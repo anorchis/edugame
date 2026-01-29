@@ -1,12 +1,13 @@
 // Game State
 const state = {
-    started: false,
+    started: false, // True once dialogue intro starts
     dialogueActive: false,
     currentLineIndex: 0,
     isTyping: false,
     typingSpeed: 50, // ms per char
     timeoutId: null,
-    currentAudio: null // Track playing audio
+    currentAudio: null, // Track playing audio
+    currentUser: null // Logged in user info
 };
 
 // Dialogue Data
@@ -32,17 +33,55 @@ const audioFiles = [
     null // No audio for the last line
 ];
 
-// DOM Elements
-const startScreen = document.getElementById('start-screen');
+// DOM Elements (Game UI)
+const gameContainer = document.getElementById('game-container');
+const startScreen = document.getElementById('start-screen'); // Click to start intro
 const dialogueBox = document.getElementById('dialogue-box');
 const dialogueText = document.getElementById('dialogue-text');
 const dialogueIndicator = document.getElementById('dialogue-indicator');
-const backgroundLayer = document.getElementById('background-layer');
 const skipButton = document.getElementById('skip-button');
+
+// Game View Elements
+const gameView = document.getElementById('game-view');
+const gameLevelDisplay = document.getElementById('game-level-display');
+
+// DOM Elements (Auth UI)
+const authOverlay = document.getElementById('auth-overlay');
+const authMenu = document.getElementById('auth-menu');
+const loginForm = document.getElementById('login-form');
+const signupForm = document.getElementById('signup-form');
+const btnShowLogin = document.getElementById('btn-show-login');
+const btnShowSignup = document.getElementById('btn-show-signup');
+const btnLoginSubmit = document.getElementById('btn-login-submit');
+const btnSignupSubmit = document.getElementById('btn-signup-submit');
+const loginIdInput = document.getElementById('login-id');
+const loginPwInput = document.getElementById('login-pw');
+const signupIdInput = document.getElementById('signup-id');
+const signupPwInput = document.getElementById('signup-pw');
+const backButtons = document.querySelectorAll('.btn-back');
 
 // Initialize
 function init() {
+    // Initial setup: Show start screen, hide auth overlay and game view
+    startScreen.classList.remove('hidden');
+    authOverlay.classList.add('hidden');
+    gameView.classList.add('hidden');
+
+    // Start Screen Event Listener (to begin dialogue intro)
     startScreen.addEventListener('click', startGameSequence);
+    
+    // Auth Event Listeners
+    btnShowLogin.addEventListener('click', () => showAuthView('login'));
+    btnShowSignup.addEventListener('click', () => showAuthView('signup'));
+    
+    backButtons.forEach(btn => {
+        btn.addEventListener('click', () => showAuthView('menu'));
+    });
+
+    btnSignupSubmit.addEventListener('click', handleSignup);
+    btnLoginSubmit.addEventListener('click', handleLogin);
+
+    // Skip Button Event Listener (for dialogue intro)
     skipButton.addEventListener('click', (e) => {
         e.stopPropagation(); // Prevent global click from firing
         finishIntro();
@@ -50,21 +89,93 @@ function init() {
 
     // Global click to advance dialogue if active
     document.addEventListener('click', (e) => {
-        if (state.dialogueActive && !startScreen.contains(e.target) && !skipButton.contains(e.target)) {
+        // Only advance dialogue if dialogue is active and click is not on auth overlay or skip button
+        if (state.dialogueActive && !authOverlay.contains(e.target) && !skipButton.contains(e.target)) {
             advanceDialogue();
         }
     });
 }
 
-// Start the Intro Sequence
+// Auth View Switcher
+function showAuthView(view) {
+    authMenu.classList.add('hidden');
+    loginForm.classList.add('hidden');
+    signupForm.classList.add('hidden');
+
+    if (view === 'menu') authMenu.classList.remove('hidden');
+    else if (view === 'login') loginForm.classList.remove('hidden');
+    else if (view === 'signup') signupForm.classList.remove('hidden');
+}
+
+// Handle Sign Up
+function handleSignup() {
+    const id = signupIdInput.value.trim();
+    const pw = signupPwInput.value.trim();
+
+    if (!id || !pw) {
+        alert("아이디와 비밀번호를 모두 입력해주세요.");
+        return;
+    }
+
+    const users = JSON.parse(localStorage.getItem('edugame_users') || '{}');
+
+    if (users[id]) {
+        alert("이미 존재하는 아이디입니다.");
+        return;
+    }
+
+    // Save new user
+    users[id] = { password: pw, level: 1 }; // Default level 1
+    localStorage.setItem('edugame_users', JSON.stringify(users));
+    
+    alert("가입이 완료되었습니다! 로그인해주세요.");
+    showAuthView('login');
+}
+
+// Handle Login
+function handleLogin() {
+    const id = loginIdInput.value.trim();
+    const pw = loginPwInput.value.trim();
+
+    if (!id || !pw) {
+        alert("아이디와 비밀번호를 입력해주세요.");
+        return;
+    }
+
+    const users = JSON.parse(localStorage.getItem('edugame_users') || '{}');
+    const user = users[id];
+
+    if (user && user.password === pw) {
+        // Login Success
+        state.currentUser = { id: id, ...user };
+        console.log(`Logged in as ${id}, Level: ${user.level}`);
+        
+        // Hide Auth Overlay and Show Game View
+        authOverlay.classList.add('hidden');
+        gameView.classList.remove('hidden');
+        
+        // Update Level Display
+        if(gameLevelDisplay) {
+            gameLevelDisplay.textContent = user.level;
+        }
+
+        // Clean up UI elements
+        dialogueBox.classList.add('hidden');
+        skipButton.classList.add('hidden');
+        
+        console.log("Game View Started");
+    } else {
+        alert("아이디 또는 비밀번호가 잘못되었습니다.");
+    }
+}
+
+// Start the Intro Sequence (Dialogue)
 function startGameSequence() {
     if (state.started) return;
     state.started = true;
     
-    // Hide Start Screen
-    startScreen.style.display = 'none';
-    
-    // Show Dialogue Box and Skip Button
+    // Hide initial start screen, show dialogue box, skip button
+    startScreen.style.display = 'none'; // Hide the "Click to Start" screen
     state.dialogueActive = true;
     dialogueBox.classList.remove('hidden');
     skipButton.classList.remove('hidden');
@@ -134,7 +245,7 @@ function advanceDialogue() {
     }
 }
 
-// Finish Intro and Transition to Game (Placeholder)
+// Finish Intro (Dialogue) and Transition to Auth Screen
 function finishIntro() {
     state.dialogueActive = false;
     dialogueBox.classList.add('hidden');
@@ -146,10 +257,11 @@ function finishIntro() {
         state.currentAudio.currentTime = 0;
     }
     
-    // Placeholder for Stage 1 transition
-    console.log("Intro finished. Starting Stage 1...");
-    alert("Intro Finished! Ready for Stage 1.");
-    // In future: initStage(1);
+    // Show the Auth Overlay
+    authOverlay.classList.remove('hidden');
+    showAuthView('menu'); // Show the login/signup choice
+    
+    console.log("Intro finished. Showing Login/Signup.");
 }
 
 // Run Init
