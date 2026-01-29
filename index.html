@@ -6,6 +6,16 @@
     <title>마법천자문: 8급 한자 수호대</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 overflow-hidden select-none">
 
@@ -48,7 +58,7 @@
             <!-- Auth Overlay (Hidden initially, shown after intro dialogue) -->
             <div id="auth-overlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center">
                 <!-- Auth Container (Shadcn UI Style) -->
-                <div id="auth-container" class="w-full max-w-[350px] bg-zinc-950 border border-zinc-800 rounded-xl p-6 shadow-lg relative transform -translate-y-8 font-sans">
+                <div id="auth-container" class="w-full max-w-[316px] bg-zinc-950 border border-zinc-800 rounded-xl p-4 shadow-lg relative transform -translate-y-8 font-sans">
                     
                     <div class="relative z-10">
                         <!-- Main Menu -->
@@ -126,13 +136,16 @@
             <!-- Game View Overlay (Hidden initially, shown after login) -->
             <div id="game-view" class="hidden absolute inset-0 z-30 flex items-center justify-center">
                 <!-- Mini Game Container -->
-                <div class="relative w-[768px] h-[432px] border-4 border-zinc-800 rounded-xl shadow-2xl overflow-hidden bg-black transform -translate-y-8">
+                <div class="relative w-[627px] h-[244px] border-4 border-zinc-800 rounded-xl shadow-2xl overflow-hidden bg-black transform -translate-y-8">
                     <!-- Game Background -->
                     <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('img/bg4.png');"></div>
                     
                     <!-- Player Character -->
-                    <img src="img/run1.png" alt="Player" class="absolute bottom-10 left-10 w-20 h-auto filter drop-shadow-lg">
+                    <img src="img/run1.png" alt="Player" class="absolute bottom-10 left-10 w-20 h-auto filter drop-shadow-lg z-10">
                     
+                    <!-- NPC: Bori Dosa -->
+                    <img id="npc-bori" src="img/bori.png" alt="Bori Dosa" class="absolute bottom-10 right-[161px] w-24 h-auto filter drop-shadow-lg z-0 animate-float">
+
                     <!-- Game UI Overlay (Example: Score, Level) -->
                     <div class="absolute top-4 left-4 text-white font-mono text-xl drop-shadow-md">
                         LEVEL <span id="game-level-display">1</span>
