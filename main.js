@@ -5,13 +5,13 @@ const state = {
     currentLineIndex: 0,
     isTyping: false,
     typingSpeed: 50, // ms per char
-    timeoutId: null
+    timeoutId: null,
+    currentAudio: null // Track playing audio
 };
 
 // Dialogue Data
 const dialogueLines = [
-    "하...",
-    "다음 주가 벌써 한자 8급 시험이네",
+    "하...다음 주가 벌써 한자 8급 시험이네...",
     "책만 보면 왜 이렇게 잠이 오냐...",
     "응? (모니터를 발견하며)",
     "'할수록 머리가 좋아지는 게임'?",
@@ -20,19 +20,37 @@ const dialogueLines = [
     "이거 깨면 시험 백 점 맞는 거 아냐?"
 ];
 
+// Audio Mapping
+const audioFiles = [
+    "sound/intro1.m4a",
+    "sound/intro2.m4a",
+    "sound/intro3.m4a",
+    "sound/intro4.m4a",
+    "sound/intro5.m4a",
+    "sound/intro6.m4a",
+    "sound/intro7.m4a",
+    null // No audio for the last line
+];
+
 // DOM Elements
 const startScreen = document.getElementById('start-screen');
 const dialogueBox = document.getElementById('dialogue-box');
 const dialogueText = document.getElementById('dialogue-text');
 const dialogueIndicator = document.getElementById('dialogue-indicator');
 const backgroundLayer = document.getElementById('background-layer');
+const skipButton = document.getElementById('skip-button');
 
 // Initialize
 function init() {
     startScreen.addEventListener('click', startGameSequence);
+    skipButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent global click from firing
+        finishIntro();
+    });
+
     // Global click to advance dialogue if active
     document.addEventListener('click', (e) => {
-        if (state.dialogueActive && !startScreen.contains(e.target)) {
+        if (state.dialogueActive && !startScreen.contains(e.target) && !skipButton.contains(e.target)) {
             advanceDialogue();
         }
     });
@@ -46,12 +64,28 @@ function startGameSequence() {
     // Hide Start Screen
     startScreen.style.display = 'none';
     
-    // Show Dialogue Box
+    // Show Dialogue Box and Skip Button
     state.dialogueActive = true;
     dialogueBox.classList.remove('hidden');
+    skipButton.classList.remove('hidden');
     
     // Start First Line
     showLine(0);
+}
+
+// Play audio for the specific line
+function playDialogueAudio(index) {
+    // Stop any currently playing audio
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+
+    // Check if audio exists for this line
+    if (index < audioFiles.length && audioFiles[index]) {
+        state.currentAudio = new Audio(audioFiles[index]);
+        state.currentAudio.play().catch(e => console.log("Audio play failed:", e));
+    }
 }
 
 // Display a line of dialogue
@@ -66,6 +100,9 @@ function showLine(index) {
     dialogueIndicator.classList.add('hidden');
     dialogueText.textContent = ""; // Clear
     
+    // Play Audio
+    playDialogueAudio(index);
+
     const line = dialogueLines[index];
     let charIndex = 0;
 
@@ -101,6 +138,13 @@ function advanceDialogue() {
 function finishIntro() {
     state.dialogueActive = false;
     dialogueBox.classList.add('hidden');
+    skipButton.classList.add('hidden');
+    
+    // Stop any audio
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
     
     // Placeholder for Stage 1 transition
     console.log("Intro finished. Starting Stage 1...");
