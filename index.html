@@ -30,6 +30,104 @@ body {
         .animate-float {
             animation: float 3s ease-in-out infinite;
         }
+        @keyframes shake-and-fade {
+            0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+            10% { transform: translate(-2px, -1px) rotate(-1deg); }
+            20% { transform: translate(2px, 1px) rotate(1deg); }
+            30% { transform: translate(-2px, 1px) rotate(1deg); }
+            40% { transform: translate(2px, -1px) rotate(-1deg); }
+            50%, 90% { transform: translate(0, 0) rotate(0); opacity: 1; }
+            100% { transform: translate(0, 20px) rotate(5deg); opacity: 0; }
+        }
+
+        .animate-enter-gate {
+            animation: shake-and-fade 1.2s ease-in-out forwards;
+        }
+        @keyframes fade-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .animate-fade-out {
+            animation: fade-out 1.5s ease-out forwards;
+        }
+
+        /* Base styles for glowing effect */
+        .base-glow {
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
+            transition: filter 0.3s ease-in-out, border 0.3s ease-in-out, transform 0.1s ease-in-out;
+            border: 2px solid transparent; /* Initial transparent border */
+            border-radius: 8px; /* Assuming bases are somewhat rectangular or need rounded corners */
+        }
+
+        /* Active state for a more solid border */
+        .base-active {
+            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 1));
+            border: 2px solid rgba(255, 255, 255, 1);
+        }
+
+        /* Scale up animation */
+        .base-scale-up {
+            animation: base-scale 0.2s ease-out forwards;
+        }
+
+        @keyframes base-scale {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #1a1a1a;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            padding: 30px;
+            color: #fff;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+            transform: translateY(-50px);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #fff;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-gray-900 overflow-hidden select-none">
@@ -48,7 +146,7 @@ body {
             
             <!-- Start Screen Overlay -->
             <div id="start-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center cursor-pointer bg-black/10 hover:bg-black/20 transition-colors">
-                <div class="text-center animate-pulse">
+                <div class="text-center animate-pulse" style="transform: translateY(-60px);">
                     <h1 class="text-6xl font-extrabold text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] mb-4 tracking-wider">
                         마법천자문<br>
                         <span class="text-yellow-400 text-5xl">8급 한자 수호대</span>
@@ -60,8 +158,8 @@ body {
             </div>
 
             <!-- Movement Instruction Overlay (Hidden initially) -->
-            <div id="movement-instruction" class="hidden absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-xl p-6 flex items-center justify-center z-40 opacity-75">
-                <p class="text-2xl text-white font-bold text-center">방향키(←, →)를 눌러 이동하세요</p>
+            <div id="movement-instruction" class="hidden absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-xl px-6 py-4 flex items-center justify-center z-40">
+                <p class="text-2xl text-gray-400 font-bold text-center">방향키(←, →)를 눌러 이동하세요</p>
             </div>
 
             <!-- Dialogue Box (Hidden initially) -->
@@ -78,74 +176,62 @@ body {
             <!-- Auth Overlay (Hidden initially, shown after intro dialogue) -->
             <div id="auth-overlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center">
                 <!-- Auth Container (Shadcn UI Style) -->
-                <div id="auth-container" class="w-full max-w-[316px] bg-zinc-950 border border-zinc-800 rounded-xl p-4 shadow-lg relative transform -translate-y-8 font-sans">
+                <div id="auth-container" class="w-full max-w-[316px] bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-lg relative transform" style="transform: translateY(-55px);">
                     
                     <div class="relative z-10">
                         <!-- Main Menu -->
-                        <div id="auth-menu" class="flex flex-col gap-6">
-                            <div class="flex flex-col space-y-2 text-center">
-                                <h1 class="text-2xl font-semibold tracking-tight text-white">마법천자문</h1>
-                                <p class="text-sm text-zinc-400">8급 한자 수호대에 오신 것을 환영합니다</p>
+                        <div id="auth-menu" class="flex flex-col gap-4">
+                            <div class="flex flex-col space-y-1 text-center">
+                                <h1 class="text-xl font-semibold tracking-tight text-white">마법천자문</h1>
+                                <p class="text-xs text-zinc-400">8급 한자 수호대에 오신 것을 환영합니다</p>
                             </div>
                             
-                            <div class="grid gap-4">
-                                <button id="btn-show-login" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 bg-zinc-50 text-zinc-900 shadow hover:bg-zinc-50/90 h-9 px-4 py-2">
+                            <div class="grid gap-2">
+                                <button id="btn-show-login" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 bg-zinc-50 text-zinc-900 shadow hover:bg-zinc-50/90 h-8 px-3 py-1">
                                     로그인
                                 </button>
-                                <button id="btn-show-signup" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 border border-zinc-800 bg-transparent shadow-sm hover:bg-zinc-800 hover:text-zinc-50 h-9 px-4 py-2 text-zinc-50">
+                                <button id="btn-show-signup" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 border border-zinc-800 bg-transparent shadow-sm hover:bg-zinc-800 hover:text-zinc-50 h-8 px-3 py-1 text-zinc-50">
                                     회원가입
                                 </button>
                             </div>
                         </div>
 
                         <!-- Login Form -->
-                        <div id="login-form" class="hidden flex flex-col gap-6">
-                            <div class="flex flex-col space-y-2 text-center">
-                                <h1 class="text-2xl font-semibold tracking-tight text-white">로그인</h1>
-                                <p class="text-sm text-zinc-400">계정 정보를 입력해주세요</p>
+                        <div id="login-form" class="hidden flex flex-col gap-4">
+                            <div class="flex flex-col space-y-1 text-center">
+                                <h1 class="text-xl font-semibold tracking-tight text-white">로그인</h1>
+                                <p class="text-xs text-zinc-400">계정 정보를 입력해주세요</p>
                             </div>
                             
-                            <div class="grid gap-4">
-                                <div class="grid gap-2">
-                                    <label class="text-sm font-medium leading-none text-zinc-50" for="login-id">아이디</label>
-                                    <input type="text" id="login-id" placeholder="아이디" class="flex h-9 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
-                                </div>
-                                <div class="grid gap-2">
-                                    <label class="text-sm font-medium leading-none text-zinc-50" for="login-pw">비밀번호</label>
-                                    <input type="password" id="login-pw" class="flex h-9 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
-                                </div>
-                                <button id="btn-login-submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 bg-zinc-50 text-zinc-900 shadow hover:bg-zinc-50/90 h-9 px-4 py-2 mt-2">
+                            <div class="grid gap-2">
+                                <input type="text" id="login-id" placeholder="아이디" class="flex h-8 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
+                                <input type="password" id="login-pw" placeholder="비밀번호" class="flex h-8 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
+                                <button id="btn-login-submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 bg-zinc-50 text-zinc-900 shadow hover:bg-zinc-50/90 h-8 px-3 py-1 mt-1">
                                     접속하기
                                 </button>
                             </div>
                             
-                            <button class="btn-back text-sm text-zinc-400 hover:text-zinc-50 underline-offset-4 hover:underline text-center">
+                            <button class="btn-back text-xs text-zinc-400 hover:text-zinc-50 underline-offset-4 hover:underline text-center">
                                 뒤로가기
                             </button>
                         </div>
 
                         <!-- Signup Form -->
-                        <div id="signup-form" class="hidden flex flex-col gap-6">
-                            <div class="flex flex-col space-y-2 text-center">
-                                <h1 class="text-2xl font-semibold tracking-tight text-white">회원가입</h1>
-                                <p class="text-sm text-zinc-400">새로운 계정을 생성합니다</p>
+                        <div id="signup-form" class="hidden flex flex-col gap-4">
+                            <div class="flex flex-col space-y-1 text-center">
+                                <h1 class="text-xl font-semibold tracking-tight text-white">회원가입</h1>
+                                <p class="text-xs text-zinc-400">새로운 계정을 생성합니다</p>
                             </div>
 
-                            <div class="grid gap-4">
-                                <div class="grid gap-2">
-                                    <label class="text-sm font-medium leading-none text-zinc-50" for="signup-id">새 아이디</label>
-                                    <input type="text" id="signup-id" placeholder="아이디" class="flex h-9 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
-                                </div>
-                                <div class="grid gap-2">
-                                    <label class="text-sm font-medium leading-none text-zinc-50" for="signup-pw">새 비밀번호</label>
-                                    <input type="password" id="signup-pw" class="flex h-9 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
-                                </div>
-                                <button id="btn-signup-submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 bg-zinc-50 text-zinc-900 shadow hover:bg-zinc-50/90 h-9 px-4 py-2 mt-2">
+                            <div class="grid gap-2">
+                                <input type="text" id="signup-id" placeholder="새 아이디" class="flex h-8 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
+                                <input type="password" id="signup-pw" placeholder="새 비밀번호" class="flex h-8 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
+                                <button id="btn-signup-submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 bg-zinc-50 text-zinc-900 shadow hover:bg-zinc-50/90 h-8 px-3 py-1 mt-1">
                                     가입하기
                                 </button>
                             </div>
                             
-                            <button class="btn-back text-sm text-zinc-400 hover:text-zinc-50 underline-offset-4 hover:underline text-center">
+                            <button class="btn-back text-xs text-zinc-400 hover:text-zinc-50 underline-offset-4 hover:underline text-center">
                                 뒤로가기
                             </button>
                         </div>
@@ -156,19 +242,24 @@ body {
             <!-- Game View Overlay (Hidden initially, shown after login) -->
             <div id="game-view" class="hidden absolute inset-0 z-30 flex items-center justify-center">
                 <!-- Mini Game Container -->
-                <div class="relative w-[627px] h-[244px] border-4 border-zinc-800 rounded-xl shadow-2xl overflow-hidden bg-black transform -translate-y-8">
+                <div class="relative w-[520px] h-[202px] rounded-xl shadow-2xl overflow-hidden bg-black transform -translate-y-16">
                     <!-- Game Background -->
-                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('img/bg4.png');"></div>
+                    <div class="absolute inset-0 bg-contain bg-no-repeat bg-center" style="background-image: url('img/bg4.png?v=1769771621');"></div>
+
+                    <!-- End Points -->
+                    <img id="base-1" src="img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[48px] w-[72px] h-auto hidden" style="left: 260px;">
+                    <img id="base-2" src="img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[68px] w-[72px] h-auto hidden" style="left: 345px; transform: scale(1.5);">
+                    <img id="base-3" src="img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[40px] w-[72px] h-auto hidden" style="left: 430px; transform: scale(0.8);">
                     
                     <!-- Player Character -->
-                    <img src="img/run1.png" alt="Player" class="absolute bottom-10 left-10 w-20 h-auto filter drop-shadow-lg z-10">
+                    <img src="img/run1.png" alt="Player" class="absolute bottom-[48px] left-0 w-16 h-auto filter drop-shadow-lg z-10">
                     
                     <!-- NPC: Bori Dosa -->
-                    <img id="npc-bori" src="img/bori.png" alt="Bori Dosa" class="absolute bottom-10 right-[161px] w-24 h-auto filter drop-shadow-lg z-0 animate-float">
+                    <img id="npc-bori" src="img/bori.png" alt="Bori Dosa" class="absolute bottom-[40px] left-[222px] w-[75px] h-auto filter drop-shadow-lg z-0 animate-float">
 
                     <!-- Game UI Overlay (Example: Score, Level) -->
                     <div class="absolute top-4 left-4 text-white font-mono text-xl drop-shadow-md">
-                        LEVEL <span id="game-level-display">1</span>
+                        한자마을
                     </div>
                 </div>
             </div>
@@ -212,7 +303,8 @@ const state = {
         currentImageIndex: 1, // 1, 2, 3
         speed: 4, // Movement speed
         boriInteraction: false, // Has interacted with Bori?
-        boriDialogueFinished: false // Has dialogue finished?
+        boriDialogueFinished: false, // Has dialogue finished?
+        isEnteringGate: false
     },
     
     keys: {
@@ -228,8 +320,7 @@ const introLines = [
     "응? (모니터를 발견하며)",
     "'할수록 머리가 좋아지는 게임'?",
     "세상에 그런 게임이 어딨어~",
-    "에이, 속는 셈 치고 딱 한 판만 해볼까?",
-    "이거 깨면 시험 백 점 맞는 거 아냐?"
+    "에이, 속는 셈 치고 딱 한 판만 해볼까?"
 ];
 
 const boriLines = [
@@ -359,7 +450,7 @@ function init() {
             state.keys[e.key] = true;
 
             // Hide instruction on first move
-            if (!movementInstruction.classList.contains('hidden')) {
+            if (!movementInstruction.classList.contains('hidden') && movementInstruction.querySelector('p').textContent.includes("방향키")) {
                 movementInstruction.classList.add('hidden');
             }
         }
@@ -449,7 +540,7 @@ function handleLogin() {
 // Start Village Scene Logic
 function startVillageScene() {
     state.village.active = true;
-    state.village.playerX = 50; // Reset position
+    state.village.playerX = 35; // Reset position
     state.village.boriInteraction = false;
     requestAnimationFrame(updateVillageLoop);
     
@@ -478,6 +569,10 @@ function finishVillageIntro() {
     }
 
     // Show new movement instruction
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "방향키(←, →)를 사용하여 이동하세요";
+    }
     movementInstruction.classList.remove('hidden');
 }
 
@@ -533,9 +628,9 @@ function updateVillageLoop(timestamp) {
     // Bori Width ~96px. Bori Left position ~= 660 - 161 - 96 = 403px.
     // Let's set a stop point before Bori, e.g., at X=325.
 
-    if (state.village.playerX > 325 && !state.village.boriDialogueFinished) {
+    if (state.village.playerX >= 190 && !state.village.boriDialogueFinished) { // Check if player reaches Bori
         // Stop player from moving past Bori
-        state.village.playerX = 325;
+        state.village.playerX = 190;
         
         // Trigger interaction if not yet triggered
         if (!state.village.boriInteraction) {
@@ -544,10 +639,20 @@ function updateVillageLoop(timestamp) {
         }
     }
 
+    if (state.village.boriDialogueFinished && !state.village.isEnteringGate && state.village.playerX > 470) {
+        state.village.isEnteringGate = true;
+        movementInstruction.classList.add('hidden');
+        animatePlayerEntry();
+    }
+
     // Apply Position
     playerImage.style.left = `${state.village.playerX}px`;
 
     requestAnimationFrame(updateVillageLoop);
+}
+
+function animatePlayerEntry() {
+    playerImage.classList.add('animate-enter-gate');
 }
 
 function triggerBoriDialogue() {
@@ -676,12 +781,20 @@ function finishBoriDialogue() {
         state.currentAudio.currentTime = 0;
     }
 
-    // Reset Bori and Allow Movement
+    // Bori disappears
+    npcBori.classList.add('animate-fade-out');
+
+    // Allow Movement
     state.village.boriDialogueFinished = true;
-    npcBori.src = "img/bori.png";
-    npcBori.classList.add('animate-float');
     
-    console.log("Bori Dialogue Finished. Player can pass now.");
+    // Show 'Enter Gate' instruction
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "마법의 문으로 입장하세요";
+    }
+    movementInstruction.classList.remove('hidden');
+    
+    console.log("Bori Dialogue Finished. Player can now go to the gate.");
 }
 
 // Start the Intro Sequence (Dialogue)
