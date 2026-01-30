@@ -203,6 +203,17 @@ body {
             display: block;
             background: #000;
         }
+
+        .hanja-shot {
+            position: absolute;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            color: #facc15;
+            text-shadow: 0 0 6px rgba(250, 204, 21, 0.8);
+            pointer-events: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body class="bg-gray-900 overflow-hidden select-none">
@@ -319,7 +330,13 @@ body {
                 <!-- Mini Game Container -->
                 <div class="relative w-[490px] h-[160px] rounded-xl shadow-2xl overflow-hidden bg-black transform -translate-y-6">
                     <!-- Game Background -->
-                    <div class="absolute inset-0 bg-cover bg-no-repeat bg-center" style="background-image: url('img/bg4.png?v=1769771621');"></div>
+                    <div id="stage-bg" class="absolute inset-0 overflow-hidden">
+                        <div id="stage-bg-static" class="absolute inset-0 bg-cover bg-no-repeat bg-center" style="background-image: url('img/bg4.png?v=1769771621');"></div>
+                        <div id="stage-bg-scroll" class="absolute inset-0 hidden">
+                            <div id="stage-bg-tile-1" class="absolute inset-y-0 left-0 bg-cover bg-no-repeat bg-center"></div>
+                            <div id="stage-bg-tile-2" class="absolute inset-y-0 left-0 bg-cover bg-no-repeat bg-center"></div>
+                        </div>
+                    </div>
 
                     <!-- End Points -->
                     <img id="base-1" src="img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item pointer-events-none" style="left: 240px;" data-base="1">
@@ -327,7 +344,13 @@ body {
                     <img id="base-3" src="img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item pointer-events-none" style="left: 410px; transform: scale(0.85);" data-base="3">
 
                     <!-- Player Character -->
-                    <img src="img/run1.png" alt="Player" class="absolute bottom-[35px] left-[105px] w-11 h-auto filter drop-shadow-lg z-10">
+                    <img src="img/run1.png" alt="Player" class="absolute bottom-[32px] left-[105px] w-11 h-auto filter drop-shadow-lg z-10">
+
+                    <!-- Stage 3 Obstacle -->
+                    <img id="stage3-obstacle" src="img/obstacle1.png" alt="Obstacle" class="absolute bottom-[32px] w-10 h-auto hidden">
+
+                    <!-- Stage 3 Projectiles -->
+                    <div id="stage3-projectiles" class="absolute inset-0 pointer-events-none"></div>
 
                     <!-- NPC: Bori Dosa -->
                     <img id="npc-bori" src="img/bori.png" alt="Bori Dosa" class="absolute bottom-[30px] left-[214px] w-[55px] h-auto filter drop-shadow-lg z-0 animate-float">
@@ -413,7 +436,21 @@ const state = {
         isEnteringGate: false,
         basesActive: false, // Are bases interactive?
         selectedBase: null, // Currently selected/hovered base (1, 2, or 3)
-        baseCollision: null // Base that player is colliding with
+        baseCollision: null, // Base that player is colliding with
+        stage3Active: false,
+        stage3BgOffset: 0,
+        stage3BgSpeed: 2,
+        stage3BgWidth: 0,
+        stage3ObstacleX: 0,
+        stage3ObstacleSpeed: 3,
+        stage3ObstacleActive: false,
+        stage3Jumping: false,
+        stage3JumpVelocity: 0,
+        stage3GroundY: 32,
+        stage3Attacking: false,
+        stage3AttackFrame: 1,
+        stage3AttackTimer: 0,
+        stage3Projectiles: []
     },
     
     keys: {
@@ -474,6 +511,12 @@ const villageIntroAudioFiles = [
     "sound/okong2.m4a"
 ];
 
+const stage3HanjaSet1 = [
+    "校","敎","九","國","軍","金","南","女","年","大","東","六","母","木","門","問",
+    "白","父","北","四","山","三","上","西","先","小","水","市","十","五","王","外",
+    "月","二","人","一","日","入","子","自","弟","中","天","靑","寸","七","八","學","韓","火"
+];
+
 // DOM Elements (Game UI)
 const gameContainer = document.getElementById('game-container');
 const startScreen = document.getElementById('start-screen'); // Click to start intro
@@ -488,6 +531,12 @@ const gameView = document.getElementById('game-view');
 const gameLevelDisplay = document.getElementById('game-level-display');
 const playerImage = gameView.querySelector('img[alt="Player"]'); // Select the player image
 const npcBori = document.getElementById('npc-bori'); // Select Bori NPC
+const stageBgStatic = document.getElementById('stage-bg-static');
+const stageBgScroll = document.getElementById('stage-bg-scroll');
+const stageBgTile1 = document.getElementById('stage-bg-tile-1');
+const stageBgTile2 = document.getElementById('stage-bg-tile-2');
+const stage3Obstacle = document.getElementById('stage3-obstacle');
+const stage3Projectiles = document.getElementById('stage3-projectiles');
 
 // DOM Elements (Auth UI)
 const authOverlay = document.getElementById('auth-overlay');
@@ -561,6 +610,29 @@ function init() {
             // Hide instruction on first move
             if (!movementInstruction.classList.contains('hidden') && movementInstruction.querySelector('p').textContent.includes("방향키")) {
                 movementInstruction.classList.add('hidden');
+            }
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (!state.village.active || !state.village.stage3Active) return;
+        if (e.code === 'ArrowUp') {
+            e.preventDefault();
+            if (!state.village.stage3Jumping) {
+                state.village.stage3Jumping = true;
+                state.village.stage3JumpVelocity = 9;
+            }
+        }
+        if (e.code === 'Space') {
+            e.preventDefault();
+            if (!state.village.stage3Attacking) {
+                state.village.stage3Attacking = true;
+                state.village.stage3AttackFrame = 1;
+                state.village.stage3AttackTimer = performance.now();
+                playerImage.src = 'img/attack1.png';
+                setTimeout(() => {
+                    state.village.stage3Attacking = false;
+                }, 400);
             }
         }
     });
@@ -693,6 +765,75 @@ function updateVillageLoop(timestamp) {
     if (state.dialogueActive) {
          requestAnimationFrame(updateVillageLoop);
          return;
+    }
+
+    if (state.village.stage3Active) {
+        if (state.keys.ArrowRight) {
+            state.village.direction = 'right';
+            state.village.isMoving = true;
+            if (timestamp - state.village.lastFrameTime > state.village.frameInterval) {
+                state.village.currentImageIndex++;
+                if (state.village.currentImageIndex > 3) state.village.currentImageIndex = 1;
+                state.village.lastFrameTime = timestamp;
+                if (!state.village.stage3Jumping && !state.village.stage3Attacking) {
+                    playerImage.src = `img/run${state.village.currentImageIndex}.png`;
+                }
+            }
+            state.village.stage3BgOffset -= state.village.stage3BgSpeed;
+            if (state.village.stage3BgWidth > 0 && state.village.stage3BgOffset <= -state.village.stage3BgWidth) {
+                state.village.stage3BgOffset += state.village.stage3BgWidth;
+            }
+            stageBgScroll.style.transform = `translateX(${state.village.stage3BgOffset}px)`;
+        } else {
+            state.village.isMoving = false;
+            if (!state.village.stage3Jumping && !state.village.stage3Attacking) {
+                playerImage.src = 'img/run1.png';
+            }
+        }
+
+        if (state.village.stage3Attacking) {
+            if (timestamp - state.village.stage3AttackTimer > 120) {
+                state.village.stage3AttackFrame = state.village.stage3AttackFrame === 1 ? 2 : 1;
+                state.village.stage3AttackTimer = timestamp;
+                playerImage.src = `img/attack${state.village.stage3AttackFrame}.png`;
+            }
+        }
+
+        if (state.village.stage3Jumping) {
+            state.village.stage3JumpVelocity -= 0.6;
+            state.village.playerY += state.village.stage3JumpVelocity;
+            if (state.village.playerY <= state.village.stage3GroundY) {
+                state.village.playerY = state.village.stage3GroundY;
+                state.village.stage3Jumping = false;
+                state.village.stage3JumpVelocity = 0;
+            }
+            playerImage.src = state.village.stage3JumpVelocity > 0 ? 'img/jump1.png' : 'img/jump2.png';
+        } else {
+            state.village.playerY = state.village.stage3GroundY;
+        }
+
+        // Obstacle movement
+        if (state.village.stage3ObstacleActive) {
+            state.village.stage3ObstacleX -= state.village.stage3ObstacleSpeed;
+            stage3Obstacle.style.left = `${state.village.stage3ObstacleX}px`;
+            if (state.village.stage3ObstacleX < -40) {
+                state.village.stage3ObstacleActive = false;
+                stage3Obstacle.classList.add('hidden');
+            }
+        } else if (state.keys.ArrowRight) {
+            if (Math.random() < 0.02) {
+                const containerWidth = stageBgScroll.parentElement.clientWidth;
+                state.village.stage3ObstacleX = containerWidth + 20;
+                stage3Obstacle.style.left = `${state.village.stage3ObstacleX}px`;
+                stage3Obstacle.classList.remove('hidden');
+                state.village.stage3ObstacleActive = true;
+            }
+        }
+
+        playerImage.style.left = `${state.village.playerX}px`;
+        playerImage.style.bottom = `${state.village.playerY}px`;
+        requestAnimationFrame(updateVillageLoop);
+        return;
     }
 
     // 1. Update Movement
@@ -1124,6 +1265,58 @@ function closeStageModal() {
     stageFrame.src = '';
 }
 
+function setupStage3Background() {
+    const container = stageBgScroll.parentElement;
+    const width = container.clientWidth;
+    state.village.stage3BgWidth = width;
+    stageBgTile1.style.width = `${width}px`;
+    stageBgTile2.style.width = `${width}px`;
+    stageBgTile1.style.left = '0px';
+    stageBgTile2.style.left = `${width}px`;
+    stageBgTile1.style.backgroundImage = "url('img/bg1.png')";
+    stageBgTile2.style.backgroundImage = "url('img/bg12.png')";
+    stageBgScroll.style.width = `${width * 2}px`;
+    stageBgScroll.style.transform = `translateX(${state.village.stage3BgOffset}px)`;
+}
+
+function startStage3() {
+    state.village.stage3Active = true;
+    state.village.stage3BgOffset = 0;
+    state.village.playerX = 105;
+    state.village.currentImageIndex = 1;
+    state.village.lastFrameTime = 0;
+    state.village.stage3GroundY = 32;
+    state.village.playerY = state.village.stage3GroundY;
+    state.village.stage3ObstacleActive = false;
+    state.village.stage3Jumping = false;
+    state.village.stage3JumpVelocity = 0;
+    state.village.stage3Attacking = false;
+    state.village.stage3AttackFrame = 1;
+    state.village.stage3AttackTimer = 0;
+    stage3Obstacle.classList.add('hidden');
+    playerImage.style.left = `${state.village.playerX}px`;
+    playerImage.style.bottom = `${state.village.playerY}px`;
+    stageBgStatic.classList.add('hidden');
+    stageBgScroll.classList.remove('hidden');
+    setupStage3Background();
+
+    bases.forEach(base => base.classList.add('hidden'));
+    state.village.basesActive = false;
+    state.village.baseCollision = null;
+    state.village.selectedBase = null;
+
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "→ 키를 눌러 달리세요";
+    }
+    movementInstruction.classList.remove('hidden');
+
+    const gameTitle = document.querySelector('#game-view .absolute.top-3.left-4');
+    if (gameTitle) {
+        gameTitle.textContent = "화과산";
+    }
+}
+
 function sendStageUser() {
     if (!stageFrame.contentWindow) return;
     const userId = state.currentUser?.id || 'guest';
@@ -1164,8 +1357,11 @@ modalStart.addEventListener('click', () => {
         openStageModal('stage1.html');
     } else if (String(baseId) === '2') {
         openStageModal('stage2.html');
+    } else if (String(baseId) === '3') {
+        startStage3();
     } else {
-        showAlert("이 단계는 아직 준비 중입니다.");
+        // Stage 3 placeholder removed
+        return;
     }
 });
 
@@ -1203,6 +1399,12 @@ window.addEventListener('message', (event) => {
     const data = event.data || {};
     if (data.type === 'hanjaReady') {
         sendStageUser();
+    }
+});
+
+window.addEventListener('resize', () => {
+    if (state.village.stage3Active) {
+        setupStage3Background();
     }
 });
 
