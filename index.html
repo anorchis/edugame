@@ -5,7 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>마법천자문: 8급 한자 수호대</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap');
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* Custom styles for the dialogue text to look game-like */
+#dialogue-text {
+    font-family: 'Nanum Pen Script', cursive; /* More 'comic' or 'handwritten' feel */
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 0px #000;
+}
+
+/* Scanline effect or CRT effect optional, keeping it clean for now */
+</style>
     <style>
         @keyframes float {
             0% { transform: translateY(0px); }
@@ -44,8 +59,13 @@
                 </div>
             </div>
 
+            <!-- Movement Instruction Overlay (Hidden initially) -->
+            <div id="movement-instruction" class="hidden absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-xl p-6 flex items-center justify-center z-40 opacity-75">
+                <p class="text-2xl text-white font-bold text-center">방향키(←, →)를 눌러 이동하세요</p>
+            </div>
+
             <!-- Dialogue Box (Hidden initially) -->
-            <div id="dialogue-box" class="hidden absolute bottom-10 left-10 right-10 bg-black/80 border-4 border-white rounded-xl p-6 min-h-[150px] flex flex-col justify-start items-start">
+            <div id="dialogue-box" class="hidden absolute bottom-10 left-10 right-10 bg-black/80 border-4 border-white rounded-xl p-6 min-h-[150px] flex flex-col justify-start items-start z-50">
                 <p id="dialogue-text" class="text-2xl text-white font-mono leading-relaxed"></p>
                 <div id="dialogue-indicator" class="self-end text-yellow-400 animate-bounce mt-auto hidden">▼</div>
             </div>
@@ -154,7 +174,7 @@
             </div>
 
             <!-- Dialogue Box (Hidden initially) -->
-            <div id="dialogue-box" class="hidden absolute bottom-10 left-10 right-10 bg-black/80 border-4 border-white rounded-xl p-6 min-h-[150px] flex flex-col justify-start items-start">
+            <div id="dialogue-box" class="hidden absolute bottom-10 left-10 right-10 bg-black/80 border-4 border-white rounded-xl p-6 min-h-[150px] flex flex-col justify-start items-start z-50">
                 <p id="dialogue-text" class="text-2xl text-white font-mono leading-relaxed"></p>
                 <div id="dialogue-indicator" class="self-end text-yellow-400 animate-bounce mt-auto hidden">▼</div>
             </div>
@@ -168,6 +188,518 @@
 
     </div>
 
-    <script type="module" src="main.js"></script>
+    <script>// Game State
+const state = {
+    started: false, // True once dialogue intro starts
+    dialogueActive: false,
+    currentLineIndex: 0,
+    isTyping: false,
+    typingSpeed: 50, // ms per char
+    timeoutId: null,
+    currentAudio: null, // Track playing audio
+    currentUser: null, // Logged in user info
+    
+    // Village Scene State (bg4)
+    village: {
+        active: false,
+        playerX: 50, // Initial X position
+        playerY: 150, // Fixed Y position (adjust based on container height)
+        direction: 'right', // 'right' or 'left'
+        isMoving: false,
+        animationFrame: 0,
+        lastFrameTime: 0,
+        frameInterval: 100, // Animation speed (ms)
+        currentImageIndex: 1, // 1, 2, 3
+        speed: 4, // Movement speed
+        boriInteraction: false, // Has interacted with Bori?
+        boriDialogueFinished: false // Has dialogue finished?
+    },
+    
+    keys: {
+        ArrowRight: false,
+        ArrowLeft: false
+    }
+};
+
+// Dialogue Data
+const introLines = [
+    "하...다음 주가 벌써 한자 8급 시험이네...",
+    "책만 보면 왜 이렇게 잠이 오냐...",
+    "응? (모니터를 발견하며)",
+    "'할수록 머리가 좋아지는 게임'?",
+    "세상에 그런 게임이 어딨어~",
+    "에이, 속는 셈 치고 딱 한 판만 해볼까?",
+    "이거 깨면 시험 백 점 맞는 거 아냐?"
+];
+
+const boriLines = [
+    "허허, 어서 오게나!",
+    "나는 이 한자 세계를 지키는 보리 도사라네.",
+    "자네가 바로 예언 속의 그 아이로군.",
+    "악당들이 8급 한자들을 모두 훔쳐갔다네!",
+    "숲, 산, 그리고 던전을 지나며 한자를 되찾아주게.",
+    "준비가 되었다면... 출발하게나!"
+];
+
+const villageIntroLines = [
+    "어? 여긴 어디지?",
+    "저 분한테 물어봐야겠다!"
+];
+
+let currentDialogueSet = introLines; // Track which dialogue to show
+
+// Audio Mapping
+const audioFiles = [
+    "sound/intro1.m4a",
+    "sound/intro2.m4a",
+    "sound/intro3.m4a",
+    "sound/intro4.m4a",
+    "sound/intro5.m4a",
+    "sound/intro6.m4a",
+    "sound/intro7.m4a",
+    null // No audio for the last line
+];
+
+const boriAudioFiles = [
+    "sound/bori1.m4a",
+    "sound/bori2.m4a",
+    "sound/bori3.m4a",
+    "sound/bori4.m4a",
+    "sound/bori5.m4a",
+    "sound/bori6.m4a"
+];
+
+const villageIntroAudioFiles = [
+    "sound/okong1.m4a",
+    "sound/okong2.m4a"
+];
+
+// DOM Elements (Game UI)
+const gameContainer = document.getElementById('game-container');
+const startScreen = document.getElementById('start-screen'); // Click to start intro
+const dialogueBox = document.getElementById('dialogue-box');
+const dialogueText = document.getElementById('dialogue-text');
+const dialogueIndicator = document.getElementById('dialogue-indicator');
+const skipButton = document.getElementById('skip-button');
+const movementInstruction = document.getElementById('movement-instruction'); // New element
+
+// Game View Elements
+const gameView = document.getElementById('game-view');
+const gameLevelDisplay = document.getElementById('game-level-display');
+const playerImage = gameView.querySelector('img[alt="Player"]'); // Select the player image
+const npcBori = document.getElementById('npc-bori'); // Select Bori NPC
+
+// DOM Elements (Auth UI)
+const authOverlay = document.getElementById('auth-overlay');
+const authMenu = document.getElementById('auth-menu');
+const loginForm = document.getElementById('login-form');
+const signupForm = document.getElementById('signup-form');
+const btnShowLogin = document.getElementById('btn-show-login');
+const btnShowSignup = document.getElementById('btn-show-signup');
+const btnLoginSubmit = document.getElementById('btn-login-submit');
+const btnSignupSubmit = document.getElementById('btn-signup-submit');
+const loginIdInput = document.getElementById('login-id');
+const loginPwInput = document.getElementById('login-pw');
+const signupIdInput = document.getElementById('signup-id');
+const signupPwInput = document.getElementById('signup-pw');
+const backButtons = document.querySelectorAll('.btn-back');
+
+// Initialize
+function init() {
+    // Initial setup: Show start screen, hide auth overlay and game view
+    startScreen.classList.remove('hidden');
+    authOverlay.classList.add('hidden');
+    gameView.classList.add('hidden');
+
+    // Start Screen Event Listener (to begin dialogue intro)
+    startScreen.addEventListener('click', startGameSequence);
+    
+    // Auth Event Listeners
+    btnShowLogin.addEventListener('click', () => showAuthView('login'));
+    btnShowSignup.addEventListener('click', () => showAuthView('signup'));
+    
+    backButtons.forEach(btn => {
+        btn.addEventListener('click', () => showAuthView('menu'));
+    });
+
+    btnSignupSubmit.addEventListener('click', handleSignup);
+    btnLoginSubmit.addEventListener('click', handleLogin);
+
+    // Skip Button Event Listener (for dialogue intro)
+    skipButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent global click from firing
+        if (currentDialogueSet === introLines) {
+            finishIntro();
+        } else if (currentDialogueSet === boriLines) {
+            finishBoriDialogue();
+        } else if (currentDialogueSet === villageIntroLines) {
+            finishVillageIntro();
+        }
+    });
+
+    // Global click to advance dialogue if active
+    document.addEventListener('click', (e) => {
+        // Only advance dialogue if dialogue is active and click is not on auth overlay or skip button
+        if (state.dialogueActive && !authOverlay.contains(e.target) && !skipButton.contains(e.target)) {
+            advanceDialogue();
+        }
+    });
+    
+    // Spacebar to advance dialogue
+    window.addEventListener('keydown', (e) => {
+        if (state.dialogueActive && (e.code === 'Space' || e.key === ' ')) {
+            e.preventDefault(); // Prevent page scroll
+            advanceDialogue();
+        }
+    });
+
+    // Movement Key Listeners
+    window.addEventListener('keydown', (e) => {
+        if (state.village.active && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+            state.keys[e.key] = true;
+
+            // Hide instruction on first move
+            if (!movementInstruction.classList.contains('hidden')) {
+                movementInstruction.classList.add('hidden');
+            }
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (state.village.active && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+            state.keys[e.key] = false;
+        }
+    });
+}
+
+// Auth View Switcher
+function showAuthView(view) {
+    authMenu.classList.add('hidden');
+    loginForm.classList.add('hidden');
+    signupForm.classList.add('hidden');
+
+    if (view === 'menu') authMenu.classList.remove('hidden');
+    else if (view === 'login') loginForm.classList.remove('hidden');
+    else if (view === 'signup') signupForm.classList.remove('hidden');
+}
+
+// Handle Sign Up
+function handleSignup() {
+    const id = signupIdInput.value.trim();
+    const pw = signupPwInput.value.trim();
+
+    if (!id || !pw) {
+        alert("아이디와 비밀번호를 모두 입력해주세요.");
+        return;
+    }
+
+    const users = JSON.parse(localStorage.getItem('edugame_users') || '{}');
+
+    if (users[id]) {
+        alert("이미 존재하는 아이디입니다.");
+        return;
+    }
+
+    // Save new user
+    users[id] = { password: pw, level: 1 }; // Default level 1
+    localStorage.setItem('edugame_users', JSON.stringify(users));
+    
+    alert("가입이 완료되었습니다! 로그인해주세요.");
+    showAuthView('login');
+}
+
+// Handle Login
+function handleLogin() {
+    const id = loginIdInput.value.trim();
+    const pw = loginPwInput.value.trim();
+
+    if (!id || !pw) {
+        alert("아이디와 비밀번호를 모두 입력해주세요.");
+        return;
+    }
+
+    const users = JSON.parse(localStorage.getItem('edugame_users') || '{}');
+    const user = users[id];
+
+    if (user && user.password === pw) {
+        // Login Success
+        state.currentUser = { id: id, ...user };
+        console.log(`Logged in as ${id}, Level: ${user.level}`);
+        
+        // Hide Auth Overlay and Show Game View
+        authOverlay.classList.add('hidden');
+        gameView.classList.remove('hidden');
+        
+        // Update Level Display
+        if(gameLevelDisplay) {
+            gameLevelDisplay.textContent = user.level;
+        }
+
+        // Clean up UI elements
+        dialogueBox.classList.add('hidden');
+        skipButton.classList.add('hidden');
+        
+        console.log("Game View Started");
+        startVillageScene(); // Start Village Logic
+    } else {
+        alert("아이디 또는 비밀번호가 잘못되었습니다.");
+    }
+}
+
+// Start Village Scene Logic
+function startVillageScene() {
+    state.village.active = true;
+    state.village.playerX = 50; // Reset position
+    state.village.boriInteraction = false;
+    requestAnimationFrame(updateVillageLoop);
+    
+    // Trigger Village Intro Dialogue
+    setTimeout(triggerVillageIntro, 500); // Slight delay for effect
+}
+
+function triggerVillageIntro() {
+    console.log("Village Intro Dialogue");
+    currentDialogueSet = villageIntroLines;
+    state.dialogueActive = true;
+    dialogueBox.classList.remove('hidden');
+    skipButton.classList.remove('hidden');
+    showLine(0);
+}
+
+function finishVillageIntro() {
+    state.dialogueActive = false;
+    dialogueBox.classList.add('hidden');
+    skipButton.classList.add('hidden');
+    
+    // Stop audio if playing
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+
+    // Show new movement instruction
+    movementInstruction.classList.remove('hidden');
+}
+
+// Village Scene Game Loop
+function updateVillageLoop(timestamp) {
+    if (!state.village.active) return;
+
+    // Skip movement update if dialogue is active (freeze player)
+    if (state.dialogueActive) {
+         requestAnimationFrame(updateVillageLoop);
+         return;
+    }
+
+    // 1. Update Movement
+    if (state.keys.ArrowRight) {
+        state.village.direction = 'right';
+        state.village.isMoving = true;
+        state.village.playerX += state.village.speed;
+    } else if (state.keys.ArrowLeft) {
+        state.village.direction = 'left';
+        state.village.isMoving = true;
+        state.village.playerX -= state.village.speed;
+    } else {
+        state.village.isMoving = false;
+    }
+
+    // Boundary Checks (Container width ~660px, player width ~80px)
+    if (state.village.playerX < -20) state.village.playerX = -20;
+    if (state.village.playerX > 560) state.village.playerX = 560;
+
+    // Apply Position
+    playerImage.style.left = `${state.village.playerX}px`;
+
+    // 2. Handle Animation
+    if (state.village.isMoving) {
+        if (timestamp - state.village.lastFrameTime > state.village.frameInterval) {
+            state.village.currentImageIndex++;
+            if (state.village.currentImageIndex > 3) state.village.currentImageIndex = 1;
+            state.village.lastFrameTime = timestamp;
+            
+            // Update Image Source
+            const prefix = state.village.direction === 'right' ? 'run' : 'left';
+            playerImage.src = `img/${prefix}${state.village.currentImageIndex}.png`;
+        }
+    } else {
+        // Idle State
+        const prefix = state.village.direction === 'right' ? 'run' : 'left';
+        playerImage.src = `img/${prefix}1.png`; // Reset to frame 1
+    }
+
+    // 3. Check Collision with Bori & Interaction
+    // Bori is at right-[161px]. Container 660px.
+    // Bori Width ~96px. Bori Left position ~= 660 - 161 - 96 = 403px.
+    // Let's set a stop point before Bori, e.g., at X=325.
+
+    if (state.village.playerX > 325 && !state.village.boriDialogueFinished) {
+        // Stop player from moving past Bori
+        state.village.playerX = 325;
+        
+        // Trigger interaction if not yet triggered
+        if (!state.village.boriInteraction) {
+            state.village.boriInteraction = true;
+            triggerBoriDialogue();
+        }
+    }
+
+    // Apply Position
+    playerImage.style.left = `${state.village.playerX}px`;
+
+    requestAnimationFrame(updateVillageLoop);
+}
+
+function triggerBoriDialogue() {
+    console.log("Meeting Bori Dosa!");
+    
+    // Change Appearance
+    npcBori.src = "img/bori2.png";
+    npcBori.classList.remove('animate-float');
+    
+    // Setup Dialogue
+    currentDialogueSet = boriLines;
+    state.dialogueActive = true;
+    dialogueBox.classList.remove('hidden');
+    skipButton.classList.remove('hidden'); // Show skip button
+    
+    // Start Dialogue
+    showLine(0);
+}
+
+// Play audio for the specific line
+function playDialogueAudio(index) {
+    let files = null;
+
+    if (currentDialogueSet === introLines) {
+        files = audioFiles;
+    } else if (currentDialogueSet === boriLines) {
+        files = boriAudioFiles;
+    } else if (currentDialogueSet === villageIntroLines) {
+        files = villageIntroAudioFiles;
+    }
+
+    if (!files) return;
+
+    // Stop any currently playing audio
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+
+    // Check if audio exists for this line
+    if (index < files.length && files[index]) {
+        state.currentAudio = new Audio(files[index]);
+        state.currentAudio.play().catch(e => console.log("Audio play failed:", e));
+    }
+}
+
+// Display a line of dialogue
+function showLine(index) {
+    if (index >= currentDialogueSet.length) {
+        if (currentDialogueSet === introLines) {
+            finishIntro();
+        } else if (currentDialogueSet === boriLines) {
+            finishBoriDialogue();
+        } else if (currentDialogueSet === villageIntroLines) {
+            finishVillageIntro();
+        }
+        return;
+    }
+
+    state.currentLineIndex = index;
+    state.isTyping = true;
+    dialogueIndicator.classList.add('hidden');
+    dialogueText.textContent = ""; // Clear
+    
+    // Play Audio (only for intro)
+    playDialogueAudio(index);
+
+    const line = currentDialogueSet[index];
+    let charIndex = 0;
+
+    function typeChar() {
+        if (charIndex < line.length) {
+            dialogueText.textContent += line[charIndex];
+            charIndex++;
+            state.timeoutId = setTimeout(typeChar, state.typingSpeed);
+        } else {
+            state.isTyping = false;
+            dialogueIndicator.classList.remove('hidden');
+        }
+    }
+    
+    typeChar();
+}
+
+// Advance to next line or complete current typing instantly
+function advanceDialogue() {
+    if (state.isTyping) {
+        // Instant finish
+        clearTimeout(state.timeoutId);
+        dialogueText.textContent = currentDialogueSet[state.currentLineIndex];
+        state.isTyping = false;
+        dialogueIndicator.classList.remove('hidden');
+    } else {
+        // Next line
+        showLine(state.currentLineIndex + 1);
+    }
+}
+
+// Finish Intro (Dialogue) and Transition to Auth Screen
+function finishIntro() {
+    state.dialogueActive = false;
+    dialogueBox.classList.add('hidden');
+    skipButton.classList.add('hidden');
+    
+    // Stop any audio
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+    
+    // Show the Auth Overlay
+    authOverlay.classList.remove('hidden');
+    showAuthView('menu'); // Show the login/signup choice
+    
+    console.log("Intro finished. Showing Login/Signup.");
+}
+
+function finishBoriDialogue() {
+    state.dialogueActive = false;
+    dialogueBox.classList.add('hidden');
+    skipButton.classList.add('hidden'); // Hide skip button
+    
+    // Stop audio if playing
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+
+    // Reset Bori and Allow Movement
+    state.village.boriDialogueFinished = true;
+    npcBori.src = "img/bori.png";
+    npcBori.classList.add('animate-float');
+    
+    console.log("Bori Dialogue Finished. Player can pass now.");
+}
+
+// Start the Intro Sequence (Dialogue)
+function startGameSequence() {
+    if (state.started) return;
+    state.started = true;
+    
+    // Hide initial start screen, show dialogue box, skip button
+    startScreen.style.display = 'none'; // Hide the "Click to Start" screen
+    state.dialogueActive = true;
+    dialogueBox.classList.remove('hidden');
+    skipButton.classList.remove('hidden');
+    
+    // Start First Line
+    showLine(0);
+}
+
+// Run Init
+init();</script>
 </body>
 </html>
