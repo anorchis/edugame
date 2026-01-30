@@ -3,555 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1단계: 기초 한자 - 마법천자문</title>
+    <title>마법천자문: 한자 수련장</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=Nanum+Brush+Script&display=swap" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
+        body { 
+            font-family: 'Noto Serif KR', serif; 
+            background: #020617; 
+            margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh;
             overflow: hidden;
         }
 
-        .game-container {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background-image: url('img/modal1.png');
-            background-size: cover;
-            background-position: center;
-            position: relative;
-        }
-
-        .game-container::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-        }
-
-        .game-content {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 900px;
-        }
-
-        .game-header {
-            text-align: center;
-            margin-bottom: 20px;
-            color: white;
-        }
-
-        .game-header h1 {
-            font-size: 2rem;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            margin-bottom: 10px;
-        }
-
-        .game-stats {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            font-size: 1.2rem;
-        }
-
-        .stat {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 20px;
-            border-radius: 20px;
-            backdrop-filter: blur(5px);
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .card {
-            aspect-ratio: 3/4;
-            cursor: pointer;
-            perspective: 1000px;
-            position: relative;
-        }
-
-        .card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
-
-        .card.flipped .card-inner {
-            transform: rotateY(180deg);
-        }
-
-        .card.matched .card-inner {
-            transform: rotateY(180deg);
-        }
-
-        .card-front, .card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .card-front {
-            background-image: url('img/card.png');
-            background-size: cover;
-            background-position: center;
-        }
-
-        .card-back {
-            background: linear-gradient(145deg, #f5f5dc 0%, #e8e4c9 100%);
-            transform: rotateY(180deg);
-            border: 3px solid #8b4513;
-            flex-direction: column;
-            padding: 10px;
-        }
-
-        .card-back .hanja {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #2c1810;
-        }
-
-        .card-back .meaning {
-            font-size: 1rem;
-            color: #5a4a3a;
-            margin-top: 5px;
-        }
-
-        .card.matched {
-            pointer-events: none;
-        }
-
-        .card.matched .card-back {
-            background: linear-gradient(145deg, #90EE90 0%, #7CCD7C 100%);
-            border-color: #228B22;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: rotateY(180deg) translateX(0); }
-            25% { transform: rotateY(180deg) translateX(-5px); }
-            75% { transform: rotateY(180deg) translateX(5px); }
-        }
-
-        .card.wrong .card-inner {
-            animation: shake 0.3s ease-in-out;
-        }
-
-        /* Result Modal */
-        .result-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
-
-        .result-modal.active {
-            display: flex;
-        }
-
-        .result-content {
-            background: linear-gradient(145deg, #2a2a4a, #1a1a2e);
-            border: 2px solid #ffd700;
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            color: white;
-            max-width: 400px;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-        }
-
-        .result-content h2 {
-            font-size: 2rem;
-            margin-bottom: 20px;
-            color: #ffd700;
-        }
-
-        .result-stats {
-            margin: 20px 0;
-            font-size: 1.2rem;
-            line-height: 2;
-        }
-
-        .result-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-        }
-
-        .result-btn {
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
+        /* 메인 콘솔: 2px 테두리 + 8px 곡률 */
+        #gameConsole {
+            width: 720px; height: 405px;
+            background: transparent;
             border: none;
+            border-radius: 0;
+            box-shadow: none;
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
         }
 
-        .btn-retry {
-            background: #4a4a6a;
-            color: white;
-        }
+        .font-brush { font-family: 'Nanum Brush Script', cursive; }
+        .magic-glow { text-shadow: 0 0 20px rgba(251, 191, 36, 1); }
 
-        .btn-retry:hover {
-            background: #5a5a7a;
+        /* 버튼 스타일 통일 */
+        .btn-magic { 
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 600;
+            font-size: 1.25rem; 
+            background: linear-gradient(to bottom, #d97706, #92400e); 
+            border: 2px solid #fef3c7; 
+            color: #fef3c7; 
+            box-shadow: 0 4px 0 #451a03;
+            letter-spacing: -0.01em;
+            transition: all 0.1s;
+            border-radius: 8px;
         }
+        .btn-magic:active { transform: translateY(3px); box-shadow: none; }
 
-        .btn-save {
-            background: linear-gradient(145deg, #ffd700, #ffb700);
-            color: #1a1a2e;
-        }
+        /* 정보 정렬 레이아웃: 140px 간격 */
+        .info-row { display: flex; align-items: center; margin-bottom: 0.75rem; }
+        .info-label { width: 140px; flex-shrink: 0; color: #a8a29e; font-weight: 600; }
+        .info-value { font-family: 'Noto Serif KR', serif; font-weight: 900; }
 
-        .btn-save:hover {
-            background: linear-gradient(145deg, #ffdd33, #ffc733);
-            transform: scale(1.05);
-        }
+        /* 카드 디자인 */
+        .card-container { perspective: 800px; }
+        .card { position: relative; width: 100%; height: 100%; transition: transform 0.5s; transform-style: preserve-3d; cursor: pointer; }
+        .card.flipped { transform: rotateY(180deg); }
+        .card.matched { opacity: 0; transform: scale(0.8); transition: all 0.4s; pointer-events: none; }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; border: 2px solid #d97706; display: flex; align-items: center; justify-content: center; }
+        .card-front { background: #fffbeb; color: #451a03; transform: rotateY(180deg); flex-direction: column; }
+        .card-back { background: #450a0a url('img/card.png') center/cover; }
+        .card-back::after { content: '封'; font-size: 2rem; color: rgba(251, 191, 36, 0.15); font-weight: 900; }
 
-        /* Timer warning */
-        .timer.warning {
-            color: #ff6b6b;
-            animation: pulse 0.5s ease-in-out infinite;
-        }
+        /* 마력 게이지 */
+        .gauge-wrap { width: 60%; height: 18px; background: #000; border-radius: 10px; border: 2px solid #78350f; overflow: hidden; margin: 2px auto 4px; position: relative; }
+        #timeBar { height: 100%; width: 100%; background: linear-gradient(to right, #ef4444, #f59e0b, #fbbf24); transition: width 0.1s linear; }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        /* 모달 레이어 */
+        .inner-modal { position: absolute; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); }
+        .scroll-content {
+            background: linear-gradient(rgba(20, 15, 10, 0.65), rgba(20, 15, 10, 0.65)), url('img/modal1.png') center/cover;
+            border: 2px solid #78350f;
+            border-radius: 8px;
+            padding: 2rem;
+            width: 380px;
+            text-align: center;
+            box-shadow: 0 0 50px #000;
         }
+        .title-magic { font-size: 2.25rem; font-weight: 900; margin-bottom: 1.5rem; color: #f59e0b; font-family: 'Nanum Brush Script', cursive; text-shadow: 0 0 20px rgba(251, 191, 36, 1); }
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <div class="game-content">
-            <div class="game-header">
-                <h1>1단계: 기초 한자 매칭</h1>
-                <div class="game-stats">
-                    <div class="stat">시간: <span id="timer">60</span>초</div>
-                    <div class="stat">매칭: <span id="matches">0</span>/4</div>
-                    <div class="stat">시도: <span id="attempts">0</span></div>
+
+    <div id="gameConsole">
+        
+        <div id="magicOverlay" class="fixed inset-0 flex flex-col items-center justify-center text-yellow-400 font-brush font-black opacity-0 pointer-events-none z-[100] transition-opacity duration-300">
+            <div id="magicChar" class="text-[12rem] leading-none magic-glow"></div>
+            <div id="magicDesc" class="text-4xl mt-4 bg-black/80 px-8 py-2 rounded-full border-2 border-orange-500"></div>
+        </div>
+
+        <div id="lobbyArea" class="inner-modal">
+            <div class="scroll-content">
+                <h2 class="title-magic">수련 대기실</h2>
+                <div class="text-lg bg-stone-950 p-6 border border-orange-950 text-left font-bold rounded-lg mb-8">
+                    <div class="info-row">
+                        <span class="info-label">👤 수련생</span>
+                        <span id="lobbyUserName" class="text-yellow-400">수련 대원</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">💎 누적 마력</span>
+                        <span id="lobbyUserScore" class="text-orange-400">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">🏆 최고 단계</span>
+                        <span id="lobbyUserLevel" class="text-red-500">Stage 1</span>
+                    </div>
                 </div>
-            </div>
-
-            <div class="card-grid" id="cardGrid">
-                <!-- Cards will be generated by JavaScript -->
+                <button onclick="startGame()" class="btn-magic w-full py-3">수련 시작!</button>
             </div>
         </div>
-    </div>
 
-    <!-- Result Modal -->
-    <div class="result-modal" id="resultModal">
-        <div class="result-content">
-            <h2 id="resultTitle">게임 완료!</h2>
-            <div class="result-stats">
-                <p>걸린 시간: <span id="resultTime">0</span>초</p>
-                <p>시도 횟수: <span id="resultAttempts">0</span>회</p>
-                <p>점수: <span id="resultScore">0</span>점</p>
+        <div id="playArea" class="hidden flex flex-col h-full">
+            <header class="flex justify-between items-center px-5 py-1 bg-black/30 border-b border-orange-900/30">
+                <div class="text-3xl font-black text-orange-400 font-brush magic-glow">Stage <span id="curStage">1</span></div>
+                <div id="comboShow" class="text-2xl font-black text-blue-400 font-brush"></div>
+            </header>
+            <div class="flex items-center justify-between px-5 pt-1 pb-1">
+                <div class="gauge-wrap"><div id="timeBar"></div></div>
+                <div class="text-base font-bold text-yellow-400 ml-3 shrink-0">마력: <span id="curScore">0</span></div>
             </div>
-            <div class="result-buttons">
-                <button class="result-btn btn-retry" onclick="restartGame()">다시하기</button>
-                <button class="result-btn btn-save" onclick="finishGame()">기록 저장</button>
+            <div id="gridArea" class="flex-1 overflow-auto p-1 flex items-start justify-center">
+                <div id="cardGrid" class="grid gap-4 grid-cols-2"></div>
             </div>
         </div>
+
+        <div id="resArea" class="inner-modal hidden">
+            <div class="scroll-content">
+                <h2 class="title-magic">수련 종료</h2>
+                <div class="text-xl bg-stone-950 p-6 border border-orange-950 text-left font-bold rounded-lg mb-8">
+                    <div class="info-row">
+                        <span class="info-label">💎 얻은 마력</span>
+                        <span id="resScore" class="info-value text-orange-400">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">🏆 도달 단계</span>
+                        <span id="resStage" class="info-value text-red-500">Stage 1</span>
+                    </div>
+                </div>
+                <button onclick="finishGame()" class="btn-magic w-full py-3">기록 저장</button>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // Hanja data for Stage 1 (Basic characters - numbers and fundamentals)
-        const hanjaData = [
-            { hanja: '一', reading: '일', meaning: '하나' },
-            { hanja: '二', reading: '이', meaning: '둘' },
-            { hanja: '三', reading: '삼', meaning: '셋' },
-            { hanja: '四', reading: '사', meaning: '넷' },
-            { hanja: '五', reading: '오', meaning: '다섯' },
-            { hanja: '六', reading: '육', meaning: '여섯' },
-            { hanja: '七', reading: '칠', meaning: '일곱' },
-            { hanja: '八', reading: '팔', meaning: '여덟' },
-            { hanja: '九', reading: '구', meaning: '아홉' },
-            { hanja: '十', reading: '십', meaning: '열' },
-            { hanja: '大', reading: '대', meaning: '크다' },
-            { hanja: '小', reading: '소', meaning: '작다' }
+        const hanjas = [
+            {id:1, c:"大", m:"크다", s:"대"}, {id:2, c:"小", m:"작다", s:"소"},
+            {id:3, c:"日", m:"날", s:"일"}, {id:4, c:"月", m:"달", s:"월"},
+            {id:5, c:"山", m:"산", s:"산"}, {id:6, c:"水", m:"물", s:"수"},
+            {id:7, c:"火", m:"불", s:"화"}, {id:8, c:"木", m:"나무", s:"목"},
+            {id:9, c:"金", m:"쇠", s:"금"}, {id:10, c:"土", m:"흙", s:"토"},
+            {id:11, c:"天", m:"하늘", s:"천"}, {id:12, c:"地", m:"땅", s:"지"}
         ];
 
-        // Game state
-        let gameState = {
-            cards: [],
-            flippedCards: [],
-            matchedPairs: 0,
-            attempts: 0,
-            timeLeft: 60,
-            timer: null,
-            isLocked: false,
-            gameStarted: false,
-            startTime: null
+        let stage=1, total=0, stageS=0, rem=0, active=false, timer=null;
+        let flipC=[], matchC=0, combo=0;
+        let userId = 'guest';
+        let storageKey = 'hanjaGameData:guest';
+
+        // 로드 시 초기 데이터 (원래는 부모 게임에서 받아오면 좋습니다)
+        function applyUser(id) {
+            userId = id || 'guest';
+            storageKey = `hanjaGameData:${userId}`;
+            document.getElementById('lobbyUserName').innerText = userId;
+            const data = JSON.parse(localStorage.getItem(storageKey) || '{"score":0, "level":1}');
+            total = data.score || 0;
+            stage = data.level || 1;
+            document.getElementById('lobbyUserScore').innerText = total;
+            document.getElementById('lobbyUserLevel').innerText = `Stage ${stage}`;
+        }
+
+        window.addEventListener('message', (event) => {
+            const data = event.data || {};
+            if (data.type === 'hanjaUser') {
+                applyUser(data.id);
+            }
+        });
+
+        window.onload = () => {
+            applyUser(userId);
+            window.parent.postMessage({ type: 'hanjaReady' }, '*');
+            speak("수련장에 잘 왔다! 준비됐으면 시작해볼까?");
         };
 
-        const cardGrid = document.getElementById('cardGrid');
-        const timerDisplay = document.getElementById('timer');
-        const matchesDisplay = document.getElementById('matches');
-        const attemptsDisplay = document.getElementById('attempts');
-        const resultModal = document.getElementById('resultModal');
+        function startGame() {
+            document.getElementById('lobbyArea').classList.add('hidden');
+            document.getElementById('playArea').classList.remove('hidden');
+            stageS = 0; stage = 1; initStage();
+        }
 
-        // Initialize game
-        function initGame() {
-            // Reset state
-            gameState = {
-                cards: [],
-                flippedCards: [],
-                matchedPairs: 0,
-                attempts: 0,
-                timeLeft: 60,
-                timer: null,
-                isLocked: false,
-                gameStarted: false,
-                startTime: null
-            };
+        function initStage() {
+            active = true; flipC = []; matchC = 0; combo = 0;
+            document.getElementById('curStage').innerText = stage;
+            document.getElementById('curScore').innerText = total + stageS;
 
-            // Select 4 random hanja for matching (8 cards total)
-            const shuffledHanja = [...hanjaData].sort(() => Math.random() - 0.5);
-            const selectedHanja = shuffledHanja.slice(0, 4);
+            let r, c, sz, fz;
+            if(stage===1) { r=2; c=2; sz="w-24 h-32"; fz="text-5xl"; }
+            else if(stage===2) { r=2; c=3; sz="w-20 h-28"; fz="text-4xl"; }
+            else if(stage===3) { r=2; c=4; sz="w-16 h-24"; fz="text-3xl"; }
+            else { r=4; c=4; sz="w-14 h-20"; fz="text-2xl"; }
 
-            // Create pairs: hanja cards and reading/meaning cards
-            const cardPairs = [];
-            selectedHanja.forEach((item, index) => {
-                // Hanja card
-                cardPairs.push({
-                    id: index,
-                    type: 'hanja',
-                    content: item.hanja,
-                    pairId: index
-                });
-                // Reading/Meaning card
-                cardPairs.push({
-                    id: index,
-                    type: 'reading',
-                    content: `${item.reading}\n(${item.meaning})`,
-                    pairId: index
-                });
+            const pairs = (r * c) / 2;
+            const shuffled = [...hanjas].sort(() => Math.random() - 0.5).slice(0, pairs);
+            let cards = [];
+            shuffled.forEach(h => {
+                cards.push({...h, type:'c', t: h.c});
+                cards.push({...h, type:'s', t: `${h.m}\n[${h.s}]`});
+            });
+            cards.sort(() => Math.random() - 0.5);
+
+            const grid = document.getElementById('cardGrid');
+            grid.innerHTML = ""; grid.className = `grid gap-4 grid-cols-${c}`;
+
+            cards.forEach(d => {
+                const div = document.createElement('div');
+                div.className = `card-container ${sz}`;
+                div.innerHTML = `
+                    <div class="card" data-id="${d.id}" data-type="${d.type}">
+                        <div class="card-front"><div class="text-center font-black ${d.type==='c'?fz:'text-xl whitespace-pre-line'}">${d.t}</div></div>
+                        <div class="card-back"></div>
+                    </div>`;
+                div.onclick = () => flip(div.querySelector('.card'), d);
+                grid.appendChild(div);
             });
 
-            // Shuffle cards
-            gameState.cards = cardPairs.sort(() => Math.random() - 0.5);
-
-            // Render cards
-            renderCards();
-
-            // Update display
-            updateDisplay();
+            rem = pairs * 10;
+            if(timer) clearInterval(timer);
+            const tot = rem;
+            timer = setInterval(() => {
+                rem -= 0.1;
+                document.getElementById('timeBar').style.width = (rem/tot*100)+'%';
+                if(rem <= 0) endGame();
+            }, 100);
         }
 
-        function renderCards() {
-            cardGrid.innerHTML = '';
-
-            gameState.cards.forEach((card, index) => {
-                const cardElement = document.createElement('div');
-                cardElement.className = 'card';
-                cardElement.dataset.index = index;
-
-                const isHanja = card.type === 'hanja';
-                const displayContent = card.content.split('\n');
-
-                cardElement.innerHTML = `
-                    <div class="card-inner">
-                        <div class="card-front"></div>
-                        <div class="card-back">
-                            <div class="hanja" style="font-size: ${isHanja ? '3rem' : '1.5rem'}">${displayContent[0]}</div>
-                            ${displayContent[1] ? `<div class="meaning">${displayContent[1]}</div>` : ''}
-                        </div>
-                    </div>
-                `;
-
-                cardElement.addEventListener('click', () => flipCard(index));
-                cardGrid.appendChild(cardElement);
-            });
+        function flip(el, d) {
+            if(!active || flipC.length >= 2 || el.classList.contains('flipped') || el.classList.contains('matched')) return;
+            el.classList.add('flipped');
+            flipC.push({el, d});
+            if(flipC.length === 2) check();
         }
 
-        function flipCard(index) {
-            if (gameState.isLocked) return;
-
-            const card = gameState.cards[index];
-            const cardElement = cardGrid.children[index];
-
-            // Don't flip if already flipped or matched
-            if (cardElement.classList.contains('flipped') ||
-                cardElement.classList.contains('matched')) {
-                return;
-            }
-
-            // Start timer on first flip
-            if (!gameState.gameStarted) {
-                startTimer();
-                gameState.gameStarted = true;
-                gameState.startTime = Date.now();
-            }
-
-            // Flip the card
-            cardElement.classList.add('flipped');
-            gameState.flippedCards.push({ index, card });
-
-            // Check for match when 2 cards are flipped
-            if (gameState.flippedCards.length === 2) {
-                gameState.isLocked = true;
-                gameState.attempts++;
-                attemptsDisplay.textContent = gameState.attempts;
-
-                checkMatch();
-            }
-        }
-
-        function checkMatch() {
-            const [first, second] = gameState.flippedCards;
-
-            // Match if same pairId but different types
-            const isMatch = first.card.pairId === second.card.pairId &&
-                           first.card.type !== second.card.type;
-
-            if (isMatch) {
-                // Mark as matched
-                cardGrid.children[first.index].classList.add('matched');
-                cardGrid.children[second.index].classList.add('matched');
-
-                gameState.matchedPairs++;
-                matchesDisplay.textContent = gameState.matchedPairs;
-
-                // Check for win
-                if (gameState.matchedPairs === 4) {
-                    setTimeout(showResult, 500);
-                }
-
-                gameState.flippedCards = [];
-                gameState.isLocked = false;
-            } else {
-                // Show wrong animation
-                cardGrid.children[first.index].classList.add('wrong');
-                cardGrid.children[second.index].classList.add('wrong');
-
-                // Flip back after delay
+        function check() {
+            const [a, b] = flipC;
+            if(a.d.id === b.d.id && a.d.type !== b.d.type) {
+                stageS += 10; matchC += 2; combo++;
+                rem = Math.min(rem + 3, 150);
+                showMagic(a.d);
+                if(combo >= 3) triggerHint();
                 setTimeout(() => {
-                    cardGrid.children[first.index].classList.remove('flipped', 'wrong');
-                    cardGrid.children[second.index].classList.remove('flipped', 'wrong');
-                    gameState.flippedCards = [];
-                    gameState.isLocked = false;
-                }, 1000);
+                    a.el.classList.add('matched'); b.el.classList.add('matched');
+                    flipC = [];
+                    if(matchC === document.querySelectorAll('.card').length) {
+                        stage++; clearInterval(timer);
+                        setTimeout(initStage, 600);
+                    }
+                }, 600);
+            } else {
+                combo = 0; rem -= 2;
+                document.getElementById('comboShow').innerText = "";
+                setTimeout(() => {
+                    a.el.classList.remove('flipped'); b.el.classList.remove('flipped');
+                    flipC = [];
+                }, 600);
             }
         }
 
-        function startTimer() {
-            gameState.timer = setInterval(() => {
-                gameState.timeLeft--;
-                timerDisplay.textContent = gameState.timeLeft;
-
-                // Warning when time is low
-                if (gameState.timeLeft <= 10) {
-                    timerDisplay.parentElement.classList.add('warning');
-                }
-
-                // Time's up
-                if (gameState.timeLeft <= 0) {
-                    clearInterval(gameState.timer);
-                    showResult(true);
-                }
-            }, 1000);
+        function triggerHint() {
+            document.getElementById('comboShow').innerText = `${combo} 콤보!`;
+            speak("힌트 마법!");
+            const target = Array.from(document.querySelectorAll('.card:not(.matched):not(.flipped)'));
+            if(target.length >= 2) {
+                const id = target[0].dataset.id;
+                const pair = target.filter(c => c.dataset.id === id);
+                pair.forEach(c => c.classList.add('flipped'));
+                setTimeout(() => pair.forEach(c => { if(!c.classList.contains('matched')) c.classList.remove('flipped'); }), 600);
+            }
         }
 
-        function updateDisplay() {
-            timerDisplay.textContent = gameState.timeLeft;
-            matchesDisplay.textContent = gameState.matchedPairs;
-            attemptsDisplay.textContent = gameState.attempts;
-            timerDisplay.parentElement.classList.remove('warning');
+        function showMagic(d) {
+            const o = document.getElementById('magicOverlay');
+            document.getElementById('magicChar').innerText = d.c;
+            document.getElementById('magicDesc').innerText = `${d.m} ${d.s}`;
+            o.style.opacity = "1"; speak(`${d.m} ${d.s}`);
+            setTimeout(() => o.style.opacity = "0", 700);
         }
 
-        function showResult(timeUp = false) {
-            clearInterval(gameState.timer);
-
-            const elapsedTime = gameState.startTime ?
-                Math.floor((Date.now() - gameState.startTime) / 1000) : 60;
-            const score = calculateScore(elapsedTime, gameState.attempts, gameState.matchedPairs);
-
-            document.getElementById('resultTitle').textContent =
-                timeUp ? '시간 초과!' : '게임 완료!';
-            document.getElementById('resultTime').textContent = elapsedTime;
-            document.getElementById('resultAttempts').textContent = gameState.attempts;
-            document.getElementById('resultScore').textContent = score;
-
-            resultModal.classList.add('active');
-        }
-
-        function calculateScore(time, attempts, matches) {
-            // Base score for matches
-            let score = matches * 100;
-
-            // Time bonus (more points for faster completion)
-            score += Math.max(0, (60 - time) * 2);
-
-            // Efficiency bonus (fewer attempts = better)
-            const efficiency = matches > 0 ? matches / attempts : 0;
-            score += Math.floor(efficiency * 50);
-
-            return score;
-        }
-
-        function restartGame() {
-            resultModal.classList.remove('active');
-            initGame();
+        function endGame() {
+            active = false; clearInterval(timer);
+            speak("수련 시간이 끝났다!");
+            document.getElementById('resScore').innerText = stageS;
+            document.getElementById('resStage').innerText = `Stage ${stage}`;
+            document.getElementById('resArea').classList.remove('hidden');
+            document.getElementById('playArea').classList.add('hidden');
         }
 
         function finishGame() {
-            // Save score to localStorage
-            const score = parseInt(document.getElementById('resultScore').textContent);
-            const userId = localStorage.getItem('edugame_current_user') || 'guest';
-
-            const records = JSON.parse(localStorage.getItem('edugame_records') || '{}');
-            if (!records[userId]) {
-                records[userId] = { stage1: [] };
-            }
-            if (!records[userId].stage1) {
-                records[userId].stage1 = [];
-            }
-
-            records[userId].stage1.push({
-                score: score,
-                time: parseInt(document.getElementById('resultTime').textContent),
-                attempts: parseInt(document.getElementById('resultAttempts').textContent),
-                date: new Date().toISOString()
-            });
-
-            localStorage.setItem('edugame_records', JSON.stringify(records));
-
-            // Return to main game
-            window.location.href = 'index.html';
+            total += stageS;
+            localStorage.setItem(storageKey, JSON.stringify({score: total, level: stage}));
+            location.reload();
         }
 
-        // Start the game
-        initGame();
+        function speak(t) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang = 'ko-KR'; m.rate = 1.2; window.speechSynthesis.speak(m); }
     </script>
 </body>
 </html>

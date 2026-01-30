@@ -168,6 +168,41 @@ body {
             color: #fff;
             cursor: pointer;
         }
+
+        #stage-modal {
+            z-index: 1100;
+        }
+
+        .stage-modal-content {
+            width: 960px;
+            height: 540px;
+            background: #000;
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stage-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: 1px solid #fff;
+            border-radius: 9999px;
+            padding: 6px 12px;
+            font-weight: 700;
+        }
+
+        .stage-modal-frame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+            background: #000;
+        }
     </style>
 </head>
 <body class="bg-gray-900 overflow-hidden select-none">
@@ -328,6 +363,25 @@ body {
             <button id="modal-start" class="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors">
                 시작하기
             </button>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">알림</h2>
+            <p id="alert-message" class="text-lg mb-6"></p>
+            <button id="alert-ok" class="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors">
+                확인
+            </button>
+        </div>
+    </div>
+
+    <!-- Stage Modal (iframe) -->
+    <div id="stage-modal" class="modal-overlay">
+        <div class="stage-modal-content">
+            <button id="stage-modal-close" class="stage-modal-close">닫기</button>
+            <iframe id="stage-frame" class="stage-modal-frame" title="Stage 1"></iframe>
         </div>
     </div>
 
@@ -535,14 +589,14 @@ function handleSignup() {
     const pw = signupPwInput.value.trim();
 
     if (!id || !pw) {
-        alert("아이디와 비밀번호를 모두 입력해주세요.");
+        showAlert("아이디와 비밀번호를 모두 입력해주세요.");
         return;
     }
 
     const users = JSON.parse(localStorage.getItem('edugame_users') || '{}');
 
     if (users[id]) {
-        alert("이미 존재하는 아이디입니다.");
+        showAlert("이미 존재하는 아이디입니다.");
         return;
     }
 
@@ -550,7 +604,7 @@ function handleSignup() {
     users[id] = { password: pw, level: 1 }; // Default level 1
     localStorage.setItem('edugame_users', JSON.stringify(users));
     
-    alert("가입이 완료되었습니다! 로그인해주세요.");
+    showAlert("가입이 완료되었습니다! 로그인해주세요.");
     showAuthView('login');
 }
 
@@ -560,7 +614,7 @@ function handleLogin() {
     const pw = loginPwInput.value.trim();
 
     if (!id || !pw) {
-        alert("아이디와 비밀번호를 모두 입력해주세요.");
+        showAlert("아이디와 비밀번호를 모두 입력해주세요.");
         return;
     }
 
@@ -588,7 +642,7 @@ function handleLogin() {
         console.log("Game View Started");
         startVillageScene(); // Start Village Logic
     } else {
-        alert("아이디 또는 비밀번호가 잘못되었습니다.");
+        showAlert("아이디 또는 비밀번호가 잘못되었습니다.");
     }
 }
 
@@ -875,11 +929,17 @@ const base1 = document.getElementById('base-1');
 const base2 = document.getElementById('base-2');
 const base3 = document.getElementById('base-3');
 const bases = [base1, base2, base3];
+const alertModal = document.getElementById('alert-modal');
+const alertMessage = document.getElementById('alert-message');
+const alertOk = document.getElementById('alert-ok');
+const stageModal = document.getElementById('stage-modal');
+const stageFrame = document.getElementById('stage-frame');
+const stageModalClose = document.getElementById('stage-modal-close');
 
 const baseData = {
-    1: { title: '1단계: 기초 한자', description: '숫자와 기본 한자를 배워봅시다!' },
-    2: { title: '2단계: 자연 한자', description: '자연과 관련된 한자를 배워봅시다!' },
-    3: { title: '3단계: 생활 한자', description: '일상생활 한자를 배워봅시다!' }
+    1: { title: '1단계: 한자 메모리 게임', description: '한자와 음·뜻을 맞춰보아요!' },
+    2: { title: '2단계: 한자 따라쓰기', description: '한자를 보며 따라 써봐요!' },
+    3: { title: '3단계: 한자 몬스터 게임', description: '한자를 쏘아 몬스터를 물리쳐요!' }
 };
 
 // Sound effects using Web Audio API
@@ -1045,6 +1105,31 @@ function closeBaseModal() {
     delete baseModal.dataset.currentBase;
 }
 
+function showAlert(message) {
+    alertMessage.textContent = message;
+    alertModal.classList.add('active');
+}
+
+function closeAlert() {
+    alertModal.classList.remove('active');
+}
+
+function openStageModal(stagePath) {
+    stageFrame.src = stagePath;
+    stageModal.classList.add('active');
+}
+
+function closeStageModal() {
+    stageModal.classList.remove('active');
+    stageFrame.src = '';
+}
+
+function sendStageUser() {
+    if (!stageFrame.contentWindow) return;
+    const userId = state.currentUser?.id || 'guest';
+    stageFrame.contentWindow.postMessage({ type: 'hanjaUser', id: userId }, '*');
+}
+
 // Base mouse events
 bases.forEach(base => {
     base.addEventListener('mouseenter', () => {
@@ -1075,7 +1160,13 @@ modalStart.addEventListener('click', () => {
     const baseId = baseModal.dataset.currentBase;
     console.log(`Starting level ${baseId}!`);
     closeBaseModal();
-    // TODO: Start the actual game level
+    if (String(baseId) === '1') {
+        openStageModal('stage1.html');
+    } else if (String(baseId) === '2') {
+        openStageModal('stage2.html');
+    } else {
+        showAlert("이 단계는 아직 준비 중입니다.");
+    }
 });
 
 baseModal.addEventListener('click', (e) => {
@@ -1084,9 +1175,41 @@ baseModal.addEventListener('click', (e) => {
     }
 });
 
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    if (!baseModal.classList.contains('active')) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    modalStart.click();
+});
+
+alertOk.addEventListener('click', closeAlert);
+alertModal.addEventListener('click', (e) => {
+    if (e.target === alertModal) {
+        closeAlert();
+    }
+});
+
+stageModalClose.addEventListener('click', closeStageModal);
+stageModal.addEventListener('click', (e) => {
+    if (e.target === stageModal) {
+        closeStageModal();
+    }
+});
+
+stageFrame.addEventListener('load', sendStageUser);
+
+window.addEventListener('message', (event) => {
+    const data = event.data || {};
+    if (data.type === 'hanjaReady') {
+        sendStageUser();
+    }
+});
+
 // Keyboard event for Enter on colliding base
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && state.village.basesActive && state.village.baseCollision) {
+        if (baseModal.classList.contains('active')) return;
         e.preventDefault();
         openBaseModal(state.village.baseCollision);
     }

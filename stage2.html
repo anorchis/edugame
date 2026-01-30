@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한자 마스터 - 최종 완성본 (Full Custom Modals)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-green: #0F4221;
+            --pure-white: #FFFFFF;
+            --soft-beige: #E8C78E;
+            --dark-brown: #312117;
+            --muted-taupe: #625152;
+            --alert-red: #8B0000;
+        }
+
+        /* --- 전체 모달 레이아웃 --- */
+        #modalOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); display: flex;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-window {
+            width: 95vw; height: 95vh; background: #E8C78E; 
+            border-radius: 20px; overflow: hidden; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+        }
+
+        /* --- 커스텀 컨펌 모달 (새로 추가) --- */
+        #confirmOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); display: none;
+            justify-content: center; align-items: center; z-index: 2000;
+        }
+        .confirm-box {
+            background: var(--pure-white); padding: 30px; border-radius: 20px;
+            border: 4px solid var(--dark-brown); text-align: center;
+            width: 320px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            font-family: 'Gaegu', cursive;
+        }
+        .confirm-msg { font-size: 24px; color: var(--dark-brown); margin-bottom: 25px; font-weight: bold; }
+        .confirm-btns { display: flex; gap: 15px; justify-content: center; }
+        .c-btn {
+            padding: 10px 25px; border-radius: 10px; border: none; cursor: pointer;
+            font-family: 'Gaegu'; font-size: 18px; font-weight: bold; transition: 0.2s;
+        }
+        .btn-yes { background: var(--alert-red); color: white; }
+        .btn-no { background: var(--muted-taupe); color: white; }
+        .c-btn:hover { transform: scale(1.05); }
+
+        .close-btn {
+            position: absolute; top: 15px; right: 20px; font-size: 30px;
+            color: white; cursor: pointer; z-index: 1001; font-weight: bold;
+        }
+
+        .game-bg { display: none; }
+        .open-modal-btn { display: none; }
+
+        .diary-app-body {
+            flex: 1; display: flex; flex-direction: column; font-family: 'Gaegu', cursive;
+            background-color: var(--soft-beige); overflow: hidden; position: relative;
+        }
+        
+        .top-nav { 
+            background-color: var(--deep-green); padding: 10px 20px; 
+            display: grid; grid-template-columns: 1.5fr 1fr 1.5fr;
+            align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;
+        }
+        .zoom-control {
+            display: flex; align-items: center; gap: 10px; color: white; font-size: 18px;
+            background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 12px;
+        }
+        .zoom-control input[type=range] { width: 100px; }
+
+        .main-title { color: var(--pure-white); font-size: 28px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); text-align: center; }
+        .nav-btns { display: flex; gap: 10px; justify-self: end; padding-right: 40px; }
+        .nav-item { color: var(--pure-white); font-size: 16px; font-weight: bold; cursor: pointer; background: rgba(255,255,255,0.15); padding: 5px 10px; border-radius: 8px; transition: 0.3s; }
+        
+        main { display: flex; flex: 1; padding: 15px; gap: 15px; height: calc(100% - 60px); }
+        
+        .sidebar-tools {
+            width: 75px; background-color: var(--muted-taupe); border-radius: 20px;
+            border: 3px solid var(--dark-brown); display: flex; flex-direction: column;
+            align-items: center; padding: 15px 5px; gap: 15px;
+        }
+        .tool-btn {
+            width: 55px; height: 55px; background: var(--pure-white); border-radius: 15px;
+            border: 3px solid var(--dark-brown); font-size: 24px; cursor: pointer;
+            transition: 0.2s; box-shadow: 0 4px 0 var(--dark-brown);
+        }
+        .tool-btn.active { background-color: var(--soft-beige); transform: translateY(4px); box-shadow: none; }
+        
+        .canvas-container { 
+            flex: 1; background-color: var(--pure-white); border-radius: 20px; 
+            border: 6px solid var(--dark-brown); position: relative; overflow: hidden; 
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+        }
+        canvas { width: 100%; height: 100%; display: block; cursor: none; }
+
+        .sidebar-props { 
+            width: 250px; background-color: var(--pure-white); border-radius: 20px; 
+            border: 3px solid var(--muted-taupe); padding: 15px; overflow-y: auto;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .section-title { width: 100%; font-weight: bold; color: var(--deep-green); margin-bottom: 12px; font-size: 18px; text-align: center; border-bottom: 2px solid var(--soft-beige); padding-bottom: 5px; }
+        
+        .brush-types { display: flex; gap: 5px; margin-bottom: 15px; width: 100%; justify-content: center; }
+        .type-btn { padding: 5px 8px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-size: 13px; background: #f9f9f9; }
+        .type-btn.active { background: var(--deep-green); color: white; }
+
+        .color-palette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+        .color-dot { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ddd; cursor: pointer; }
+
+        .color-picker-wrapper { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        #colorPicker { width: 40px; height: 40px; border: none; cursor: pointer; background: none; }
+
+        .sticker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
+        .sticker-opt { font-size: 24px; cursor: pointer; text-align: center; background: #f9f9f9; border-radius: 8px; padding: 5px; border: 1px solid #eee; }
+
+        input[type=range] { -webkit-appearance: none; background: transparent; width: 85%; margin: 15px 0; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #ddd; border-radius: 4px; }
+        input[type=range]::-webkit-slider-thumb { height: 22px; width: 22px; border-radius: 50%; background: var(--deep-green); cursor: pointer; -webkit-appearance: none; margin-top: -7px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+
+    <div id="confirmOverlay">
+        <div class="confirm-box">
+            <div class="confirm-msg" id="confirmMsg">모두 초기화할까요?</div>
+            <div class="confirm-btns">
+                <button class="c-btn btn-yes" id="confirmYes">네</button>
+                <button class="c-btn btn-no" id="confirmNo">아니오</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalOverlay">
+        <div class="modal-window">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div class="diary-app-body">
+                <div class="top-nav">
+                    <div class="zoom-control">
+                        <span>🔍 종이 확대</span>
+                        <input type="range" id="zoomRange" min="1" max="5" step="0.1" value="1" oninput="changeZoom(this.value)">
+                        <span id="zoomVal">100%</span>
+                    </div>
+                    <div class="main-title">한자 쓰기 스튜디오</div>
+                    <div class="nav-btns">
+                        <div class="nav-item" onclick="undo()">취소</div>
+                        <div class="nav-item" onclick="clearCanvas()">초기화</div>
+                    </div>
+                </div>
+
+                <main>
+                    <aside class="sidebar-tools">
+                        <button class="tool-btn active" id="btn-draw" onclick="setMode('draw')" title="그리기">🖌️</button>
+                        <button class="tool-btn" id="btn-sticker" onclick="setMode('sticker')" title="스티커">🐻</button>
+                        <button class="tool-btn" id="btn-pan" onclick="setMode('pan')" title="이동">🖐️</button>
+                        <button class="tool-btn" id="btn-eraser" onclick="setMode('eraser')" title="지우개">🧽</button>
+                    </aside>
+
+                    <section class="canvas-container" id="canvasFrame">
+                        <canvas id="mainCanvas"></canvas>
+                    </section>
+
+                    <aside class="sidebar-props">
+                        <div class="section-title">붓 굵기 / 스티커 크기</div>
+                        <input type="range" id="sizeRange" min="1" max="40" value="8" oninput="activeSize = parseInt(this.value); scheduleSave();">
+                        
+                        <div class="section-title">붓 종류</div>
+                        <div class="brush-types">
+                            <button class="type-btn active" onclick="setBrushType('normal')">연필</button>
+                            <button class="type-btn" onclick="setBrushType('calligraphy')">서예</button>
+                            <button class="type-btn" onclick="setBrushType('glow')">형광</button>
+                        </div>
+
+                        <div class="section-title">기본 색상</div>
+                        <div id="palette" class="color-palette"></div>
+
+                        <div class="section-title">직접 선택</div>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="colorPicker" value="#312117" oninput="activeColor = this.value; scheduleSave();">
+                            <span>컬러피커</span>
+                        </div>
+                        
+                        <div class="section-title" style="margin-top:20px;">배경 투명도</div>
+                        <input type="range" id="bgOpacityRange" min="0" max="1" step="0.1" value="0.5" oninput="bgOpacity = parseFloat(this.value); render(); scheduleSave();">
+                        
+                        <div class="section-title" style="margin-top:20px;">칭찬 스티커</div>
+                        <div id="stickers" class="sticker-grid"></div>
+                    </aside>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        const bgImg = new Image();
+        bgImg.src = 'img/hanja.png'; 
+        
+        let bgOpacity = 0.5;
+        let zoomLevel = 1.0;
+        let panOffset = { x: 0, y: 0 };
+        let lastMousePos = { x: 0, y: 0 };
+        let screenMousePos = { x: 0, y: 0 }; 
+        
+        let diaryData = { actions: [] }; 
+        let mode = 'draw'; 
+        let brushType = 'normal';
+        let isDrawing = false;
+        let isPanning = false;
+        let isStickerResizing = false;
+        let isDraggingPlacedSticker = false;
+        let isResizingPlacedSticker = false;
+        let isMouseOverCanvas = false;
+        let isOverHandle = false;
+        
+        let activeColor = '#312117'; 
+        let activeSize = 8; 
+        let currentSticker = '🐻';
+        let tempStickerAction = null;
+        let selectedActionIndex = -1;
+        let userId = 'guest';
+        let storageKey = 'hanjaStage2:guest';
+        let saveTimer = null;
+
+        // --- 모달 제어 함수 ---
+        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+
+        function scheduleSave() {
+            if (saveTimer) clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveState, 300);
+        }
+
+        function saveState() {
+            const payload = {
+                bgOpacity,
+                zoomLevel,
+                panOffset,
+                activeColor,
+                activeSize,
+                brushType,
+                currentSticker,
+                diaryData
+            };
+            localStorage.setItem(storageKey, JSON.stringify(payload));
+        }
+
+        function loadState() {
+            const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+            if (!saved) return;
+            bgOpacity = saved.bgOpacity ?? bgOpacity;
+            zoomLevel = saved.zoomLevel ?? zoomLevel;
+            panOffset = saved.panOffset ?? panOffset;
+            activeColor = saved.activeColor ?? activeColor;
+            activeSize = saved.activeSize ?? activeSize;
+            brushType = saved.brushType ?? brushType;
+            currentSticker = saved.currentSticker ?? currentSticker;
+            diaryData = saved.diaryData ?? diaryData;
+
+            const zoomRange = document.getElementById('zoomRange');
+            const zoomVal = document.getElementById('zoomVal');
+            if (zoomRange) zoomRange.value = zoomLevel;
+            if (zoomVal) zoomVal.innerText = Math.round(zoomLevel * 100) + "%";
+
+            const sizeRange = document.getElementById('sizeRange');
+            if (sizeRange) sizeRange.value = activeSize;
+
+            const colorPicker = document.getElementById('colorPicker');
+            if (colorPicker) colorPicker.value = activeColor;
+
+            const bgOpacityRange = document.getElementById('bgOpacityRange');
+            if (bgOpacityRange) bgOpacityRange.value = bgOpacity;
+
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            const brushBtn = document.querySelector(`.type-btn[onclick="setBrushType('${brushType}')"]`);
+            if (brushBtn) brushBtn.classList.add('active');
+        }
+
+        function applyUser(id) {
+            userId = id || 'guest';
+            storageKey = `hanjaStage2:${userId}`;
+            loadState();
+            render();
+        }
+
+        window.addEventListener('message', (event) => {
+            const data = event.data || {};
+            if (data.type === 'hanjaUser') {
+                applyUser(data.id);
+            }
+        });
+
+        // 커스텀 컨펌 모달 제어
+        function showConfirm(msg, onYes) {
+            const overlay = document.getElementById('confirmOverlay');
+            document.getElementById('confirmMsg').innerText = msg;
+            overlay.style.display = 'flex';
+            
+            document.getElementById('confirmYes').onclick = () => {
+                onYes();
+                overlay.style.display = 'none';
+            };
+            document.getElementById('confirmNo').onclick = () => {
+                overlay.style.display = 'none';
+            };
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedActionIndex !== -1) {
+                diaryData.actions.splice(selectedActionIndex, 1);
+                selectedActionIndex = -1;
+                render();
+            }
+        });
+
+        bgImg.onload = () => { render(); };
+
+        window.onload = () => {
+            const basicColors = ['#000000', '#312117', '#8B0000', '#0F4221', '#00008B', '#FFD700', '#625152', '#E8C78E'];
+            const palette = document.getElementById('palette');
+            basicColors.forEach(c => {
+                let dot = document.createElement('div');
+                dot.className = 'color-dot'; dot.style.background = c;
+                dot.onclick = () => { activeColor = c; document.getElementById('colorPicker').value = c; };
+                palette.appendChild(dot);
+            });
+
+            const emojis = ['🐻','✅','⭐','❤️','👍','🎉','🍀','✨','🥇','🔥','💎','🌈'];
+            emojis.forEach(e => {
+                let s = document.createElement('div');
+                s.className = 'sticker-opt'; s.innerText = e;
+                s.onclick = () => { currentSticker = e; setMode('sticker'); };
+                document.getElementById('stickers').appendChild(s);
+            });
+            initCanvas();
+            applyUser(userId);
+            window.parent.postMessage({ type: 'hanjaReady' }, '*');
+        };
+
+        function initCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            render();
+        }
+
+        function changeZoom(val) {
+            zoomLevel = parseFloat(val);
+            document.getElementById('zoomVal').innerText = Math.round(val * 100) + "%";
+            render();
+            scheduleSave();
+        }
+
+        function setBrushType(type) {
+            brushType = type;
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            scheduleSave();
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(canvas.width / 2 + panOffset.x, canvas.height / 2 + panOffset.y);
+            ctx.scale(zoomLevel, zoomLevel);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+            ctx.save();
+            ctx.globalAlpha = bgOpacity;
+            const scale = Math.min(canvas.width / bgImg.width, canvas.height / bgImg.height) * 0.9;
+            const x = (canvas.width - bgImg.width * scale) / 2;
+            const y = (canvas.height - bgImg.height * scale) / 2;
+            if (bgImg.complete) ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
+            ctx.restore();
+
+            diaryData.actions.forEach((action, index) => {
+                drawAction(ctx, action);
+                if (index === selectedActionIndex && action.type === 'sticker') {
+                    ctx.save();
+                    ctx.strokeStyle = "#0F4221"; ctx.lineWidth = 2 / zoomLevel; ctx.setLineDash([5, 5]);
+                    ctx.strokeRect(action.x - action.size/2, action.y - action.size/2, action.size, action.size);
+                    ctx.setLineDash([]); ctx.fillStyle = "white"; ctx.strokeStyle = "#0F4221";
+                    ctx.beginPath(); ctx.arc(action.x + action.size/2, action.y + action.size/2, 8 / zoomLevel, 0, Math.PI * 2);
+                    ctx.fill(); ctx.stroke();
+                    ctx.restore();
+                }
+            });
+
+            if (tempStickerAction) drawAction(ctx, tempStickerAction);
+            ctx.restore();
+
+            if (isMouseOverCanvas) {
+                ctx.save();
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                if (isOverHandle || isResizingPlacedSticker) {
+                    ctx.font = '28px Arial'; ctx.fillText('⤡', screenMousePos.x + 10, screenMousePos.y + 10);
+                } else if (mode === 'draw') {
+                    ctx.font = '32px Arial'; ctx.fillText('🖌️', screenMousePos.x + 15, screenMousePos.y - 15);
+                } else if (mode === 'sticker' && !isStickerResizing && !isDraggingPlacedSticker) {
+                    ctx.font = `${activeSize * zoomLevel * 3}px Arial`; ctx.globalAlpha = 0.5;
+                    ctx.fillText(currentSticker, screenMousePos.x, screenMousePos.y);
+                } else if (mode === 'eraser') {
+                    ctx.beginPath(); ctx.arc(screenMousePos.x, screenMousePos.y, (activeSize * zoomLevel)/2, 0, Math.PI * 2);
+                    ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.font = '24px Arial'; ctx.fillText('🧽', screenMousePos.x, screenMousePos.y);
+                } else if (mode === 'pan') {
+                    ctx.font = '32px Arial'; ctx.fillText(isPanning ? '✊' : '🖐️', screenMousePos.x, screenMousePos.y);
+                }
+                ctx.restore();
+            }
+        }
+
+        function drawAction(targetCtx, action) {
+            targetCtx.save();
+            if (action.type === 'line' || action.type === 'eraser') {
+                if (action.type === 'eraser') targetCtx.globalCompositeOperation = "destination-out";
+                else {
+                    targetCtx.strokeStyle = action.color;
+                    if (action.brush === 'normal') targetCtx.globalAlpha = 0.8;
+                    else if (action.brush === 'calligraphy') targetCtx.lineCap = 'butt';
+                    else if (action.brush === 'glow') {
+                        targetCtx.lineCap = 'butt'; targetCtx.lineJoin = 'miter'; targetCtx.globalAlpha = 0.3; targetCtx.shadowBlur = 10; targetCtx.shadowColor = action.color;
+                    }
+                }
+                targetCtx.lineWidth = action.size; targetCtx.lineCap = (action.brush === 'glow') ? 'butt' : 'round'; targetCtx.lineJoin = 'round';
+                targetCtx.beginPath();
+                action.points.forEach((p, i) => { if (i === 0) targetCtx.moveTo(p.x, p.y); else targetCtx.lineTo(p.x, p.y); });
+                targetCtx.stroke();
+            } else if (action.type === 'sticker') {
+                targetCtx.font = `${action.size}px Arial`; targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'middle';
+                targetCtx.fillText(action.content, action.x, action.y);
+            }
+            targetCtx.restore();
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            let sx = e.clientX - rect.left; let sy = e.clientY - rect.top;
+            screenMousePos = { x: sx, y: sy }; 
+            let x = (sx - (canvas.width / 2 + panOffset.x)) / zoomLevel + canvas.width / 2;
+            let y = (sy - (canvas.height / 2 + panOffset.y)) / zoomLevel + canvas.height / 2;
+            return { x, y };
+        }
+
+        canvas.addEventListener('mouseenter', () => { isMouseOverCanvas = true; render(); });
+        canvas.addEventListener('mouseleave', () => { isMouseOverCanvas = false; render(); });
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getMousePos(e);
+            lastMousePos = { x: e.clientX, y: e.clientY };
+            
+            if (mode === 'eraser') {
+                let targetIdx = -1;
+                for (let i = diaryData.actions.length - 1; i >= 0; i--) {
+                    const a = diaryData.actions[i];
+                    if (a.type === 'sticker' && pos.x > a.x - a.size/2 && pos.x < a.x + a.size/2 && pos.y > a.y - a.size/2 && pos.y < a.y + a.size/2) {
+                        targetIdx = i; break;
+                    }
+                }
+                if (targetIdx !== -1) { diaryData.actions.splice(targetIdx, 1); render(); return; }
+            }
+
+            if (isOverHandle && selectedActionIndex !== -1) {
+                isResizingPlacedSticker = true;
+            } else if (mode === 'pan') {
+                let targetIdx = -1;
+                for (let i = diaryData.actions.length - 1; i >= 0; i--) {
+                    const a = diaryData.actions[i];
+                    if (a.type === 'sticker' && pos.x > a.x - a.size/2 && pos.x < a.x + a.size/2 && pos.y > a.y - a.size/2 && pos.y < a.y + a.size/2) {
+                        targetIdx = i; break;
+                    }
+                }
+                if (targetIdx !== -1) { selectedActionIndex = targetIdx; isDraggingPlacedSticker = true; }
+                else { selectedActionIndex = -1; isPanning = true; }
+            } else if (mode === 'sticker') {
+                let clickedIndex = -1;
+                for (let i = diaryData.actions.length - 1; i >= 0; i--) {
+                    const a = diaryData.actions[i];
+                    if (a.type === 'sticker' && pos.x > a.x - a.size/2 && pos.x < a.x + a.size/2 && pos.y > a.y - a.size/2 && pos.y < a.y + a.size/2) {
+                        clickedIndex = i; break;
+                    }
+                }
+                if (clickedIndex !== -1) { selectedActionIndex = clickedIndex; isDraggingPlacedSticker = true; }
+                else { selectedActionIndex = -1; isStickerResizing = true; tempStickerAction = { type: 'sticker', x: pos.x, y: pos.y, content: currentSticker, size: activeSize * 3 }; }
+            } else {
+                isDrawing = true;
+                const type = mode === 'eraser' ? 'eraser' : 'line';
+                diaryData.actions.push({ type: type, brush: brushType, points: [pos], color: activeColor, size: activeSize });
+            }
+            render();
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const pos = getMousePos(e);
+            if (selectedActionIndex !== -1 && diaryData.actions[selectedActionIndex].type === 'sticker') {
+                const a = diaryData.actions[selectedActionIndex];
+                const handleX = a.x + a.size/2; const handleY = a.y + a.size/2;
+                const dist = Math.sqrt((pos.x - handleX)**2 + (pos.y - handleY)**2);
+                isOverHandle = (dist < 15 / zoomLevel);
+            } else { isOverHandle = false; }
+
+            if (isResizingPlacedSticker) {
+                const a = diaryData.actions[selectedActionIndex];
+                a.size = Math.max(10, Math.sqrt((pos.x - a.x)**2 + (pos.y - a.y)**2) * 2);
+            } else if (isPanning) {
+                panOffset.x += e.clientX - lastMousePos.x; panOffset.y += e.clientY - lastMousePos.y;
+                lastMousePos = { x: e.clientX, y: e.clientY };
+            } else if (isDrawing) {
+                diaryData.actions[diaryData.actions.length - 1].points.push(pos);
+            } else if (isDraggingPlacedSticker) {
+                diaryData.actions[selectedActionIndex].x = pos.x; diaryData.actions[selectedActionIndex].y = pos.y;
+            } else if (isStickerResizing) {
+                const dx = pos.x - tempStickerAction.x; const dy = pos.y - tempStickerAction.y;
+                tempStickerAction.size = Math.max(activeSize * 3, Math.sqrt(dx*dx + dy*dy) * 2);
+            }
+            render();
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (isStickerResizing) diaryData.actions.push(tempStickerAction);
+            isDrawing = false; isPanning = false; isStickerResizing = false; isDraggingPlacedSticker = false; isResizingPlacedSticker = false; tempStickerAction = null;
+            render();
+            scheduleSave();
+        });
+
+        function setMode(m) { mode = m; selectedActionIndex = -1; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active')); document.getElementById(`btn-${m}`).classList.add('active'); render(); }
+        function undo() { diaryData.actions.pop(); selectedActionIndex = -1; render(); scheduleSave(); }
+        
+        // 초기화 버튼 시 커스텀 모달 호출
+        function clearCanvas() { 
+            showConfirm("모든 그림과 스티커를 초기화할까요?", () => {
+                diaryData.actions = []; 
+                selectedActionIndex = -1; 
+                render(); 
+                scheduleSave();
+            });
+        }
+
+        window.onresize = initCanvas;
+    </script>
+</body>
+</html>
