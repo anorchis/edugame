@@ -53,29 +53,68 @@ body {
             animation: fade-out 1.5s ease-out forwards;
         }
 
-        /* Base styles for glowing effect */
-        .base-glow {
-            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
-            transition: filter 0.3s ease-in-out, border 0.3s ease-in-out, transform 0.1s ease-in-out;
-            border: 2px solid transparent; /* Initial transparent border */
-            border-radius: 8px; /* Assuming bases are somewhat rectangular or need rounded corners */
+        /* Base item styles */
+        .base-item {
+            transition: filter 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            cursor: default;
         }
 
-        /* Active state for a more solid border */
-        .base-active {
-            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 1));
-            border: 2px solid rgba(255, 255, 255, 1);
+        /* Base activated (after bori disappears) - glowing effect */
+        .base-item.base-activated {
+            pointer-events: auto !important;
+            cursor: pointer;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 16px rgba(255, 255, 255, 0.4));
+            animation: base-pulse 2s ease-in-out infinite;
         }
 
-        /* Scale up animation */
-        .base-scale-up {
-            animation: base-scale 0.2s ease-out forwards;
+        @keyframes base-pulse {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 16px rgba(255, 255, 255, 0.4)); }
+            50% { filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.6)); }
         }
 
-        @keyframes base-scale {
+        /* Hover or collision state - outline following image shape using multiple drop-shadows */
+        .base-item.base-hover {
+            filter:
+                drop-shadow(0 0 1px white)
+                drop-shadow(0 0 1px white)
+                drop-shadow(0 0 2px white)
+                drop-shadow(0 0 2px white)
+                drop-shadow(0 0 4px rgba(255, 255, 255, 0.9))
+                drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+            animation: none;
+        }
+
+        /* Scale up animation on click/enter */
+        .base-item.base-click {
+            animation: base-scale-click 0.3s ease-out forwards;
+        }
+
+        @keyframes base-scale-click {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
+        }
+
+        /* For base-2 which has scale(1.5) */
+        #base-2.base-click {
+            animation: base-scale-click-2 0.3s ease-out forwards;
+        }
+
+        @keyframes base-scale-click-2 {
+            0% { transform: scale(1.5); }
+            50% { transform: scale(1.65); }
+            100% { transform: scale(1.5); }
+        }
+
+        /* For base-3 which has scale(0.85) */
+        #base-3.base-click {
+            animation: base-scale-click-3 0.3s ease-out forwards;
+        }
+
+        @keyframes base-scale-click-3 {
+            0% { transform: scale(0.85); }
+            50% { transform: scale(0.935); }
+            100% { transform: scale(0.85); }
         }
 
         /* Modal styles */
@@ -248,9 +287,9 @@ body {
                     <div class="absolute inset-0 bg-cover bg-no-repeat bg-center" style="background-image: url('img/bg4.png?v=1769771621');"></div>
 
                     <!-- End Points -->
-                    <img id="base-1" src="img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto" style="left: 240px;">
-                    <img id="base-2" src="img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto" style="left: 325px; transform: scale(1.5);">
-                    <img id="base-3" src="img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto" style="left: 410px; transform: scale(0.85);">
+                    <img id="base-1" src="img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item pointer-events-none" style="left: 240px;" data-base="1">
+                    <img id="base-2" src="img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item pointer-events-none" style="left: 325px; transform: scale(1.5);" data-base="2">
+                    <img id="base-3" src="img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item pointer-events-none" style="left: 410px; transform: scale(0.85);" data-base="3">
 
                     <!-- Player Character -->
                     <img src="img/run1.png" alt="Player" class="absolute bottom-[35px] left-[105px] w-11 h-auto filter drop-shadow-lg z-10">
@@ -280,6 +319,18 @@ body {
 
     </div>
 
+    <!-- Base Modal -->
+    <div id="base-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <h2 id="modal-title" class="text-2xl font-bold mb-4">학습 모드</h2>
+            <p id="modal-description" class="text-lg mb-6">여기서 한자를 학습할 수 있습니다.</p>
+            <button id="modal-start" class="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors">
+                시작하기
+            </button>
+        </div>
+    </div>
+
     <script>// Game State
 const state = {
     started: false, // True once dialogue intro starts
@@ -305,7 +356,10 @@ const state = {
         speed: 4, // Movement speed
         boriInteraction: false, // Has interacted with Bori?
         boriDialogueFinished: false, // Has dialogue finished?
-        isEnteringGate: false
+        isEnteringGate: false,
+        basesActive: false, // Are bases interactive?
+        selectedBase: null, // Currently selected/hovered base (1, 2, or 3)
+        baseCollision: null // Base that player is colliding with
     },
     
     keys: {
@@ -607,6 +661,9 @@ function updateVillageLoop(timestamp) {
     // Apply Position
     playerImage.style.left = `${state.village.playerX}px`;
 
+    // Check base collision
+    checkBaseCollision();
+
     // 2. Handle Animation
     if (state.village.isMoving) {
         if (timestamp - state.village.lastFrameTime > state.village.frameInterval) {
@@ -640,20 +697,10 @@ function updateVillageLoop(timestamp) {
         }
     }
 
-    if (state.village.boriDialogueFinished && !state.village.isEnteringGate && state.village.playerX > 381) {
-        state.village.isEnteringGate = true;
-        movementInstruction.classList.add('hidden');
-        animatePlayerEntry();
-    }
-
     // Apply Position
     playerImage.style.left = `${state.village.playerX}px`;
 
     requestAnimationFrame(updateVillageLoop);
-}
-
-function animatePlayerEntry() {
-    playerImage.classList.add('animate-enter-gate');
 }
 
 function triggerBoriDialogue() {
@@ -787,15 +834,20 @@ function finishBoriDialogue() {
 
     // Allow Movement
     state.village.boriDialogueFinished = true;
-    
+
+    // Activate bases after bori disappears
+    setTimeout(() => {
+        activateBases();
+    }, 1500); // Wait for bori fade-out animation
+
     // Show 'Enter Gate' instruction
     const instructionP = movementInstruction.querySelector('p');
     if (instructionP) {
-        instructionP.textContent = "마법의 문으로 입장하세요";
+        instructionP.textContent = "학습할 단계를 선택하세요";
     }
     movementInstruction.classList.remove('hidden');
-    
-    console.log("Bori Dialogue Finished. Player can now go to the gate.");
+
+    console.log("Bori Dialogue Finished. Bases activated.");
 }
 
 // Start the Intro Sequence (Dialogue)
@@ -812,6 +864,155 @@ function startGameSequence() {
     // Start First Line
     showLine(0);
 }
+
+// Base interaction functions
+const baseModal = document.getElementById('base-modal');
+const modalClose = document.getElementById('modal-close');
+const modalTitle = document.getElementById('modal-title');
+const modalDescription = document.getElementById('modal-description');
+const modalStart = document.getElementById('modal-start');
+const base1 = document.getElementById('base-1');
+const base2 = document.getElementById('base-2');
+const base3 = document.getElementById('base-3');
+const bases = [base1, base2, base3];
+
+const baseData = {
+    1: { title: '1단계: 기초 한자', description: '숫자와 기본 한자를 배워봅시다!' },
+    2: { title: '2단계: 자연 한자', description: '자연과 관련된 한자를 배워봅시다!' },
+    3: { title: '3단계: 생활 한자', description: '일상생활 한자를 배워봅시다!' }
+};
+
+// Activate bases after bori disappears
+function activateBases() {
+    state.village.basesActive = true;
+    bases.forEach(base => {
+        base.classList.remove('pointer-events-none');
+        base.classList.add('base-activated');
+    });
+    console.log("Bases activated!");
+}
+
+// Check collision between player and bases
+function checkBaseCollision() {
+    if (!state.village.basesActive) return;
+
+    const playerX = state.village.playerX;
+    const playerWidth = 44; // w-11 = 44px
+    const playerRight = playerX + playerWidth;
+
+    // Base positions and widths (considering scale and center-based transform)
+    // scale transforms from center, so we need to adjust left position
+    const basePositions = [
+        { id: 1, left: 240, width: 70, scale: 1 },
+        { id: 2, left: 325, width: 70, scale: 1.5 },
+        { id: 3, left: 410, width: 70, scale: 0.85 }
+    ].map(bp => {
+        const scaledWidth = bp.width * bp.scale;
+        const offsetX = (bp.width - scaledWidth) / 2;
+        return {
+            id: bp.id,
+            left: bp.left + offsetX,
+            width: scaledWidth
+        };
+    });
+
+    let collidingBase = null;
+
+    basePositions.forEach(bp => {
+        const baseRight = bp.left + bp.width;
+        // Check overlap
+        if (playerRight > bp.left && playerX < baseRight) {
+            collidingBase = bp.id;
+        }
+    });
+
+    // Update collision state
+    if (collidingBase !== state.village.baseCollision) {
+        // Remove hover from previous
+        if (state.village.baseCollision) {
+            const prevBase = document.getElementById(`base-${state.village.baseCollision}`);
+            prevBase.classList.remove('base-hover');
+        }
+        // Add hover to current
+        if (collidingBase) {
+            const currBase = document.getElementById(`base-${collidingBase}`);
+            currBase.classList.add('base-hover');
+        }
+        state.village.baseCollision = collidingBase;
+    }
+}
+
+// Open modal for a base
+function openBaseModal(baseId) {
+    const base = document.getElementById(`base-${baseId}`);
+    const data = baseData[baseId];
+
+    // Play click animation
+    base.classList.add('base-click');
+    setTimeout(() => {
+        base.classList.remove('base-click');
+    }, 300);
+
+    // Open modal after animation
+    setTimeout(() => {
+        modalTitle.textContent = data.title;
+        modalDescription.textContent = data.description;
+        baseModal.classList.add('active');
+        baseModal.dataset.currentBase = baseId;
+    }, 150);
+}
+
+// Close modal
+function closeBaseModal() {
+    baseModal.classList.remove('active');
+    delete baseModal.dataset.currentBase;
+}
+
+// Base mouse events
+bases.forEach(base => {
+    base.addEventListener('mouseenter', () => {
+        if (!state.village.basesActive) return;
+        base.classList.add('base-hover');
+        state.village.selectedBase = parseInt(base.dataset.base);
+    });
+
+    base.addEventListener('mouseleave', () => {
+        if (!state.village.basesActive) return;
+        // Only remove if not colliding
+        if (state.village.baseCollision !== parseInt(base.dataset.base)) {
+            base.classList.remove('base-hover');
+        }
+        state.village.selectedBase = null;
+    });
+
+    base.addEventListener('click', () => {
+        if (!state.village.basesActive) return;
+        openBaseModal(parseInt(base.dataset.base));
+    });
+});
+
+// Modal events
+modalClose.addEventListener('click', closeBaseModal);
+modalStart.addEventListener('click', () => {
+    const baseId = baseModal.dataset.currentBase;
+    console.log(`Starting level ${baseId}!`);
+    closeBaseModal();
+    // TODO: Start the actual game level
+});
+
+baseModal.addEventListener('click', (e) => {
+    if (e.target === baseModal) {
+        closeBaseModal();
+    }
+});
+
+// Keyboard event for Enter on colliding base
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && state.village.basesActive && state.village.baseCollision) {
+        e.preventDefault();
+        openBaseModal(state.village.baseCollision);
+    }
+});
 
 // Run Init
 init();</script>
