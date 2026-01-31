@@ -50,10 +50,6 @@
         .btn-no { background: var(--muted-taupe); color: white; }
         .c-btn:hover { transform: scale(1.05); }
 
-        .close-btn {
-            position: absolute; top: 15px; right: 20px; font-size: 30px;
-            color: white; cursor: pointer; z-index: 1001; font-weight: bold;
-        }
 
         .game-bg { display: none; }
         .open-modal-btn { display: none; }
@@ -141,7 +137,6 @@
 
     <div id="modalOverlay">
         <div class="modal-window">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
             <div class="diary-app-body">
                 <div class="top-nav">
                     <div class="zoom-control">
@@ -232,7 +227,6 @@
         let saveTimer = null;
 
         // --- 모달 제어 함수 ---
-        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
         function scheduleSave() {
             if (saveTimer) clearTimeout(saveTimer);

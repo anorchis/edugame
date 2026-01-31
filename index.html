@@ -645,18 +645,11 @@ body {
                     </div>
 
                     <!-- Stage 3 UI: Player HP (Hearts) -->
-                    <div id="stage3-player-hp" class="absolute top-2 left-[72px] player-hp-container hidden">
+                    <div id="stage3-player-hp" class="absolute top-2 left-[77px] player-hp-container hidden">
                         <span class="player-heart">❤️</span>
                         <span class="player-heart">❤️</span>
                         <span class="player-heart">❤️</span>
                     </div>
-                    <!-- Stage 3 UI: Return to Village -->
-                    <button id="stage3-return-btn" class="absolute top-2 right-3 bg-white/20 hover:bg-white/40 text-white rounded-full border border-white/50 backdrop-blur-sm transition-all z-40 p-2 hidden" aria-label="Return to Village">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <path d="M4 12l7-7v4h6a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3h-6v4l-7-7z"/>
-                        </svg>
-                    </button>
-
                     <!-- Stage 3: Obstacles Container -->
                     <div id="stage3-obstacles" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
@@ -670,7 +663,7 @@ body {
                     </div>
 
                     <!-- Stage 3 UI: Level Indicator -->
-                    <div id="stage3-level" class="absolute top-2 right-[67px] text-white text-sm font-bold hidden" style="font-family: 'Pretendard', sans-serif;">
+                    <div id="stage3-level" class="absolute top-2 right-[65px] text-white text-sm font-bold hidden" style="font-family: 'Pretendard', sans-serif;">
                         Level 1/3
                     </div>
 
@@ -929,63 +922,63 @@ function setBgmMuted(muted) {
     }
 }
 
-// Stage 3 한자 데이터 (레벨별 분류)
+// Stage 3 한자 데이터 (획수 기준 레벨 분류)
 const stage3HanjaData = {
-    level1: [ // 1~4획 (17자)
+    level1: [ // 1~4획 (24자)
         { char: '一', eum: '일', deut: '한' },
-        { char: '二', eum: '이', deut: '두' },
-        { char: '三', eum: '삼', deut: '석' },
         { char: '七', eum: '칠', deut: '일곱' },
-        { char: '八', eum: '팔', deut: '여덟' },
         { char: '九', eum: '구', deut: '아홉' },
-        { char: '十', eum: '십', deut: '열' },
+        { char: '二', eum: '이', deut: '두' },
         { char: '人', eum: '인', deut: '사람' },
-        { char: '入', eum: '입', deut: '들' },
+        { char: '八', eum: '팔', deut: '여덟' },
+        { char: '十', eum: '십', deut: '열' },
+        { char: '三', eum: '삼', deut: '석' },
+        { char: '土', eum: '토', deut: '흙' },
         { char: '大', eum: '대', deut: '큰' },
+        { char: '女', eum: '녀', deut: '여자' },
+        { char: '寸', eum: '촌', deut: '마디' },
         { char: '小', eum: '소', deut: '작을' },
-        { char: '上', eum: '상', deut: '윗' },
-        { char: '山', eum: '산', deut: '메' },
-        { char: '子', eum: '자', deut: '아들' },
-        { char: '火', eum: '화', deut: '불' },
+        { char: '山', eum: '산', deut: '뫼' },
+        { char: '中', eum: '중', deut: '가운데' },
+        { char: '五', eum: '오', deut: '다섯' },
+        { char: '六', eum: '육', deut: '여섯' },
         { char: '日', eum: '일', deut: '날' },
-        { char: '月', eum: '월', deut: '달' }
-    ],
-    level2: [ // 5~8획 (19자)
+        { char: '月', eum: '월', deut: '달' },
         { char: '木', eum: '목', deut: '나무' },
         { char: '水', eum: '수', deut: '물' },
-        { char: '王', eum: '왕', deut: '임금' },
-        { char: '天', eum: '천', deut: '하늘' },
-        { char: '中', eum: '중', deut: '가운데' },
-        { char: '寸', eum: '촌', deut: '마디' },
-        { char: '女', eum: '녀', deut: '여자' },
-        { char: '六', eum: '륙', deut: '여섯' },
-        { char: '四', eum: '사', deut: '넉' },
-        { char: '五', eum: '오', deut: '다섯' },
-        { char: '外', eum: '외', deut: '바깥' },
-        { char: '北', eum: '북', deut: '북녘' },
-        { char: '母', eum: '모', deut: '어머니' },
-        { char: '白', eum: '백', deut: '흰' },
-        { char: '市', eum: '시', deut: '저자' },
-        { char: '西', eum: '서', deut: '서녘' },
-        { char: '自', eum: '자', deut: '스스로' },
-        { char: '先', eum: '선', deut: '먼저' },
-        { char: '年', eum: '년', deut: '해' }
+        { char: '火', eum: '화', deut: '불' },
+        { char: '父', eum: '부', deut: '아버지' },
+        { char: '王', eum: '왕', deut: '임금' }
     ],
-    level3: [ // 9획+ (14자)
-        { char: '門', eum: '문', deut: '문' },
-        { char: '金', eum: '금', deut: '쇠' },
-        { char: '東', eum: '동', deut: '동녘' },
-        { char: '靑', eum: '청', deut: '푸를' },
+    level2: [ // 5~8획 (17자)
+        { char: '兄', eum: '형', deut: '형' },
+        { char: '北', eum: '북', deut: '북녘' },
+        { char: '四', eum: '사', deut: '넉' },
+        { char: '外', eum: '외', deut: '바깥' },
+        { char: '母', eum: '모', deut: '어머니' },
+        { char: '民', eum: '민', deut: '백성' },
+        { char: '生', eum: '생', deut: '날' },
+        { char: '白', eum: '백', deut: '흰' },
+        { char: '先', eum: '선', deut: '먼저' },
+        { char: '年', eum: '년', deut: '해' },
+        { char: '西', eum: '서', deut: '서녘' },
         { char: '弟', eum: '제', deut: '아우' },
+        { char: '東', eum: '동', deut: '동녘' },
+        { char: '金', eum: '금', deut: '쇠' },
+        { char: '長', eum: '장', deut: '길' },
+        { char: '門', eum: '문', deut: '문' },
+        { char: '靑', eum: '청', deut: '푸를' }
+    ],
+    level3: [ // 9획+ (9자)
         { char: '南', eum: '남', deut: '남녘' },
+        { char: '室', eum: '실', deut: '집' },
         { char: '軍', eum: '군', deut: '군사' },
         { char: '校', eum: '교', deut: '학교' },
-        { char: '敎', eum: '교', deut: '가르칠' },
         { char: '國', eum: '국', deut: '나라' },
-        { char: '問', eum: '문', deut: '물을' },
-        { char: '父', eum: '부', deut: '아버지' },
+        { char: '敎', eum: '교', deut: '가르칠' },
+        { char: '萬', eum: '만', deut: '일만' },
         { char: '學', eum: '학', deut: '배울' },
-        { char: '韓', eum: '한', deut: '나라' }
+        { char: '韓', eum: '한', deut: '나라이름' }
     ]
 };
 
@@ -1031,7 +1024,6 @@ const stage3ObstaclesContainer = document.getElementById('stage3-obstacles');
 const stage3ScreenFlashContainer = document.getElementById('stage3-screen-flash-container');
 const stage3GameOver = document.getElementById('stage3-game-over');
 const stage3RestartBtn = document.getElementById('stage3-restart-btn');
-const stage3ReturnBtn = document.getElementById('stage3-return-btn');
 const certificateModal = document.getElementById('certificate-modal');
 const certificateName = document.getElementById('certificate-name');
 const certificateDate = document.getElementById('certificate-date');
@@ -1293,6 +1285,14 @@ function updateVillageLoop(timestamp) {
     }
 
     if (state.village.stage3Active) {
+        // Victory 상태면 walkToCenter가 애니메이션을 담당하므로 건너뜀
+        if (state.village.stage3Victory) {
+            // 배경만 유지 (스크롤 없이)
+            stageBgScroll.style.transform = `translateX(${state.village.stage3BgOffset}px)`;
+            requestAnimationFrame(updateVillageLoop);
+            return;
+        }
+
         // 항상 달리는 애니메이션 (점프/공격 중이 아닐 때)
         if (!state.village.stage3Jumping && !state.village.stage3Attacking) {
             if (timestamp - state.village.stage3RunAnimTimer > state.village.stage3RunAnimInterval) {
@@ -1985,7 +1985,6 @@ function startStage3() {
     stage3CurrentHanja.classList.remove('hidden');
     stage3HanjaQueue.classList.remove('hidden');
     stage3PlayerHp.classList.remove('hidden');
-    stage3ReturnBtn.classList.remove('hidden');
     stage3GameOver.classList.add('hidden');
 
     // Reset player HP UI
@@ -2226,21 +2225,84 @@ function showVictory() {
     state.village.stage3Obstacles = [];
     stage3ObstaclesContainer.innerHTML = '';
 
-    const instructionP = movementInstruction.querySelector('p');
-    if (instructionP) {
-        instructionP.innerHTML = '🎉 축하합니다! 모든 레벨 클리어! 🎉';
-        instructionP.classList.add('level-clear-text');
+    // Clear projectiles
+    state.village.stage3Projectiles.forEach(proj => proj.element.remove());
+    state.village.stage3Projectiles = [];
+    stage3Projectiles.innerHTML = '';
+
+    // Calculate center position
+    const containerWidth = stageBgScroll.parentElement.clientWidth;
+    const targetX = (containerWidth / 2) - 22; // Center minus half player width
+
+    // Gradually slow down background
+    const initialSpeed = state.village.stage3BgSpeed;
+    const deceleration = 0.05; // How much to slow down each frame
+
+    function slowDownBackground() {
+        if (state.village.stage3BgSpeed > 0.1) {
+            state.village.stage3BgSpeed -= deceleration;
+            if (state.village.stage3BgSpeed < 0.1) state.village.stage3BgSpeed = 0;
+
+            // Update background position
+            state.village.stage3BgOffset -= state.village.stage3BgSpeed;
+            if (state.village.stage3BgWidth > 0 && state.village.stage3BgOffset <= -state.village.stage3BgWidth) {
+                state.village.stage3BgOffset += state.village.stage3BgWidth;
+            }
+            stageBgScroll.style.transform = `translateX(${state.village.stage3BgOffset}px)`;
+
+            requestAnimationFrame(slowDownBackground);
+        } else {
+            // Background fully stopped, now walk to center
+            state.village.stage3BgSpeed = 0;
+            requestAnimationFrame(walkToCenter);
+        }
     }
-    movementInstruction.classList.remove('hidden');
 
-    victoryConfetti();
-    playCheerSound();
-    state.village.stage3Completed = true;
+    // Walk to center animation
+    const walkSpeed = 2;
+    let walkAnimTimer = 0;
+    const walkAnimInterval = 150;
 
-    // Return to village after delay
-    setTimeout(() => {
-        returnToVillage();
-    }, 3000);
+    function walkToCenter(timestamp) {
+        if (!walkAnimTimer) walkAnimTimer = timestamp;
+
+        // Walking animation
+        if (timestamp - walkAnimTimer > walkAnimInterval) {
+            state.village.currentImageIndex++;
+            if (state.village.currentImageIndex > 3) state.village.currentImageIndex = 1;
+            walkAnimTimer = timestamp;
+            playerImage.src = `img/run${state.village.currentImageIndex}.png`;
+        }
+
+        // Move player towards center
+        if (state.village.playerX < targetX) {
+            state.village.playerX += walkSpeed;
+            playerImage.style.left = `${state.village.playerX}px`;
+            requestAnimationFrame(walkToCenter);
+        } else {
+            // Arrived at center - show victory message and confetti
+            playerImage.src = 'img/run1.png';
+
+            const instructionP = movementInstruction.querySelector('p');
+            if (instructionP) {
+                instructionP.innerHTML = '🎉 축하합니다! 모든 레벨 클리어! 🎉';
+                instructionP.classList.add('level-clear-text');
+            }
+            movementInstruction.classList.remove('hidden');
+
+            victoryConfetti();
+            playCheerSound();
+            state.village.stage3Completed = true;
+
+            // Return to village after delay
+            setTimeout(() => {
+                returnToVillage();
+            }, 3000);
+        }
+    }
+
+    // Start the slow down sequence
+    requestAnimationFrame(slowDownBackground);
 }
 
 // Stage 3: Return to village
@@ -2259,7 +2321,6 @@ function returnToVillage() {
     stage3Monster.classList.add('hidden');
     stage3PlayerHp.classList.add('hidden');
     stage3GameOver.classList.add('hidden');
-    stage3ReturnBtn.classList.add('hidden');
     stage3Projectiles.innerHTML = '';
     stage3ObstaclesContainer.innerHTML = '';
     stage3ScreenFlashContainer.innerHTML = '';
@@ -2319,6 +2380,14 @@ function returnToVillage() {
         instructionP.textContent = "사람들을 만나세요";
         instructionP.classList.remove('level-clear-text');
     }
+}
+
+function resetHanjaScore() {
+    const userId = state.currentUser?.id || 'guest';
+    const ok = confirm('마력(점수)과 단계 기록을 초기화할까요?');
+    if (!ok) return;
+    localStorage.removeItem(`hanjaGameData:${userId}`);
+    alert('마력 기록이 초기화되었습니다.');
 }
 
 // Stage 3: TTS speak hanja
@@ -2809,9 +2878,6 @@ stageFrame.addEventListener('load', sendStageUser);
 
 // Stage 3 restart button
 stage3RestartBtn.addEventListener('click', restartStage3);
-stage3ReturnBtn.addEventListener('click', () => {
-    returnToVillage();
-});
 
 window.addEventListener('message', (event) => {
     const data = event.data || {};
