@@ -323,6 +323,10 @@ body {
             animation: heart-pulse 0.3s ease-out;
         }
 
+        .player-glow {
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.25)) !important;
+        }
+
         .firework {
             position: absolute;
             width: 0;
@@ -417,6 +421,75 @@ body {
         .game-over-btn:hover {
             background: #fde047;
             transform: scale(1.05);
+        }
+
+        /* Certificate Modal */
+        .certificate-modal {
+            background: linear-gradient(135deg, rgba(20, 20, 20, 0.96), rgba(5, 5, 5, 0.98));
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            border-radius: 18px;
+            padding: 28px;
+            width: min(520px, 92vw);
+            color: #fff7d1;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            position: relative;
+        }
+
+        .certificate-title {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #ffd166;
+            margin-bottom: 10px;
+        }
+
+        .certificate-subtitle {
+            font-size: 14px;
+            color: #fef3c7;
+            margin-bottom: 18px;
+        }
+
+        .certificate-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 12px 0;
+        }
+
+        .certificate-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #fde68a;
+            margin: 6px 0 20px;
+        }
+
+        .certificate-date {
+            font-size: 14px;
+            color: #fcd34d;
+            margin-top: 6px;
+        }
+
+        .certificate-ornament {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #facc15, transparent);
+            margin: 14px 0;
+        }
+
+        .certificate-btn {
+            margin-top: 18px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            font-weight: 700;
+            padding: 10px 18px;
+            border-radius: 999px;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .certificate-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
         }
     </style>
 </head>
@@ -612,8 +685,14 @@ body {
                         <!-- Queue items will be added dynamically -->
                     </div>
 
+                    <img id="npc-ok-1" src="img/ok1.png" alt="Ok 1" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0">
+                    <img id="npc-ok-2" src="img/ok2.png" alt="Ok 2" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0 hidden">
                     <!-- NPC: Bori Dosa -->
                     <img id="npc-bori" src="img/bori.png" alt="Bori Dosa" class="absolute bottom-[30px] left-[214px] w-[55px] h-auto filter drop-shadow-lg z-0 animate-float">
+                    <img id="npc-sam-1" src="img/sam1.png" alt="Sam 1" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0">
+                    <img id="npc-sam-2" src="img/sam2.png" alt="Sam 2" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0 hidden">
+                    <img id="npc-bori-3" src="img/bori3.png" alt="Bori 3" class="absolute bottom-[30px] left-[430px] w-[50px] h-auto z-0">
+                    <img id="npc-bori-4" src="img/bori4.png" alt="Bori 4" class="absolute bottom-[30px] left-[430px] w-[50px] h-auto z-0 hidden">
 
                     <!-- Game UI Overlay (Example: Score, Level) -->
                     <div class="absolute top-3 left-4 text-white text-lg drop-shadow-md" style="font-family: 'Pretendard', sans-serif;">
@@ -657,6 +736,21 @@ body {
             <button id="alert-ok" class="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors">
                 확인
             </button>
+        </div>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="certificate-modal" class="modal-overlay hidden">
+        <div class="certificate-modal">
+            <div class="certificate-title">8급 한자 마스터 인증서</div>
+            <div class="certificate-subtitle">Magic Hanja Master Certificate</div>
+            <div class="certificate-ornament"></div>
+            <div class="certificate-text">이 인증서는 아래의 수험자가</div>
+            <div id="certificate-name" class="certificate-name">수호자</div>
+            <div class="certificate-text">모든 수련을 마치고 마을의 평화를 되찾았음을 증명합니다.</div>
+            <div class="certificate-ornament"></div>
+            <div id="certificate-date" class="certificate-date"></div>
+            <button id="certificate-home" class="certificate-btn">처음으로</button>
         </div>
     </div>
 
@@ -723,6 +817,14 @@ const state = {
         stage3MonsterActive: false,
         stage3GameStarted: false,
         stage3Victory: false,
+        stage3Completed: false,
+        npcMetOk: false,
+        npcMetSam: false,
+        npcMetBori: false,
+        npcSpokenOk: false,
+        npcSpokenSam: false,
+        npcSpokenBori: false,
+        certificateShown: false,
         // 플레이어 체력 시스템
         stage3PlayerHP: 3,
         stage3PlayerMaxHP: 3,
@@ -772,6 +874,7 @@ const villageIntroLines = [
 ];
 
 let currentDialogueSet = introLines; // Track which dialogue to show
+let dialogueMode = null;
 
 // Audio Mapping
 const audioFiles = [
@@ -901,6 +1004,12 @@ const gameView = document.getElementById('game-view');
 const gameLevelDisplay = document.getElementById('game-level-display');
 const playerImage = gameView.querySelector('img[alt="Player"]'); // Select the player image
 const npcBori = document.getElementById('npc-bori'); // Select Bori NPC
+const npcOk1 = document.getElementById('npc-ok-1');
+const npcOk2 = document.getElementById('npc-ok-2');
+const npcSam1 = document.getElementById('npc-sam-1');
+const npcSam2 = document.getElementById('npc-sam-2');
+const npcBori3 = document.getElementById('npc-bori-3');
+const npcBori4 = document.getElementById('npc-bori-4');
 const stageBgStatic = document.getElementById('stage-bg-static');
 const stageBgScroll = document.getElementById('stage-bg-scroll');
 const stageBgTile1 = document.getElementById('stage-bg-tile-1');
@@ -923,6 +1032,10 @@ const stage3ScreenFlashContainer = document.getElementById('stage3-screen-flash-
 const stage3GameOver = document.getElementById('stage3-game-over');
 const stage3RestartBtn = document.getElementById('stage3-restart-btn');
 const stage3ReturnBtn = document.getElementById('stage3-return-btn');
+const certificateModal = document.getElementById('certificate-modal');
+const certificateName = document.getElementById('certificate-name');
+const certificateDate = document.getElementById('certificate-date');
+const certificateHome = document.getElementById('certificate-home');
 
 // DOM Elements (Auth UI)
 const authOverlay = document.getElementById('auth-overlay');
@@ -1119,6 +1232,13 @@ function handleLogin() {
 // Start Village Scene Logic
 function startVillageScene() {
     startVillageBgm();
+    state.village.npcMetOk = false;
+    state.village.npcMetSam = false;
+    state.village.npcMetBori = false;
+    state.village.npcSpokenOk = false;
+    state.village.npcSpokenSam = false;
+    state.village.npcSpokenBori = false;
+    setNpcVisibility(false);
     if (bgmToggle) {
         bgmToggle.classList.remove('hidden');
         bgmToggle.classList.toggle('muted', state.bgmMuted);
@@ -1294,6 +1414,28 @@ function updateVillageLoop(timestamp) {
         }
     }
 
+    if (state.village.stage3Completed) {
+        const playerRect = playerImage.getBoundingClientRect();
+        const hitOk = updateNpcContact(playerRect, npcOk1, npcOk2);
+        const hitSam = updateNpcContact(playerRect, npcSam1, npcSam2);
+        const hitBori = updateNpcContact(playerRect, npcBori3, npcBori4);
+
+        if (hitOk && !state.village.npcSpokenOk) {
+            showNpcDialogue("야호! 이제 다시 평화로운 마을이야! 진정한 마법천자문 마스터가 된 걸 축하해!", "sound/ok.wav");
+            state.village.npcSpokenOk = true;
+        } else if (hitSam && !state.village.npcSpokenSam) {
+            showNpcDialogue("와! 네가 아니었으면 우린 영영 한자를 잃어버릴 뻔했어! 정말 대단해!", "sound/sam.wav");
+            state.village.npcSpokenSam = true;
+        } else if (hitBori && !state.village.npcSpokenBori) {
+            showNpcDialogue("오오! 장하다, 우리 수호자! 네가 마법 붓의 진정한 주인이 되었구나!", "sound/bori.wav");
+            state.village.npcSpokenBori = true;
+        }
+
+        if (state.village.npcSpokenOk && state.village.npcSpokenSam && state.village.npcSpokenBori) {
+            showCertificateModal();
+        }
+    }
+
     // Apply Position
     playerImage.style.left = `${state.village.playerX}px`;
 
@@ -1353,6 +1495,8 @@ function showLine(index) {
             finishBoriDialogue();
         } else if (currentDialogueSet === villageIntroLines) {
             finishVillageIntro();
+        } else if (dialogueMode === 'npc') {
+            finishNpcDialogue();
         }
         return;
     }
@@ -1380,6 +1524,40 @@ function showLine(index) {
     }
     
     typeChar();
+}
+
+function showNpcDialogue(line, audioSrc) {
+    dialogueMode = 'npc';
+    currentDialogueSet = [line];
+    state.dialogueActive = true;
+    dialogueBox.classList.remove('hidden');
+    skipButton.classList.add('hidden');
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+    if (audioSrc) {
+        state.currentAudio = new Audio(audioSrc);
+        state.currentAudio.play().catch(e => console.log("Audio play failed:", e));
+    }
+    showLine(0);
+}
+
+function finishNpcDialogue() {
+    state.dialogueActive = false;
+    dialogueBox.classList.add('hidden');
+    dialogueMode = null;
+}
+
+function showCertificateModal() {
+    if (state.village.certificateShown) return;
+    state.village.certificateShown = true;
+    const name = state.currentUser?.id || 'guest';
+    const date = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+    if (certificateName) certificateName.textContent = name;
+    if (certificateDate) certificateDate.textContent = date;
+    certificateModal.classList.remove('hidden');
+    certificateModal.classList.add('active');
 }
 
 // Advance to next line or complete current typing instantly
@@ -1547,12 +1725,53 @@ function playSelectSound() {
 
 // Activate bases after bori disappears
 function activateBases() {
+    if (state.village.stage3Completed) {
+        state.village.basesActive = false;
+        bases.forEach(base => {
+            base.classList.add('pointer-events-none');
+            base.classList.remove('base-activated', 'base-hover', 'base-click');
+        });
+        return;
+    }
     state.village.basesActive = true;
     bases.forEach(base => {
         base.classList.remove('pointer-events-none');
         base.classList.add('base-activated');
     });
     console.log("Bases activated!");
+}
+
+function setNpcVisibility(afterClear) {
+    if (!npcOk1 || !npcOk2 || !npcSam1 || !npcSam2 || !npcBori3 || !npcBori4) return;
+    if (!afterClear) {
+        npcOk1.classList.add('hidden');
+        npcOk2.classList.add('hidden');
+        npcSam1.classList.add('hidden');
+        npcSam2.classList.add('hidden');
+        npcBori3.classList.add('hidden');
+        npcBori4.classList.add('hidden');
+        return;
+    }
+        npcOk1.classList.remove('hidden');
+        npcSam1.classList.remove('hidden');
+        npcBori3.classList.remove('hidden');
+        npcOk2.classList.add('hidden');
+        npcSam2.classList.add('hidden');
+        npcBori4.classList.add('hidden');
+    [npcOk1, npcSam1, npcBori3, npcOk2, npcSam2, npcBori4].forEach(el => {
+        el.classList.add('animate-float');
+    });
+}
+
+function updateNpcContact(playerRect, normalEl, altEl) {
+    if (!normalEl || !altEl) return;
+    if (normalEl.classList.contains('hidden') && altEl.classList.contains('hidden')) return;
+    const baseEl = normalEl.classList.contains('hidden') ? altEl : normalEl;
+    const r = baseEl.getBoundingClientRect();
+    const hit = !(playerRect.right < r.left || playerRect.left > r.right || playerRect.bottom < r.top || playerRect.top > r.bottom);
+    normalEl.classList.toggle('hidden', hit);
+    altEl.classList.toggle('hidden', !hit);
+    return hit;
 }
 
 // Check collision between player and bases
@@ -1732,6 +1951,13 @@ function startStage3() {
     state.village.basesActive = false;
     state.village.baseCollision = null;
     state.village.selectedBase = null;
+    setNpcVisibility(false);
+    if (npcOk1) npcOk1.classList.add('hidden');
+    if (npcOk2) npcOk2.classList.add('hidden');
+    if (npcSam1) npcSam1.classList.add('hidden');
+    if (npcSam2) npcSam2.classList.add('hidden');
+    if (npcBori3) npcBori3.classList.add('hidden');
+    if (npcBori4) npcBori4.classList.add('hidden');
 
     // Show Stage 3 UI
     stage3HpBar.classList.remove('hidden');
@@ -1989,6 +2215,7 @@ function showVictory() {
 
     victoryConfetti();
     playCheerSound();
+    state.village.stage3Completed = true;
 
     // Return to village after delay
     setTimeout(() => {
@@ -2012,6 +2239,7 @@ function returnToVillage() {
     stage3Monster.classList.add('hidden');
     stage3PlayerHp.classList.add('hidden');
     stage3GameOver.classList.add('hidden');
+    stage3ReturnBtn.classList.add('hidden');
     stage3Projectiles.innerHTML = '';
     stage3ObstaclesContainer.innerHTML = '';
     stage3ScreenFlashContainer.innerHTML = '';
@@ -2028,13 +2256,37 @@ function returnToVillage() {
 
     // Show bases again
     bases.forEach(base => base.classList.remove('hidden'));
-    state.village.basesActive = true;
+    if (state.village.stage3Completed) {
+        state.village.basesActive = false;
+        state.village.baseCollision = null;
+        state.village.selectedBase = null;
+        bases.forEach(base => {
+            base.classList.add('pointer-events-none');
+            base.classList.remove('base-activated', 'base-hover', 'base-click');
+        });
+        state.village.npcMetOk = false;
+        state.village.npcMetSam = false;
+        state.village.npcMetBori = false;
+        state.village.npcSpokenOk = false;
+        state.village.npcSpokenSam = false;
+        state.village.npcSpokenBori = false;
+        state.village.certificateShown = false;
+        setNpcVisibility(true);
+    } else {
+        state.village.basesActive = true;
+    }
 
     // Reset player position
-    state.village.playerX = 300;
+    if (state.village.stage3Completed) {
+        const containerWidth = stageBgStatic.parentElement.clientWidth || 600;
+        state.village.playerX = Math.round(containerWidth / 2 - 22);
+    } else {
+        state.village.playerX = 300;
+    }
     playerImage.style.left = `${state.village.playerX}px`;
     playerImage.style.bottom = '32px';
     playerImage.src = 'img/run1.png';
+    playerImage.classList.toggle('player-glow', state.village.stage3Completed);
 
     // Update title
     const gameTitle = document.querySelector('#game-view .absolute.top-3.left-4');
@@ -2044,7 +2296,7 @@ function returnToVillage() {
 
     const instructionP = movementInstruction.querySelector('p');
     if (instructionP) {
-        instructionP.textContent = "학습할 단계를 선택하세요";
+        instructionP.textContent = "사람들을 만나세요";
         instructionP.classList.remove('level-clear-text');
     }
 }
@@ -2492,6 +2744,10 @@ modalStart.addEventListener('click', () => {
         // Stage 3 placeholder removed
         return;
     }
+});
+
+certificateHome.addEventListener('click', () => {
+    location.reload();
 });
 
 baseModal.addEventListener('click', (e) => {
