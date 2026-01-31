@@ -214,6 +214,49 @@ body {
             pointer-events: none;
             user-select: none;
         }
+
+        .hanja-queue-item {
+            width: 28px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #facc15;
+            font-weight: bold;
+        }
+
+        @keyframes monster-hit {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(2) sepia(1) saturate(5) hue-rotate(-50deg); }
+        }
+
+        .monster-hit {
+            animation: monster-hit 0.2s ease-out;
+        }
+
+        @keyframes monster-defeat {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(0) rotate(45deg); opacity: 0; }
+        }
+
+        .monster-defeat {
+            animation: monster-defeat 0.5s ease-out forwards;
+        }
+
+        @keyframes level-clear {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-clear-text {
+            animation: level-clear 0.5s ease-out;
+        }
     </style>
 </head>
 <body class="bg-gray-900 overflow-hidden select-none">
@@ -352,6 +395,30 @@ body {
                     <!-- Stage 3 Projectiles -->
                     <div id="stage3-projectiles" class="absolute inset-0 pointer-events-none"></div>
 
+                    <!-- Stage 3 Monster -->
+                    <img id="stage3-monster" src="img/monster1/motion1.png" alt="Monster" class="absolute bottom-[20px] w-[70px] h-auto hidden" style="right: 30px;">
+
+                    <!-- Stage 3 UI: Health Bar -->
+                    <div id="stage3-hp-bar" class="absolute top-2 left-1/2 transform -translate-x-1/2 w-48 h-4 bg-gray-800 rounded-full overflow-hidden hidden border border-white/30">
+                        <div id="stage3-hp-fill" class="h-full bg-gradient-to-r from-red-600 to-red-400 transition-all duration-200" style="width: 100%;"></div>
+                    </div>
+
+                    <!-- Stage 3 UI: Level Indicator -->
+                    <div id="stage3-level" class="absolute top-2 right-3 text-white text-sm font-bold hidden" style="font-family: 'Pretendard', sans-serif;">
+                        Level 1/3
+                    </div>
+
+                    <!-- Stage 3 UI: Current Hanja Display -->
+                    <div id="stage3-current-hanja" class="absolute bottom-2 left-3 bg-black/70 rounded-lg px-3 py-1 hidden">
+                        <span id="stage3-hanja-char" class="text-2xl text-yellow-400 font-bold">火</span>
+                        <span id="stage3-hanja-reading" class="text-sm text-white ml-2">불 화</span>
+                    </div>
+
+                    <!-- Stage 3 UI: Hanja Queue Preview -->
+                    <div id="stage3-hanja-queue" class="absolute bottom-2 right-3 flex gap-1 hidden">
+                        <!-- Queue items will be added dynamically -->
+                    </div>
+
                     <!-- NPC: Bori Dosa -->
                     <img id="npc-bori" src="img/bori.png" alt="Bori Dosa" class="absolute bottom-[30px] left-[214px] w-[55px] h-auto filter drop-shadow-lg z-0 animate-float">
 
@@ -450,7 +517,17 @@ const state = {
         stage3Attacking: false,
         stage3AttackFrame: 1,
         stage3AttackTimer: 0,
-        stage3Projectiles: []
+        stage3Projectiles: [],
+        // Stage 3 몬스터 시스템
+        stage3Level: 1,           // 현재 레벨 (1, 2, 3)
+        stage3HanjaQueue: [],     // 발사할 한자 큐
+        stage3CurrentHanjaIndex: 0,
+        stage3MonsterHP: 100,
+        stage3MonsterMaxHP: 100,
+        stage3MonsterX: 400,      // 몬스터 X 위치
+        stage3MonsterActive: false,
+        stage3GameStarted: false,
+        stage3Victory: false
     },
     
     keys: {
@@ -511,11 +588,65 @@ const villageIntroAudioFiles = [
     "sound/okong2.m4a"
 ];
 
-const stage3HanjaSet1 = [
-    "校","敎","九","國","軍","金","南","女","年","大","東","六","母","木","門","問",
-    "白","父","北","四","山","三","上","西","先","小","水","市","十","五","王","外",
-    "月","二","人","一","日","入","子","自","弟","中","天","靑","寸","七","八","學","韓","火"
-];
+// Stage 3 한자 데이터 (레벨별 분류)
+const stage3HanjaData = {
+    level1: [ // 1~4획 (17자)
+        { char: '一', eum: '일', deut: '한' },
+        { char: '二', eum: '이', deut: '두' },
+        { char: '三', eum: '삼', deut: '석' },
+        { char: '七', eum: '칠', deut: '일곱' },
+        { char: '八', eum: '팔', deut: '여덟' },
+        { char: '九', eum: '구', deut: '아홉' },
+        { char: '十', eum: '십', deut: '열' },
+        { char: '人', eum: '인', deut: '사람' },
+        { char: '入', eum: '입', deut: '들' },
+        { char: '大', eum: '대', deut: '큰' },
+        { char: '小', eum: '소', deut: '작을' },
+        { char: '上', eum: '상', deut: '윗' },
+        { char: '山', eum: '산', deut: '메' },
+        { char: '子', eum: '자', deut: '아들' },
+        { char: '火', eum: '화', deut: '불' },
+        { char: '日', eum: '일', deut: '날' },
+        { char: '月', eum: '월', deut: '달' }
+    ],
+    level2: [ // 5~8획 (19자)
+        { char: '木', eum: '목', deut: '나무' },
+        { char: '水', eum: '수', deut: '물' },
+        { char: '王', eum: '왕', deut: '임금' },
+        { char: '天', eum: '천', deut: '하늘' },
+        { char: '中', eum: '중', deut: '가운데' },
+        { char: '寸', eum: '촌', deut: '마디' },
+        { char: '女', eum: '녀', deut: '여자' },
+        { char: '六', eum: '륙', deut: '여섯' },
+        { char: '四', eum: '사', deut: '넉' },
+        { char: '五', eum: '오', deut: '다섯' },
+        { char: '外', eum: '외', deut: '바깥' },
+        { char: '北', eum: '북', deut: '북녘' },
+        { char: '母', eum: '모', deut: '어머니' },
+        { char: '白', eum: '백', deut: '흰' },
+        { char: '市', eum: '시', deut: '저자' },
+        { char: '西', eum: '서', deut: '서녘' },
+        { char: '自', eum: '자', deut: '스스로' },
+        { char: '先', eum: '선', deut: '먼저' },
+        { char: '年', eum: '년', deut: '해' }
+    ],
+    level3: [ // 9획+ (14자)
+        { char: '門', eum: '문', deut: '문' },
+        { char: '金', eum: '금', deut: '쇠' },
+        { char: '東', eum: '동', deut: '동녘' },
+        { char: '靑', eum: '청', deut: '푸를' },
+        { char: '弟', eum: '제', deut: '아우' },
+        { char: '南', eum: '남', deut: '남녘' },
+        { char: '軍', eum: '군', deut: '군사' },
+        { char: '校', eum: '교', deut: '학교' },
+        { char: '敎', eum: '교', deut: '가르칠' },
+        { char: '國', eum: '국', deut: '나라' },
+        { char: '問', eum: '문', deut: '물을' },
+        { char: '父', eum: '부', deut: '아버지' },
+        { char: '學', eum: '학', deut: '배울' },
+        { char: '韓', eum: '한', deut: '나라' }
+    ]
+};
 
 // DOM Elements (Game UI)
 const gameContainer = document.getElementById('game-container');
@@ -537,6 +668,16 @@ const stageBgTile1 = document.getElementById('stage-bg-tile-1');
 const stageBgTile2 = document.getElementById('stage-bg-tile-2');
 const stage3Obstacle = document.getElementById('stage3-obstacle');
 const stage3Projectiles = document.getElementById('stage3-projectiles');
+
+// Stage 3 UI Elements
+const stage3Monster = document.getElementById('stage3-monster');
+const stage3HpBar = document.getElementById('stage3-hp-bar');
+const stage3HpFill = document.getElementById('stage3-hp-fill');
+const stage3LevelDisplay = document.getElementById('stage3-level');
+const stage3CurrentHanja = document.getElementById('stage3-current-hanja');
+const stage3HanjaChar = document.getElementById('stage3-hanja-char');
+const stage3HanjaReading = document.getElementById('stage3-hanja-reading');
+const stage3HanjaQueue = document.getElementById('stage3-hanja-queue');
 
 // DOM Elements (Auth UI)
 const authOverlay = document.getElementById('auth-overlay');
@@ -630,6 +771,10 @@ function init() {
                 state.village.stage3AttackFrame = 1;
                 state.village.stage3AttackTimer = performance.now();
                 playerImage.src = 'img/attack1.png';
+
+                // Shoot hanja projectile
+                shootHanja();
+
                 setTimeout(() => {
                     state.village.stage3Attacking = false;
                 }, 400);
@@ -812,23 +957,8 @@ function updateVillageLoop(timestamp) {
             state.village.playerY = state.village.stage3GroundY;
         }
 
-        // Obstacle movement
-        if (state.village.stage3ObstacleActive) {
-            state.village.stage3ObstacleX -= state.village.stage3ObstacleSpeed;
-            stage3Obstacle.style.left = `${state.village.stage3ObstacleX}px`;
-            if (state.village.stage3ObstacleX < -40) {
-                state.village.stage3ObstacleActive = false;
-                stage3Obstacle.classList.add('hidden');
-            }
-        } else if (state.keys.ArrowRight) {
-            if (Math.random() < 0.02) {
-                const containerWidth = stageBgScroll.parentElement.clientWidth;
-                state.village.stage3ObstacleX = containerWidth + 20;
-                stage3Obstacle.style.left = `${state.village.stage3ObstacleX}px`;
-                stage3Obstacle.classList.remove('hidden');
-                state.village.stage3ObstacleActive = true;
-            }
-        }
+        // Update projectiles
+        updateStage3Projectiles();
 
         playerImage.style.left = `${state.village.playerX}px`;
         playerImage.style.bottom = `${state.village.playerY}px`;
@@ -1293,6 +1423,13 @@ function startStage3() {
     state.village.stage3Attacking = false;
     state.village.stage3AttackFrame = 1;
     state.village.stage3AttackTimer = 0;
+    state.village.stage3Projectiles = [];
+
+    // Initialize monster system
+    state.village.stage3Level = 1;
+    state.village.stage3GameStarted = true;
+    state.village.stage3Victory = false;
+
     stage3Obstacle.classList.add('hidden');
     playerImage.style.left = `${state.village.playerX}px`;
     playerImage.style.bottom = `${state.village.playerY}px`;
@@ -1305,9 +1442,19 @@ function startStage3() {
     state.village.baseCollision = null;
     state.village.selectedBase = null;
 
+    // Show Stage 3 UI
+    stage3HpBar.classList.remove('hidden');
+    stage3LevelDisplay.classList.remove('hidden');
+    stage3CurrentHanja.classList.remove('hidden');
+    stage3HanjaQueue.classList.remove('hidden');
+
+    // Initialize hanja queue and spawn monster
+    initializeHanjaQueue(1);
+    spawnMonster(1);
+
     const instructionP = movementInstruction.querySelector('p');
     if (instructionP) {
-        instructionP.textContent = "→ 키를 눌러 달리세요";
+        instructionP.textContent = "스페이스바로 한자 발사!";
     }
     movementInstruction.classList.remove('hidden');
 
@@ -1315,6 +1462,310 @@ function startStage3() {
     if (gameTitle) {
         gameTitle.textContent = "화과산";
     }
+}
+
+// Stage 3: Initialize hanja queue for a level
+function initializeHanjaQueue(level) {
+    const levelKey = `level${level}`;
+    const hanjaList = [...stage3HanjaData[levelKey]];
+    // Shuffle the array
+    for (let i = hanjaList.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [hanjaList[i], hanjaList[j]] = [hanjaList[j], hanjaList[i]];
+    }
+    state.village.stage3HanjaQueue = hanjaList;
+    state.village.stage3CurrentHanjaIndex = 0;
+    updateHanjaUI();
+}
+
+// Stage 3: Update hanja UI display
+function updateHanjaUI() {
+    const queue = state.village.stage3HanjaQueue;
+    const idx = state.village.stage3CurrentHanjaIndex;
+
+    if (idx >= queue.length) {
+        // All hanja used for this level
+        stage3HanjaChar.textContent = '-';
+        stage3HanjaReading.textContent = '';
+        stage3HanjaQueue.innerHTML = '';
+        return;
+    }
+
+    // Update current hanja
+    const current = queue[idx];
+    stage3HanjaChar.textContent = current.char;
+    stage3HanjaReading.textContent = `${current.deut} ${current.eum}`;
+
+    // Update queue preview (next 5)
+    stage3HanjaQueue.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+        const nextIdx = idx + i;
+        if (nextIdx < queue.length) {
+            const item = document.createElement('div');
+            item.className = 'hanja-queue-item';
+            item.textContent = queue[nextIdx].char;
+            stage3HanjaQueue.appendChild(item);
+        }
+    }
+}
+
+// Stage 3: Spawn monster for a level
+function spawnMonster(level) {
+    state.village.stage3MonsterHP = 100;
+    state.village.stage3MonsterMaxHP = 100;
+    state.village.stage3MonsterActive = true;
+    state.village.stage3MonsterX = 400;
+
+    // Set monster image based on level
+    stage3Monster.src = `img/monster${level}/motion1.png`;
+    stage3Monster.classList.remove('hidden', 'monster-defeat');
+    stage3Monster.style.right = '30px';
+
+    // Update level display
+    stage3LevelDisplay.textContent = `Level ${level}/3`;
+
+    // Update HP bar
+    updateMonsterHP();
+
+    // Update background for level
+    updateStage3Background(level);
+}
+
+// Stage 3: Update monster sprite based on HP
+function updateMonsterSprite() {
+    const level = state.village.stage3Level;
+    const hpPercent = (state.village.stage3MonsterHP / state.village.stage3MonsterMaxHP) * 100;
+
+    let motion = 1;
+    if (hpPercent <= 32) {
+        motion = 3;
+    } else if (hpPercent <= 65) {
+        motion = 2;
+    }
+
+    stage3Monster.src = `img/monster${level}/motion${motion}.png`;
+}
+
+// Stage 3: Update monster HP bar
+function updateMonsterHP() {
+    const hpPercent = (state.village.stage3MonsterHP / state.village.stage3MonsterMaxHP) * 100;
+    stage3HpFill.style.width = `${hpPercent}%`;
+
+    // Change color based on HP
+    if (hpPercent <= 32) {
+        stage3HpFill.className = 'h-full bg-gradient-to-r from-red-800 to-red-600 transition-all duration-200';
+    } else if (hpPercent <= 65) {
+        stage3HpFill.className = 'h-full bg-gradient-to-r from-orange-600 to-orange-400 transition-all duration-200';
+    } else {
+        stage3HpFill.className = 'h-full bg-gradient-to-r from-red-600 to-red-400 transition-all duration-200';
+    }
+}
+
+// Stage 3: Damage monster
+function damageMonster(amount) {
+    state.village.stage3MonsterHP -= amount;
+    if (state.village.stage3MonsterHP < 0) state.village.stage3MonsterHP = 0;
+
+    updateMonsterHP();
+    updateMonsterSprite();
+
+    // Hit animation
+    stage3Monster.classList.add('monster-hit');
+    setTimeout(() => {
+        stage3Monster.classList.remove('monster-hit');
+    }, 200);
+
+    // Check if monster defeated
+    if (state.village.stage3MonsterHP <= 0) {
+        defeatMonster();
+    }
+}
+
+// Stage 3: Monster defeated
+function defeatMonster() {
+    state.village.stage3MonsterActive = false;
+    stage3Monster.classList.add('monster-defeat');
+
+    // Play defeat sound
+    playSelectSound();
+
+    setTimeout(() => {
+        const currentLevel = state.village.stage3Level;
+
+        if (currentLevel < 3) {
+            // Next level
+            state.village.stage3Level++;
+            initializeHanjaQueue(state.village.stage3Level);
+            spawnMonster(state.village.stage3Level);
+
+            // Show level clear message
+            const instructionP = movementInstruction.querySelector('p');
+            if (instructionP) {
+                instructionP.textContent = `Level ${state.village.stage3Level} 시작!`;
+                instructionP.classList.add('level-clear-text');
+                setTimeout(() => {
+                    instructionP.classList.remove('level-clear-text');
+                    instructionP.textContent = "스페이스바로 한자 발사!";
+                }, 1500);
+            }
+        } else {
+            // Victory!
+            state.village.stage3Victory = true;
+            showVictory();
+        }
+    }, 600);
+}
+
+// Stage 3: Update background based on level
+function updateStage3Background(level) {
+    const bgImage = `url('img/bg${level}.png')`;
+    stageBgTile1.style.backgroundImage = bgImage;
+    stageBgTile2.style.backgroundImage = bgImage;
+}
+
+// Stage 3: Show victory screen
+function showVictory() {
+    stage3HpBar.classList.add('hidden');
+    stage3LevelDisplay.classList.add('hidden');
+    stage3CurrentHanja.classList.add('hidden');
+    stage3HanjaQueue.classList.add('hidden');
+    stage3Monster.classList.add('hidden');
+
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.innerHTML = '🎉 축하합니다! 모든 레벨 클리어! 🎉';
+        instructionP.classList.add('level-clear-text');
+    }
+    movementInstruction.classList.remove('hidden');
+
+    // Return to village after delay
+    setTimeout(() => {
+        returnToVillage();
+    }, 3000);
+}
+
+// Stage 3: Return to village
+function returnToVillage() {
+    state.village.stage3Active = false;
+    state.village.stage3GameStarted = false;
+    state.village.stage3Victory = false;
+    state.village.stage3Projectiles = [];
+
+    // Hide Stage 3 UI
+    stage3HpBar.classList.add('hidden');
+    stage3LevelDisplay.classList.add('hidden');
+    stage3CurrentHanja.classList.add('hidden');
+    stage3HanjaQueue.classList.add('hidden');
+    stage3Monster.classList.add('hidden');
+    stage3Projectiles.innerHTML = '';
+
+    // Reset background
+    stageBgScroll.classList.add('hidden');
+    stageBgStatic.classList.remove('hidden');
+
+    // Show bases again
+    bases.forEach(base => base.classList.remove('hidden'));
+    state.village.basesActive = true;
+
+    // Reset player position
+    state.village.playerX = 300;
+    playerImage.style.left = `${state.village.playerX}px`;
+    playerImage.style.bottom = '32px';
+    playerImage.src = 'img/run1.png';
+
+    // Update title
+    const gameTitle = document.querySelector('#game-view .absolute.top-3.left-4');
+    if (gameTitle) {
+        gameTitle.textContent = '한자마을';
+    }
+
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "학습할 단계를 선택하세요";
+        instructionP.classList.remove('level-clear-text');
+    }
+}
+
+// Stage 3: TTS speak hanja
+function speakHanja(deut, eum) {
+    if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech
+        speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(`${deut} ${eum}`);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        speechSynthesis.speak(utterance);
+    }
+}
+
+// Stage 3: Shoot hanja projectile
+function shootHanja() {
+    if (!state.village.stage3GameStarted || state.village.stage3Victory) return;
+    if (!state.village.stage3MonsterActive) return;
+
+    const queue = state.village.stage3HanjaQueue;
+    const idx = state.village.stage3CurrentHanjaIndex;
+
+    if (idx >= queue.length) return;
+
+    const hanja = queue[idx];
+
+    // Speak the hanja
+    speakHanja(hanja.deut, hanja.eum);
+
+    // Create projectile element
+    const projectile = document.createElement('div');
+    projectile.className = 'hanja-shot';
+    projectile.textContent = hanja.char;
+    projectile.style.left = `${state.village.playerX + 44}px`;
+    projectile.style.bottom = `${state.village.playerY + 20}px`;
+    stage3Projectiles.appendChild(projectile);
+
+    // Add to projectiles array
+    state.village.stage3Projectiles.push({
+        element: projectile,
+        x: state.village.playerX + 44,
+        y: state.village.playerY + 20,
+        speed: 8,
+        damage: 15 + Math.floor(Math.random() * 10) // 15-24 damage
+    });
+
+    // Move to next hanja
+    state.village.stage3CurrentHanjaIndex++;
+    updateHanjaUI();
+
+    // If we run out of hanja, refill queue
+    if (state.village.stage3CurrentHanjaIndex >= queue.length) {
+        initializeHanjaQueue(state.village.stage3Level);
+    }
+}
+
+// Stage 3: Update projectiles
+function updateStage3Projectiles() {
+    const containerWidth = stageBgScroll.parentElement.clientWidth;
+    const monsterLeft = containerWidth - 100; // Approximate monster hitbox
+
+    state.village.stage3Projectiles = state.village.stage3Projectiles.filter(proj => {
+        proj.x += proj.speed;
+        proj.element.style.left = `${proj.x}px`;
+
+        // Check collision with monster
+        if (state.village.stage3MonsterActive && proj.x >= monsterLeft) {
+            damageMonster(proj.damage);
+            proj.element.remove();
+            return false;
+        }
+
+        // Remove if off screen
+        if (proj.x > containerWidth + 50) {
+            proj.element.remove();
+            return false;
+        }
+
+        return true;
+    });
 }
 
 function sendStageUser() {
