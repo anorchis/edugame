@@ -665,6 +665,13 @@ body {
                         <span class="player-heart">❤️</span>
                         <span class="player-heart">❤️</span>
                     </div>
+                    <!-- Stage 3 UI: Return to Village -->
+                    <button id="stage3-return-btn" class="absolute top-2 right-3 bg-white/20 hover:bg-white/40 text-white rounded-full border border-white/50 backdrop-blur-sm transition-all z-40 p-2 hidden" aria-label="Return to Village">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M4 12l7-7v4h6a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3h-6v4l-7-7z"/>
+                        </svg>
+                    </button>
+
                     <!-- Stage 3: Obstacles Container -->
                     <div id="stage3-obstacles" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
@@ -1045,6 +1052,7 @@ const stage3ItemsContainer = document.getElementById('stage3-items');
 const stage3ScreenFlashContainer = document.getElementById('stage3-screen-flash-container');
 const stage3GameOver = document.getElementById('stage3-game-over');
 const stage3RestartBtn = document.getElementById('stage3-restart-btn');
+const stage3ReturnBtn = document.getElementById('stage3-return-btn');
 const certificateModal = document.getElementById('certificate-modal');
 const certificateName = document.getElementById('certificate-name');
 const certificateDate = document.getElementById('certificate-date');
@@ -2013,6 +2021,7 @@ function startStage3() {
     stage3CurrentHanja.classList.remove('hidden');
     stage3HanjaQueue.classList.remove('hidden');
     stage3PlayerHp.classList.remove('hidden');
+    stage3ReturnBtn.classList.remove('hidden');
     stage3GameOver.classList.add('hidden');
 
     // Reset player HP UI
@@ -2251,6 +2260,7 @@ function showVictory() {
     stage3Monster.classList.add('hidden');
     stage3Monster.style.display = 'none';  // 확실하게 숨김
     stage3PlayerHp.classList.add('hidden');
+    stage3ReturnBtn.classList.add('hidden');
 
     // Clear obstacles
     state.village.stage3Obstacles.forEach(obs => obs.element.remove());
@@ -2301,6 +2311,20 @@ function showVictory() {
     const walkAnimInterval = 150;
 
     function walkToCenter(timestamp) {
+        // 점프 중이면 먼저 착지시킴
+        if (state.village.stage3Jumping || state.village.playerY > state.village.stage3GroundY) {
+            state.village.stage3JumpVelocity -= 0.6;
+            state.village.playerY += state.village.stage3JumpVelocity;
+            if (state.village.playerY <= state.village.stage3GroundY) {
+                state.village.playerY = state.village.stage3GroundY;
+                state.village.stage3Jumping = false;
+                state.village.stage3JumpVelocity = 0;
+            }
+            playerImage.style.bottom = `${state.village.playerY}px`;
+            requestAnimationFrame(walkToCenter);
+            return;
+        }
+
         if (!walkAnimTimer) walkAnimTimer = timestamp;
 
         // Walking animation
@@ -2357,6 +2381,7 @@ function returnToVillage() {
     stage3HanjaQueue.classList.add('hidden');
     stage3Monster.classList.add('hidden');
     stage3PlayerHp.classList.add('hidden');
+    stage3ReturnBtn.classList.add('hidden');
     stage3GameOver.classList.add('hidden');
     stage3Projectiles.innerHTML = '';
     stage3ObstaclesContainer.innerHTML = '';
@@ -2520,14 +2545,16 @@ function spawnObstacle() {
     obstacle.src = `img/obstacle${obstacleNum}.png`;
     obstacle.className = 'stage3-obstacle';
     obstacle.style.right = '-50px';
-    obstacle.style.width = '24px';
+    // obstacle1~2는 작게, obstacle3은 기존 크기
+    const obstacleWidth = obstacleNum <= 2 ? 20 : 24;
+    obstacle.style.width = `${obstacleWidth}px`;
     stage3ObstaclesContainer.appendChild(obstacle);
 
     state.village.stage3Obstacles.push({
         element: obstacle,
         x: stageBgScroll.parentElement.clientWidth + 50,
-        width: 24,
-        hitboxInset: 6,
+        width: obstacleWidth,
+        hitboxInset: 8,
         passed: false
     });
 
@@ -2999,6 +3026,9 @@ stageFrame.addEventListener('load', sendStageUser);
 
 // Stage 3 restart button
 stage3RestartBtn.addEventListener('click', restartStage3);
+stage3ReturnBtn.addEventListener('click', () => {
+    returnToVillage();
+});
 
 window.addEventListener('message', (event) => {
     const data = event.data || {};
