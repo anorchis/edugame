@@ -1128,6 +1128,7 @@ function init() {
             if (!state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
                 state.village.stage3JumpVelocity = 9;
+                playJumpSound();
             }
         }
         if (e.code === 'Space') {
@@ -1431,9 +1432,6 @@ function updateVillageLoop(timestamp) {
             state.village.npcSpokenBori = true;
         }
 
-        if (state.village.npcSpokenOk && state.village.npcSpokenSam && state.village.npcSpokenBori) {
-            showCertificateModal();
-        }
     }
 
     // Apply Position
@@ -1447,7 +1445,7 @@ function triggerBoriDialogue() {
     
     // Change Appearance
     npcBori.src = "img/bori2.png";
-    npcBori.classList.remove('animate-float');
+    npcBori.classList.add('animate-float');
     
     // Setup Dialogue
     currentDialogueSet = boriLines;
@@ -1547,6 +1545,12 @@ function finishNpcDialogue() {
     state.dialogueActive = false;
     dialogueBox.classList.add('hidden');
     dialogueMode = null;
+    if (state.village.stage3Completed &&
+        state.village.npcSpokenOk &&
+        state.village.npcSpokenSam &&
+        state.village.npcSpokenBori) {
+        showCertificateModal();
+    }
 }
 
 function showCertificateModal() {
@@ -1690,6 +1694,22 @@ function playHoverSound() {
 
     oscillator.start(ctx.currentTime);
     oscillator.stop(ctx.currentTime + 0.15);
+}
+
+// Stage 3: Jump sound
+function playJumpSound() {
+    const ctx = getAudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(260, ctx.currentTime + 0.18);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.18);
 }
 
 // Click/select sound - two-tone chime
@@ -2757,7 +2777,7 @@ baseModal.addEventListener('click', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
+    if (e.key !== 'Enter' && e.code !== 'Space') return;
     if (!baseModal.classList.contains('active')) return;
     e.preventDefault();
     e.stopImmediatePropagation();
