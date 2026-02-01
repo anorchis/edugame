@@ -303,24 +303,38 @@ body {
         }
 
         .stage3-touch-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.8);
+            width: 72px;
+            height: 72px;
+            border-radius: 12px;
+            border: 3px solid #8B4513;
             color: #fff;
-            font-size: 22px;
+            font-size: 28px;
             display: none;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.2);
+            position: fixed;
+            bottom: 100px;
+            z-index: 100;
+            font-family: 'Pretendard', serif;
+            font-weight: bold;
         }
 
         #stage3-attack-btn {
-            background: linear-gradient(180deg,#ef4444,#dc2626);
+            background: linear-gradient(180deg, #C41E3A, #8B0000);
+            border-color: #FFD700;
+            left: 20px;
         }
 
         #stage3-jump-btn {
-            background: linear-gradient(180deg,#3b82f6,#2563eb);
+            background: linear-gradient(180deg, #2E8B57, #006400);
+            border-color: #FFD700;
+            right: 20px;
+        }
+
+        .stage3-touch-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.4);
         }
 
         /* Stage 3: Player hit blink effect */
@@ -649,10 +663,12 @@ body {
 
             <!-- Movement Instruction Overlay (Hidden initially) -->
             <div id="movement-instruction" class="hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-xl px-6 py-4 flex items-center justify-center z-40">
-                <button id="stage3-attack-btn" class="stage3-touch-btn" aria-label="한자 발사">⚔️</button>
                 <p class="text-2xl text-gray-400 font-bold text-center">캐릭터를 드래그하세요</p>
-                <button id="stage3-jump-btn" class="stage3-touch-btn" aria-label="점프">⬆️</button>
             </div>
+
+            <!-- Stage 3 Touch Controls (positioned outside instruction box) -->
+            <button id="stage3-attack-btn" class="stage3-touch-btn" aria-label="한자 발사">發</button>
+            <button id="stage3-jump-btn" class="stage3-touch-btn" aria-label="점프">跳</button>
             <div id="tts-fallback" class="tts-fallback"></div>
 
             <!-- Dialogue Box (Hidden initially) -->
@@ -758,7 +774,7 @@ body {
                     <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 360px; transform: scale(0.85);" data-base="3">
 
                     <!-- Player Character -->
-                    <img src="../img/run1.png" alt="Player" class="absolute bottom-[32px] left-[105px] w-11 h-auto filter drop-shadow-lg z-10">
+                    <img src="../img/run1.png" alt="Player" class="absolute bottom-[32px] left-[75px] w-11 h-auto filter drop-shadow-lg z-10">
 
                     <!-- Stage 3 Obstacle -->
                     <img id="stage3-obstacle" src="../img/obstacle1.png" alt="Obstacle" class="absolute bottom-[32px] w-[24px] h-auto hidden">
@@ -775,7 +791,7 @@ body {
                     </div>
 
                     <!-- Stage 3 UI: Player HP (Hearts) -->
-                    <div id="stage3-player-hp" class="absolute top-2 left-[77px] player-hp-container hidden">
+                    <div id="stage3-player-hp" class="absolute top-2 left-[47px] player-hp-container hidden">
                         <span class="player-heart">❤️</span>
                         <span class="player-heart">❤️</span>
                         <span class="player-heart">❤️</span>
@@ -973,8 +989,8 @@ const state = {
         // 아이템 시스템
         stage3Items: [],
         // 몬스터 접근 시스템
-        stage3MonsterApproachSpeed: 0.1,   // 접근 속도
-        stage3MonsterBaseX: 520,           // 몬스터 시작 위치
+        stage3MonsterApproachSpeed: 0.04,  // 접근 속도 (느리게)
+        stage3MonsterBaseX: 620,           // 몬스터 시작 위치 (더 오른쪽)
         stage3MonsterKnockback: 0,         // 넉백 거리
         // 런 애니메이션 타이머
         stage3RunAnimTimer: 0,
@@ -2264,7 +2280,7 @@ function setupStage3Background() {
 function startStage3() {
     state.village.stage3Active = true;
     state.village.stage3BgOffset = 0;
-    state.village.playerX = 105;
+    state.village.playerX = 75;
     state.village.currentImageIndex = 1;
     state.village.lastFrameTime = 0;
     state.village.stage3GroundY = 32;
@@ -2306,7 +2322,7 @@ function startStage3() {
     stageBgScroll.classList.remove('hidden');
     setupStage3Background();
     const stage3Width = stageBgScroll.parentElement.clientWidth;
-    state.village.stage3MonsterBaseX = Math.max(320, stage3Width - 140);
+    state.village.stage3MonsterBaseX = Math.max(420, stage3Width - 40);
 
     // Initialize monster movement
     state.village.stage3MonsterX = state.village.stage3MonsterBaseX;

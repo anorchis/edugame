@@ -408,6 +408,10 @@
         const bgImg = new Image();
         bgImg.src = '../img/hanja.png';
 
+        // 그림 레이어용 오프스크린 캔버스 (지우개가 배경을 지우지 않도록)
+        const drawingCanvas = document.createElement('canvas');
+        const drawingCtx = drawingCanvas.getContext('2d');
+
         // 상태 변수
         let bgOpacity = 0.5;
         let bgScale = 1.0;
@@ -460,6 +464,8 @@
             const container = canvas.parentElement;
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
+            drawingCanvas.width = canvas.width;
+            drawingCanvas.height = canvas.height;
             render();
         }
 
@@ -530,13 +536,15 @@
         // 렌더링
         function render() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+
             ctx.save();
 
             ctx.translate(canvas.width / 2 + panOffset.x, canvas.height / 2 + panOffset.y);
             ctx.scale(zoomLevel, zoomLevel);
             ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
-            // 배경 이미지
+            // 배경 이미지 (메인 캔버스에 직접 그림)
             ctx.save();
             ctx.globalAlpha = bgOpacity;
             if (bgImg.complete && bgImg.naturalWidth > 0) {
@@ -547,9 +555,23 @@
             }
             ctx.restore();
 
-            // 액션 그리기
-            diaryData.actions.forEach(action => drawAction(ctx, action));
+            // 액션은 별도 캔버스에 그림 (지우개가 배경을 지우지 않도록)
+            drawingCtx.save();
+            drawingCtx.translate(canvas.width / 2 + panOffset.x, canvas.height / 2 + panOffset.y);
+            drawingCtx.scale(zoomLevel, zoomLevel);
+            drawingCtx.translate(-canvas.width / 2, -canvas.height / 2);
+            diaryData.actions.forEach(action => drawAction(drawingCtx, action));
+            drawingCtx.restore();
 
+            // 그림 레이어를 메인 캔버스에 합성
+            ctx.restore();
+            ctx.drawImage(drawingCanvas, 0, 0);
+            ctx.save();
+            ctx.translate(canvas.width / 2 + panOffset.x, canvas.height / 2 + panOffset.y);
+            ctx.scale(zoomLevel, zoomLevel);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+            // 배치 중인 스티커 미리보기
             if (placingSticker) {
                 ctx.save();
                 ctx.globalAlpha = 0.6;
@@ -560,6 +582,7 @@
                 ctx.restore();
             }
 
+            // 선택된 스티커 핸들 표시
             if (selectedStickerIndex !== null && diaryData.actions[selectedStickerIndex]) {
                 const a = diaryData.actions[selectedStickerIndex];
                 if (a.type === 'sticker') {
@@ -571,7 +594,7 @@
                     ctx.strokeRect(a.x - half, a.y - half, a.size, a.size);
                     ctx.setLineDash([]);
                     ctx.fillStyle = '#2563eb';
-                    const handle = 6;
+                    const handle = 10;
                     const handles = [
                         { x: a.x - half, y: a.y - half },
                         { x: a.x + half, y: a.y - half },
@@ -621,6 +644,7 @@
 
                 targetCtx.stroke();
             } else if (action.type === 'sticker') {
+                targetCtx.globalAlpha = 1.0;
                 targetCtx.font = `${action.size}px Arial`;
                 targetCtx.textAlign = 'center';
                 targetCtx.textBaseline = 'middle';
@@ -674,7 +698,7 @@
                 { x: a.x - half, y: a.y + half, key: 'sw' }
             ];
             for (const h of handles) {
-                if (distance(pos, h) <= 12) return h.key;
+                if (distance(pos, h) <= 20) return h.key;
             }
             return null;
         }
@@ -778,7 +802,7 @@
                 const p2 = getTouchPos(e.touches[1]);
                 const dist = distance(p1, p2);
                 const ratio = dist / Math.max(1, pinchStartDist);
-                bgScale = clamp(pinchStartScale * ratio, 0.5, 2.5);
+                bgScale = clamp(pinchStartScale * ratio, 0.5, 5.0);
                 render();
                 return;
             }
