@@ -1287,7 +1287,7 @@ function init() {
             e.preventDefault();
             if (!state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 8;
+                state.village.stage3JumpVelocity = 12;
                 playJumpSound();
             }
         }
@@ -1426,7 +1426,7 @@ function init() {
             e.stopPropagation();
             if (state.village.stage3Active && !state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 8;
+                state.village.stage3JumpVelocity = 12;
                 playJumpSound();
             }
         };
@@ -3055,7 +3055,7 @@ function updateStage3Obstacles(timestamp) {
             // Collision check
             if (playerRight > obsLeft && playerLeft < obsRight) {
                 // If player is on the ground (not jumping high enough)
-                if (state.village.playerY < state.village.stage3GroundY + 30) {
+                if (state.village.playerY < state.village.stage3GroundY + 25) {
                     damagePlayer();
                     obs.passed = true; // Don't damage again from same obstacle
                 }
