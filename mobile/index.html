@@ -1673,7 +1673,7 @@ function updateVillageLoop(timestamp) {
 
         // 점프 물리
         if (state.village.stage3Jumping) {
-            state.village.stage3JumpVelocity -= 0.1;
+            state.village.stage3JumpVelocity -= 1.5;
             state.village.playerY += state.village.stage3JumpVelocity;
             // 최대 점프 높이 제한 (bg 영역 안에서만)
             const maxJumpHeight = 95;
@@ -2364,7 +2364,7 @@ function startStage3() {
 
     const instructionP = movementInstruction.querySelector('p');
     if (instructionP) {
-                instructionP.textContent = "왼쪽은 발사, 오른쪽은 점프";
+                instructionP.textContent = "發 발사 ← · → 跳 점프";
     }
     movementInstruction.classList.remove('hidden');
 
@@ -2537,7 +2537,7 @@ function defeatMonster() {
                 instructionP.classList.add('level-clear-text');
                 setTimeout(() => {
                     instructionP.classList.remove('level-clear-text');
-                    instructionP.textContent = "왼쪽은 발사, 오른쪽은 점프";
+                    instructionP.textContent = "發 발사 ← · → 跳 점프";
                 }, 1500);
             }
         } else {
@@ -2931,7 +2931,7 @@ function spawnObstacle() {
     obstacle.className = 'stage3-obstacle';
     obstacle.style.right = '-50px';
     // obstacle1~2는 작게, obstacle3은 기존 크기
-    const obstacleWidth = obstacleNum <= 2 ? 20 : 24;
+    const obstacleWidth = obstacleNum <= 2 ? 16 : 20;
     obstacle.style.width = `${obstacleWidth}px`;
     stage3ObstaclesContainer.appendChild(obstacle);
 
@@ -2939,7 +2939,7 @@ function spawnObstacle() {
         element: obstacle,
         x: stageBgScroll.parentElement.clientWidth + 50,
         width: obstacleWidth,
-        hitboxInset: 8,
+        hitboxInset: 10,
         passed: false
     });
 
@@ -3315,7 +3315,7 @@ function restartStage3() {
     // Show instruction
     const instructionP = movementInstruction.querySelector('p');
     if (instructionP) {
-        instructionP.textContent = "왼쪽은 발사, 오른쪽은 점프";
+        instructionP.textContent = "發 발사 ← · → 跳 점프";
     }
     movementInstruction.classList.remove('hidden');
 }
