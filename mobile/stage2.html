@@ -140,32 +140,6 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        .opacity-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            color: #fff;
-            font-weight: 700;
-            font-size: 14px;
-        }
-        .opacity-slider {
-            width: 160px;
-            height: 8px;
-            -webkit-appearance: none;
-            background: #ddd;
-            border-radius: 4px;
-            outline: none;
-        }
-        .opacity-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: var(--deep-green);
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
 
         .color-btn {
             width: 36px;
@@ -402,10 +376,6 @@
                 <input id="colorPicker" class="color-picker" type="color" value="#000000" aria-label="색상 선택">
                 <input type="range" class="size-slider" id="sizeSlider" min="2" max="30" value="8">
             </div>
-            <div class="opacity-row">
-                <span>투명도 조절</span>
-                <input type="range" class="opacity-slider" id="opacitySlider" min="0" max="1" step="0.05" value="0.5" aria-label="투명도 조절">
-            </div>
         </div>
 
         <!-- 스티커 선택 패널 -->
@@ -435,8 +405,6 @@
         // 캔버스 설정
         const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
-        const drawLayer = document.createElement('canvas');
-        const drawCtx = drawLayer.getContext('2d');
         const bgImg = new Image();
         bgImg.src = '../img/hanja.png';
 
@@ -472,7 +440,6 @@
         const brushTypeBtns = document.querySelectorAll('.brush-type-btn');
         const sizeSlider = document.getElementById('sizeSlider');
         const colorPicker = document.getElementById('colorPicker');
-        const opacitySlider = document.getElementById('opacitySlider');
         const stickerPanel = document.getElementById('sticker-panel');
         const stickerGrid = document.getElementById('sticker-grid');
         const confirmOverlay = document.getElementById('confirm-overlay');
@@ -493,8 +460,6 @@
             const container = canvas.parentElement;
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
-            drawLayer.width = canvas.width;
-            drawLayer.height = canvas.height;
             render();
         }
 
@@ -556,8 +521,6 @@
                     btn.classList.toggle('active', btn.dataset.brush === brushType);
                 });
 
-                if (opacitySlider) opacitySlider.value = bgOpacity;
-
                 render();
             } catch (e) {
                 console.error('Failed to load state:', e);
@@ -584,15 +547,8 @@
             }
             ctx.restore();
 
-            drawCtx.setTransform(1, 0, 0, 1, 0, 0);
-            drawCtx.clearRect(0, 0, drawLayer.width, drawLayer.height);
-            drawCtx.save();
-            drawCtx.translate(canvas.width / 2 + panOffset.x, canvas.height / 2 + panOffset.y);
-            drawCtx.scale(zoomLevel, zoomLevel);
-            drawCtx.translate(-canvas.width / 2, -canvas.height / 2);
-            diaryData.actions.forEach(action => drawAction(drawCtx, action));
-            drawCtx.restore();
-            ctx.drawImage(drawLayer, 0, 0);
+            // 액션 그리기
+            diaryData.actions.forEach(action => drawAction(ctx, action));
 
             if (placingSticker) {
                 ctx.save();
@@ -615,7 +571,7 @@
                     ctx.strokeRect(a.x - half, a.y - half, a.size, a.size);
                     ctx.setLineDash([]);
                     ctx.fillStyle = '#2563eb';
-                    const handle = 9;
+                    const handle = 6;
                     const handles = [
                         { x: a.x - half, y: a.y - half },
                         { x: a.x + half, y: a.y - half },
@@ -718,7 +674,7 @@
                 { x: a.x - half, y: a.y + half, key: 'sw' }
             ];
             for (const h of handles) {
-                if (distance(pos, h) <= 16) return h.key;
+                if (distance(pos, h) <= 12) return h.key;
             }
             return null;
         }
@@ -822,7 +778,7 @@
                 const p2 = getTouchPos(e.touches[1]);
                 const dist = distance(p1, p2);
                 const ratio = dist / Math.max(1, pinchStartDist);
-                bgScale = clamp(pinchStartScale * ratio, 0.5, 4);
+                bgScale = clamp(pinchStartScale * ratio, 0.5, 2.5);
                 render();
                 return;
             }
@@ -881,7 +837,6 @@
             isDrawing = false;
             isPanning = false;
             stickerDragMode = null;
-            render();
         });
 
         // 도구 버튼 이벤트
@@ -941,14 +896,6 @@
             activeSize = parseInt(sizeSlider.value);
             scheduleSave();
         });
-
-        if (opacitySlider) {
-            opacitySlider.addEventListener('input', () => {
-                bgOpacity = parseFloat(opacitySlider.value);
-                render();
-                scheduleSave();
-            });
-        }
 
         // 스티커 선택
         function selectSticker(emoji) {
