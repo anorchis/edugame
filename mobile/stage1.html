@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>수련장 1: 한자 카드 (모바일)</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Noto+Sans+KR:wght@400;700;900&family=Noto+Serif+KR:wght@600;900&display=swap" rel="stylesheet">
+
+    <!-- Common Mobile Styles -->
+    <link rel="stylesheet" href="common.css">
+
+    <style>
+        body {
+            background: #020617;
+            font-family: 'Noto Serif KR', serif;
+        }
+
+        /* 전체 레이아웃 */
+        .game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 상단 헤더 */
+        .game-header {
+            padding: 12px 16px;
+            padding-top: calc(12px + env(safe-area-inset-top, 0));
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .back-button {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stage-title {
+            font-family: 'Nanum Brush Script', cursive;
+            font-size: 28px;
+            color: #f59e0b;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+        }
+
+        .score-display {
+            font-size: 14px;
+            color: #fbbf24;
+            font-weight: 700;
+        }
+
+        /* 마력 게이지 */
+        .gauge-container {
+            padding: 0 16px;
+            margin-top: calc(68px + env(safe-area-inset-top, 0));
+        }
+
+        .gauge-wrap {
+            width: 100%;
+            height: 12px;
+            background: #1f1f1f;
+            border-radius: 6px;
+            border: 2px solid #78350f;
+            overflow: hidden;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #fbbf24);
+            transition: width 0.1s linear;
+            border-radius: 4px;
+        }
+
+        /* 콤보 표시 */
+        .combo-display {
+            text-align: center;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .combo-text {
+            font-family: 'Nanum Brush Script', cursive;
+            font-size: 24px;
+            color: #3b82f6;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+        }
+
+        /* 카드 그리드 영역 */
+        .grid-area {
+            flex: 1;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .card-grid {
+            display: grid;
+            gap: 8px;
+            grid-template-columns: repeat(4, 1fr);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        /* 카드 스타일 */
+        .card-container {
+            aspect-ratio: 3 / 4;
+            perspective: 800px;
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s ease-out;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card.matched {
+            opacity: 0;
+            transform: scale(0.8) rotateY(180deg);
+            transition: all 0.4s ease-out;
+            pointer-events: none;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            border: 2px solid #d97706;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .card-front {
+            background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+            color: #451a03;
+            transform: rotateY(180deg);
+            flex-direction: column;
+            padding: 4px;
+        }
+
+        .card-back {
+            background: linear-gradient(180deg, #450a0a 0%, #1c0a0a 100%);
+            background-image: url('../img/card.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .card-back::after {
+            content: '封';
+            font-size: clamp(24px, 8vw, 48px);
+            color: rgba(251, 191, 36, 0.15);
+            font-weight: 900;
+        }
+
+        .hanja-char {
+            font-size: clamp(24px, 10vw, 48px);
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .hanja-meaning {
+            font-size: clamp(12px, 4vw, 18px);
+            font-weight: 700;
+            text-align: center;
+            white-space: pre-line;
+            line-height: 1.2;
+        }
+
+        /* 마법 오버레이 */
+        .magic-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .magic-overlay.active {
+            opacity: 1;
+        }
+
+        .magic-char {
+            font-family: 'Nanum Brush Script', cursive;
+            font-size: 120px;
+            color: #fbbf24;
+            text-shadow: 0 0 40px rgba(251, 191, 36, 1);
+            line-height: 1;
+        }
+
+        .magic-desc {
+            font-size: 28px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 24px;
+            border-radius: 24px;
+            border: 2px solid #f59e0b;
+            margin-top: 16px;
+        }
+
+        /* 로비 화면 */
+        .lobby-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            padding: 24px;
+        }
+
+        .lobby-screen.hidden {
+            display: none;
+        }
+
+        .lobby-content {
+            background: linear-gradient(180deg, rgba(20, 15, 10, 0.9), rgba(20, 15, 10, 0.95)),
+                        url('../img/modal1.png') center/cover;
+            border: 2px solid #78350f;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+
+        .lobby-title {
+            font-family: 'Nanum Brush Script', cursive;
+            font-size: 36px;
+            color: #f59e0b;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 1);
+            margin-bottom: 20px;
+        }
+
+        .lobby-info {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #78350f;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(120, 53, 15, 0.3);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #a8a29e;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-weight: 900;
+        }
+
+        .lobby-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .lobby-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 12px;
+            border: 2px solid #fef3c7;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .lobby-btn:active {
+            transform: translateY(4px);
+        }
+
+        .lobby-btn.primary {
+            background: linear-gradient(180deg, #d97706 0%, #92400e 100%);
+            color: #fef3c7;
+            box-shadow: 0 4px 0 #451a03;
+        }
+
+        .lobby-btn.primary:active {
+            box-shadow: 0 0 0 #451a03;
+        }
+
+        .lobby-btn.secondary {
+            background: linear-gradient(180deg, #57534e 0%, #44403c 100%);
+            color: #fef3c7;
+            box-shadow: 0 4px 0 #292524;
+        }
+
+        /* 결과 화면 */
+        .result-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            padding: 24px;
+        }
+
+        .result-screen.active {
+            display: flex;
+        }
+
+        .result-content {
+            background: linear-gradient(180deg, rgba(20, 15, 10, 0.9), rgba(20, 15, 10, 0.95)),
+                        url('../img/modal1.png') center/cover;
+            border: 2px solid #78350f;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+
+        .result-title {
+            font-family: 'Nanum Brush Script', cursive;
+            font-size: 36px;
+            color: #f59e0b;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 1);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body class="portrait-only">
+    <!-- 가로 모드 경고 -->
+    <div class="landscape-warning">
+        <div class="landscape-warning-icon">📱</div>
+        <div class="landscape-warning-text">세로 모드로 플레이해주세요</div>
+    </div>
+
+    <div class="mobile-container">
+        <!-- 로비 화면 -->
+        <div id="lobby-screen" class="lobby-screen">
+            <div class="lobby-content">
+                <h2 class="lobby-title">수련 대기실</h2>
+                <div class="lobby-info">
+                    <div class="info-row">
+                        <span class="info-label">👤 수련생</span>
+                        <span id="lobby-username" class="info-value" style="color: #fbbf24;">수련 대원</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">💎 누적 마력</span>
+                        <span id="lobby-score" class="info-value" style="color: #f97316;">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">🏆 최고 단계</span>
+                        <span id="lobby-level" class="info-value" style="color: #ef4444;">Stage 1</span>
+                    </div>
+                </div>
+                <div class="lobby-buttons">
+                    <button id="btn-continue" class="lobby-btn primary">
+                        이어하기 <span id="continue-stage">(Stage 1)</span>
+                    </button>
+                    <button id="btn-new" class="lobby-btn secondary">
+                        처음부터
+                    </button>
+                    <button id="btn-back" class="lobby-btn secondary" style="background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%); border-color: #9ca3af;">
+                        돌아가기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 게임 화면 -->
+        <div id="game-container" class="game-container" style="display: none;">
+            <!-- 상단 헤더 -->
+            <div class="game-header">
+                <button id="btn-exit" class="back-button">✕</button>
+                <div class="stage-title">Stage <span id="cur-stage">1</span></div>
+                <div class="score-display">💎 <span id="cur-score">0</span></div>
+            </div>
+
+            <!-- 마력 게이지 -->
+            <div class="gauge-container">
+                <div class="gauge-wrap">
+                    <div id="time-bar" class="gauge-fill"></div>
+                </div>
+            </div>
+
+            <!-- 콤보 표시 -->
+            <div class="combo-display">
+                <span id="combo-text" class="combo-text"></span>
+            </div>
+
+            <!-- 카드 그리드 -->
+            <div class="grid-area">
+                <div id="card-grid" class="card-grid"></div>
+            </div>
+        </div>
+
+        <!-- 마법 오버레이 -->
+        <div id="magic-overlay" class="magic-overlay">
+            <div id="magic-char" class="magic-char"></div>
+            <div id="magic-desc" class="magic-desc"></div>
+        </div>
+
+        <!-- 결과 화면 -->
+        <div id="result-screen" class="result-screen">
+            <div class="result-content">
+                <h2 class="result-title">수련 종료</h2>
+                <div class="lobby-info">
+                    <div class="info-row">
+                        <span class="info-label">💎 얻은 마력</span>
+                        <span id="result-score" class="info-value" style="color: #f97316;">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">🏆 도달 단계</span>
+                        <span id="result-stage" class="info-value" style="color: #ef4444;">Stage 1</span>
+                    </div>
+                </div>
+                <div class="lobby-buttons">
+                    <button id="btn-save" class="lobby-btn primary">기록 저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 한자 데이터
+        const hanjas = [
+            {id:1, c:"一", m:"한", s:"일"},
+            {id:2, c:"二", m:"두", s:"이"},
+            {id:3, c:"三", m:"석", s:"삼"},
+            {id:4, c:"四", m:"넉", s:"사"},
+            {id:5, c:"五", m:"다섯", s:"오"},
+            {id:6, c:"六", m:"여섯", s:"육"},
+            {id:7, c:"七", m:"일곱", s:"칠"},
+            {id:8, c:"八", m:"여덟", s:"팔"},
+            {id:9, c:"九", m:"아홉", s:"구"},
+            {id:10, c:"十", m:"열", s:"십"},
+            {id:11, c:"日", m:"날", s:"일"},
+            {id:12, c:"月", m:"달", s:"월"},
+            {id:13, c:"火", m:"불", s:"화"},
+            {id:14, c:"水", m:"물", s:"수"},
+            {id:15, c:"木", m:"나무", s:"목"},
+            {id:16, c:"金", m:"쇠", s:"금"},
+            {id:17, c:"土", m:"흙", s:"토"},
+            {id:18, c:"大", m:"큰", s:"대"},
+            {id:19, c:"小", m:"작을", s:"소"},
+            {id:20, c:"中", m:"가운데", s:"중"},
+            {id:21, c:"長", m:"길", s:"장"},
+            {id:22, c:"山", m:"뫼", s:"산"},
+            {id:23, c:"門", m:"문", s:"문"},
+            {id:24, c:"東", m:"동녘", s:"동"},
+            {id:25, c:"西", m:"서녘", s:"서"},
+            {id:26, c:"南", m:"남녘", s:"남"},
+            {id:27, c:"北", m:"북녘", s:"북"},
+            {id:28, c:"外", m:"바깥", s:"외"},
+            {id:29, c:"室", m:"집", s:"실"},
+            {id:30, c:"人", m:"사람", s:"인"},
+            {id:31, c:"女", m:"여자", s:"녀"},
+            {id:32, c:"父", m:"아버지", s:"부"},
+            {id:33, c:"母", m:"어머니", s:"모"},
+            {id:34, c:"兄", m:"형", s:"형"},
+            {id:35, c:"弟", m:"아우", s:"제"},
+            {id:36, c:"王", m:"임금", s:"왕"},
+            {id:37, c:"民", m:"백성", s:"민"},
+            {id:38, c:"軍", m:"군사", s:"군"},
+            {id:39, c:"國", m:"나라", s:"국"},
+            {id:40, c:"校", m:"학교", s:"교"},
+            {id:41, c:"學", m:"배울", s:"학"},
+            {id:42, c:"敎", m:"가르칠", s:"교"},
+            {id:43, c:"生", m:"날", s:"생"},
+            {id:44, c:"白", m:"흰", s:"백"},
+            {id:45, c:"靑", m:"푸를", s:"청"},
+            {id:46, c:"年", m:"해", s:"년"},
+            {id:47, c:"先", m:"먼저", s:"선"},
+            {id:48, c:"萬", m:"일만", s:"만"},
+            {id:49, c:"寸", m:"마디", s:"촌"},
+            {id:50, c:"韓", m:"나라이름", s:"한"}
+        ];
+
+        // 모바일용 스테이지 레이아웃 (4열 고정, 행만 증가)
+        const stageLayouts = [
+            { r: 2, c: 2 },  // Stage 1:  4장
+            { r: 2, c: 3 },  // Stage 2:  6장
+            { r: 2, c: 4 },  // Stage 3:  8장
+            { r: 3, c: 4 },  // Stage 4:  12장
+            { r: 4, c: 4 },  // Stage 5:  16장
+            { r: 5, c: 4 },  // Stage 6:  20장
+            { r: 6, c: 4 },  // Stage 7:  24장
+            { r: 7, c: 4 },  // Stage 8:  28장
+            { r: 8, c: 4 },  // Stage 9:  32장
+            { r: 9, c: 4 },  // Stage 10: 36장
+            { r: 10, c: 4 }, // Stage 11: 40장
+            { r: 10, c: 4 }, // Stage 12: 40장
+        ];
+
+        // 게임 상태
+        let stage = 1;
+        let total = 0;
+        let stageScore = 0;
+        let timeRemaining = 0;
+        let active = false;
+        let timer = null;
+        let flippedCards = [];
+        let matchedCount = 0;
+        let combo = 0;
+        const storageKey = 'hanjaGameData:mobile';
+
+        // DOM 요소
+        const lobbyScreen = document.getElementById('lobby-screen');
+        const gameContainer = document.getElementById('game-container');
+        const resultScreen = document.getElementById('result-screen');
+        const magicOverlay = document.getElementById('magic-overlay');
+        const cardGrid = document.getElementById('card-grid');
+        const timeBar = document.getElementById('time-bar');
+        const comboText = document.getElementById('combo-text');
+
+        // 진행 상황 불러오기
+        function loadProgress() {
+            try {
+                return JSON.parse(localStorage.getItem(storageKey) || '{"score":0,"level":1}');
+            } catch {
+                return { score: 0, level: 1 };
+            }
+        }
+
+        // 진행 상황 저장
+        function saveProgress(nextLevel) {
+            const level = Math.min(Math.max(1, nextLevel), stageLayouts.length);
+            localStorage.setItem(storageKey, JSON.stringify({
+                score: total + stageScore,
+                level
+            }));
+        }
+
+        // 로비 초기화
+        function initLobby() {
+            const data = loadProgress();
+            total = data.score || 0;
+            stage = data.level || 1;
+
+            document.getElementById('lobby-score').textContent = total;
+            document.getElementById('lobby-level').textContent = `Stage ${stage}`;
+            document.getElementById('continue-stage').textContent = `(Stage ${stage})`;
+        }
+
+        // 점수 업데이트
+        function updateScore() {
+            document.getElementById('cur-score').textContent = total + stageScore;
+        }
+
+        // 게임 시작
+        function startGame(fromBeginning = false) {
+            if (fromBeginning) {
+                stage = 1;
+            }
+            lobbyScreen.classList.add('hidden');
+            gameContainer.style.display = 'flex';
+            stageScore = 0;
+            initStage();
+        }
+
+        // 스테이지 초기화
+        function initStage() {
+            active = true;
+            flippedCards = [];
+            matchedCount = 0;
+            combo = 0;
+            comboText.textContent = '';
+
+            document.getElementById('cur-stage').textContent = stage;
+            updateScore();
+
+            if (stage > stageLayouts.length) {
+                endGame();
+                return;
+            }
+
+            const layout = stageLayouts[stage - 1];
+            const r = layout.r;
+            const c = layout.c;
+            const pairs = (r * c) / 2;
+
+            // 해금된 한자 수 계산
+            const progress = Math.min(1, (stage + 5) / 16);
+            const unlockCount = Math.max(pairs, Math.ceil(progress * hanjas.length));
+            const pool = hanjas.slice(0, unlockCount);
+            const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, pairs);
+
+            // 카드 생성
+            let cards = [];
+            shuffled.forEach(h => {
+                cards.push({ ...h, type: 'c', t: h.c });
+                cards.push({ ...h, type: 's', t: `${h.m}\n[${h.s}]` });
+            });
+            cards.sort(() => Math.random() - 0.5);
+
+            // 그리드 설정
+            cardGrid.innerHTML = '';
+            cardGrid.style.gridTemplateColumns = `repeat(${c}, 1fr)`;
+
+            // 카드 렌더링
+            cards.forEach(d => {
+                const container = document.createElement('div');
+                container.className = 'card-container';
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.id = d.id;
+                card.dataset.type = d.type;
+
+                const front = document.createElement('div');
+                front.className = 'card-face card-front';
+                front.innerHTML = `<div class="${d.type === 'c' ? 'hanja-char' : 'hanja-meaning'}">${d.t}</div>`;
+
+                const back = document.createElement('div');
+                back.className = 'card-face card-back';
+
+                card.appendChild(front);
+                card.appendChild(back);
+                container.appendChild(card);
+
+                container.addEventListener('click', () => flip(card, d));
+                cardGrid.appendChild(container);
+            });
+
+            // 타이머 시작
+            timeRemaining = pairs * 10;
+            if (timer) clearInterval(timer);
+            const totalTime = timeRemaining;
+
+            timer = setInterval(() => {
+                timeRemaining -= 0.1;
+                timeBar.style.width = (timeRemaining / totalTime * 100) + '%';
+                if (timeRemaining <= 0) endGame();
+            }, 100);
+        }
+
+        // 카드 뒤집기
+        function flip(el, d) {
+            if (!active || flippedCards.length >= 2) return;
+            if (el.classList.contains('flipped') || el.classList.contains('matched')) return;
+
+            el.classList.add('flipped');
+            flippedCards.push({ el, d });
+
+            if (flippedCards.length === 2) {
+                check();
+            }
+        }
+
+        // 매칭 확인
+        function check() {
+            const [a, b] = flippedCards;
+
+            if (a.d.id === b.d.id && a.d.type !== b.d.type) {
+                // 매칭 성공
+                stageScore += 10;
+                matchedCount += 2;
+                combo++;
+                updateScore();
+                timeRemaining = Math.min(timeRemaining + 3, 150);
+
+                showMagic(a.d);
+
+                if (combo >= 3) {
+                    triggerHint();
+                }
+
+                setTimeout(() => {
+                    a.el.classList.add('matched');
+                    b.el.classList.add('matched');
+                    flippedCards = [];
+
+                    if (matchedCount === document.querySelectorAll('.card').length) {
+                        clearInterval(timer);
+                        if (stage >= stageLayouts.length) {
+                            saveProgress(stage);
+                            endGame();
+                        } else {
+                            saveProgress(stage + 1);
+                            stage++;
+                            setTimeout(initStage, 600);
+                        }
+                    }
+                }, 500);
+            } else {
+                // 매칭 실패
+                combo = 0;
+                timeRemaining -= 2;
+                comboText.textContent = '';
+
+                setTimeout(() => {
+                    a.el.classList.remove('flipped');
+                    b.el.classList.remove('flipped');
+                    flippedCards = [];
+                }, 500);
+            }
+        }
+
+        // 힌트 발동 (3콤보 이상)
+        function triggerHint() {
+            comboText.textContent = `${combo} 콤보!`;
+            speak("힌트 마법!");
+
+            const unmatched = Array.from(document.querySelectorAll('.card:not(.matched):not(.flipped)'));
+            if (unmatched.length >= 2) {
+                const id = unmatched[0].dataset.id;
+                const pair = unmatched.filter(c => c.dataset.id === id);
+                pair.forEach(c => c.classList.add('flipped'));
+                setTimeout(() => {
+                    pair.forEach(c => {
+                        if (!c.classList.contains('matched')) {
+                            c.classList.remove('flipped');
+                        }
+                    });
+                }, 600);
+            }
+        }
+
+        // 마법 효과 표시
+        function showMagic(d) {
+            document.getElementById('magic-char').textContent = d.c;
+            document.getElementById('magic-desc').textContent = `${d.m} ${d.s}`;
+            magicOverlay.classList.add('active');
+            speak(`${d.m} ${d.s}`);
+
+            setTimeout(() => {
+                magicOverlay.classList.remove('active');
+            }, 700);
+        }
+
+        // 게임 종료
+        function endGame() {
+            active = false;
+            if (timer) clearInterval(timer);
+
+            speak("수련 시간이 끝났다!");
+
+            document.getElementById('result-score').textContent = stageScore;
+            document.getElementById('result-stage').textContent = `Stage ${stage}`;
+            resultScreen.classList.add('active');
+            gameContainer.style.display = 'none';
+        }
+
+        // 게임 종료 및 저장
+        function finishGame() {
+            total += stageScore;
+            localStorage.setItem(storageKey, JSON.stringify({ score: total, level: stage }));
+
+            // 모바일 메인으로 스테이지 완료 알림
+            const mobileState = JSON.parse(localStorage.getItem('mobileGameState') || '{}');
+            mobileState.stage1Completed = true;
+            localStorage.setItem('mobileGameState', JSON.stringify(mobileState));
+
+            window.location.href = 'index.html?completed=1';
+        }
+
+        // TTS
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ko-KR';
+                utterance.rate = 1.2;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // 이벤트 리스너
+        document.getElementById('btn-continue').addEventListener('click', () => startGame(false));
+        document.getElementById('btn-new').addEventListener('click', () => startGame(true));
+        document.getElementById('btn-back').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+        document.getElementById('btn-exit').addEventListener('click', () => {
+            if (confirm('정말 나가시겠습니까? 진행 중인 내용이 저장되지 않습니다.')) {
+                if (timer) clearInterval(timer);
+                window.location.href = 'index.html';
+            }
+        });
+        document.getElementById('btn-save').addEventListener('click', finishGame);
+
+        // 초기화
+        initLobby();
+        speak("수련장에 잘 왔다! 준비됐으면 시작해볼까?");
+    </script>
+</body>
+</html>

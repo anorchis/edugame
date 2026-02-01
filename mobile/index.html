@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>마법천자문: 8급 한자 수호대 (모바일)</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Common Mobile Styles -->
+    <link rel="stylesheet" href="common.css">
+
+    <style>
+        body {
+            background: linear-gradient(180deg, #0c0a1d 0%, #1a1035 50%, #0c0a1d 100%);
+        }
+
+        /* 인트로 화면 */
+        .intro-screen {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 배경 이미지 */
+        .intro-bg {
+            position: absolute;
+            inset: 0;
+            background: url('../img/bg.png') center/cover no-repeat;
+            opacity: 0.3;
+            filter: blur(2px);
+        }
+
+        /* 컨텐츠 래퍼 */
+        .intro-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            max-width: 360px;
+        }
+
+        /* 로고/타이틀 영역 */
+        .game-logo {
+            margin-bottom: 8px;
+        }
+
+        .game-logo img {
+            width: 120px;
+            height: auto;
+            filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.5));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .game-title {
+            font-family: 'Nanum Pen Script', cursive;
+            font-size: 42px;
+            font-weight: 700;
+            color: #fbbf24;
+            text-shadow:
+                0 0 20px rgba(251, 191, 36, 0.8),
+                0 4px 8px rgba(0, 0, 0, 0.8);
+            line-height: 1.2;
+        }
+
+        .game-subtitle {
+            font-size: 16px;
+            color: #9ca3af;
+            font-weight: 500;
+            letter-spacing: 2px;
+        }
+
+        /* 캐릭터 이미지 */
+        .characters {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .character-img {
+            width: 80px;
+            height: auto;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+        }
+
+        .character-img.bori {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* 메뉴 버튼들 */
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .menu-btn {
+            width: 100%;
+            padding: 18px 24px;
+            font-size: 20px;
+            font-weight: 700;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-btn:active {
+            transform: translateY(4px);
+        }
+
+        .menu-btn.start {
+            background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+            color: #fff;
+            box-shadow: 0 6px 0 #92400e, 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .menu-btn.start:active {
+            box-shadow: 0 2px 0 #92400e, 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .menu-btn.continue {
+            background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff;
+            box-shadow: 0 6px 0 #1d4ed8, 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .menu-btn.continue:active {
+            box-shadow: 0 2px 0 #1d4ed8, 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .menu-btn.web-version {
+            background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+            color: #fff;
+            box-shadow: 0 6px 0 #374151, 0 8px 16px rgba(0, 0, 0, 0.4);
+            font-size: 16px;
+            padding: 14px 20px;
+        }
+
+        .menu-btn.web-version:active {
+            box-shadow: 0 2px 0 #374151, 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 스테이지 선택 화면 */
+        .stage-select-screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            padding: 24px;
+            padding-top: calc(24px + env(safe-area-inset-top, 0));
+        }
+
+        .stage-select-screen.active {
+            display: flex;
+        }
+
+        .intro-screen.hidden {
+            display: none;
+        }
+
+        .screen-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fbbf24;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .stages-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        .stage-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .stage-card:active {
+            transform: scale(0.98);
+        }
+
+        .stage-card.locked {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .stage-card.completed {
+            border-color: #22c55e;
+        }
+
+        .stage-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .stage-card.locked .stage-icon {
+            background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+        }
+
+        .stage-info {
+            flex: 1;
+        }
+
+        .stage-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .stage-desc {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .stage-status {
+            font-size: 24px;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+            background: linear-gradient(0deg, rgba(12,10,29,1) 0%, transparent 100%);
+        }
+
+        /* 로딩 화면 */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #0c0a1d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.5s;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            font-size: 16px;
+            color: #9ca3af;
+        }
+
+        /* 버전 정보 */
+        .version-info {
+            position: absolute;
+            bottom: calc(16px + env(safe-area-inset-bottom, 0));
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body class="portrait-only">
+    <!-- 가로 모드 경고 -->
+    <div class="landscape-warning">
+        <div class="landscape-warning-icon">📱</div>
+        <div class="landscape-warning-text">세로 모드로 플레이해주세요</div>
+    </div>
+
+    <div class="mobile-container">
+        <!-- 로딩 화면 -->
+        <div id="loading-screen" class="loading-screen">
+            <div class="spinner"></div>
+            <div class="loading-text">로딩 중...</div>
+        </div>
+
+        <!-- 인트로 화면 -->
+        <div id="intro-screen" class="intro-screen">
+            <div class="intro-bg"></div>
+            <div class="intro-content fade-in">
+                <div class="game-logo">
+                    <img src="../img/hanja.png" alt="마법천자문">
+                </div>
+                <h1 class="game-title">마법천자문</h1>
+                <p class="game-subtitle">8급 한자 수호대</p>
+
+                <div class="characters">
+                    <img src="../img/run1.png" alt="주인공" class="character-img">
+                    <img src="../img/bori.png" alt="보리도사" class="character-img bori">
+                </div>
+
+                <div class="menu-buttons">
+                    <button id="btn-start" class="menu-btn start pulse">게임 시작</button>
+                    <button id="btn-continue" class="menu-btn continue" style="display: none;">이어하기</button>
+                    <button id="btn-web" class="menu-btn web-version">웹 버전으로 보기</button>
+                </div>
+            </div>
+            <div class="version-info">Mobile v1.0</div>
+        </div>
+
+        <!-- 스테이지 선택 화면 -->
+        <div id="stage-select-screen" class="stage-select-screen">
+            <h2 class="screen-title">스테이지 선택</h2>
+
+            <div class="stages-grid">
+                <!-- Stage 1: 카드 매칭 -->
+                <div class="stage-card" data-stage="1">
+                    <div class="stage-icon">🀄</div>
+                    <div class="stage-info">
+                        <div class="stage-name">수련장 1: 한자 카드</div>
+                        <div class="stage-desc">같은 뜻의 한자 카드를 찾아 짝을 맞춰요</div>
+                    </div>
+                    <div class="stage-status">▶</div>
+                </div>
+
+                <!-- Stage 2: 그림판 -->
+                <div class="stage-card" data-stage="2">
+                    <div class="stage-icon">🎨</div>
+                    <div class="stage-info">
+                        <div class="stage-name">수련장 2: 한자 그리기</div>
+                        <div class="stage-desc">손가락으로 한자를 직접 써봐요</div>
+                    </div>
+                    <div class="stage-status">▶</div>
+                </div>
+
+                <!-- Stage 3: 사이드스크롤러 -->
+                <div class="stage-card" data-stage="3">
+                    <div class="stage-icon">⚔️</div>
+                    <div class="stage-info">
+                        <div class="stage-name">수련장 3: 마을 지키기</div>
+                        <div class="stage-desc">몬스터를 물리치고 마을을 지켜요</div>
+                    </div>
+                    <div class="stage-status">▶</div>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <button id="btn-back-intro" class="btn btn-secondary" style="width: 100%;">뒤로가기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM 요소
+        const loadingScreen = document.getElementById('loading-screen');
+        const introScreen = document.getElementById('intro-screen');
+        const stageSelectScreen = document.getElementById('stage-select-screen');
+        const btnStart = document.getElementById('btn-start');
+        const btnContinue = document.getElementById('btn-continue');
+        const btnWeb = document.getElementById('btn-web');
+        const btnBackIntro = document.getElementById('btn-back-intro');
+        const stageCards = document.querySelectorAll('.stage-card');
+
+        // 게임 상태
+        let gameState = {
+            stage1Completed: false,
+            stage2Completed: false,
+            stage3Completed: false
+        };
+
+        // 로컬 스토리지에서 상태 불러오기
+        function loadGameState() {
+            const saved = localStorage.getItem('mobileGameState');
+            if (saved) {
+                try {
+                    gameState = JSON.parse(saved);
+                    // 이어하기 버튼 표시
+                    if (gameState.stage1Completed || gameState.stage2Completed || gameState.stage3Completed) {
+                        btnContinue.style.display = 'block';
+                    }
+                } catch (e) {
+                    console.error('Failed to load game state:', e);
+                }
+            }
+        }
+
+        // 게임 상태 저장
+        function saveGameState() {
+            localStorage.setItem('mobileGameState', JSON.stringify(gameState));
+        }
+
+        // 스테이지 상태 업데이트
+        function updateStageCards() {
+            stageCards.forEach(card => {
+                const stage = card.dataset.stage;
+                if (gameState[`stage${stage}Completed`]) {
+                    card.classList.add('completed');
+                    card.querySelector('.stage-status').textContent = '✅';
+                }
+            });
+        }
+
+        // 화면 전환
+        function showScreen(screenId) {
+            introScreen.classList.add('hidden');
+            stageSelectScreen.classList.remove('active');
+
+            if (screenId === 'intro') {
+                introScreen.classList.remove('hidden');
+            } else if (screenId === 'stage-select') {
+                stageSelectScreen.classList.add('active');
+                updateStageCards();
+            }
+        }
+
+        // 스테이지 시작
+        function startStage(stageNum) {
+            switch (stageNum) {
+                case '1':
+                    window.location.href = 'stage1.html';
+                    break;
+                case '2':
+                    window.location.href = 'stage2.html';
+                    break;
+                case '3':
+                    // Stage 3은 아직 구현 전, 모달로 알림
+                    alert('Stage 3은 준비 중입니다!');
+                    break;
+            }
+        }
+
+        // 이벤트 리스너
+        btnStart.addEventListener('click', () => {
+            showScreen('stage-select');
+        });
+
+        btnContinue.addEventListener('click', () => {
+            showScreen('stage-select');
+        });
+
+        btnWeb.addEventListener('click', () => {
+            // 웹 버전으로 이동 (세션 스토리지에 플래그 설정)
+            sessionStorage.setItem('forceDesktop', 'true');
+            window.location.href = '../index.html';
+        });
+
+        btnBackIntro.addEventListener('click', () => {
+            showScreen('intro');
+        });
+
+        stageCards.forEach(card => {
+            card.addEventListener('click', () => {
+                if (!card.classList.contains('locked')) {
+                    startStage(card.dataset.stage);
+                }
+            });
+        });
+
+        // 초기화
+        function init() {
+            loadGameState();
+
+            // 로딩 완료 후 화면 표시
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+            }, 500);
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', init);
+
+        // URL 파라미터로 스테이지 완료 처리
+        const urlParams = new URLSearchParams(window.location.search);
+        const completedStage = urlParams.get('completed');
+        if (completedStage) {
+            gameState[`stage${completedStage}Completed`] = true;
+            saveGameState();
+            // URL 파라미터 제거
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    </script>
+</body>
+</html>

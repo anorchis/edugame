@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>수련장 2: 한자 그리기 (모바일)</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Common Mobile Styles -->
+    <link rel="stylesheet" href="common.css">
+
+    <style>
+        :root {
+            --deep-green: #0F4221;
+            --pure-white: #FFFFFF;
+            --soft-beige: #E8C78E;
+            --dark-brown: #312117;
+            --muted-taupe: #625152;
+        }
+
+        body {
+            background: var(--soft-beige);
+            font-family: 'Gaegu', cursive;
+            overflow: hidden;
+        }
+
+        .mobile-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 상단 헤더 */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            padding-top: calc(12px + env(safe-area-inset-top, 0));
+            background: var(--deep-green);
+            color: white;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 캔버스 영역 */
+        .canvas-area {
+            flex: 1;
+            background: var(--pure-white);
+            position: relative;
+            overflow: hidden;
+            border: 4px solid var(--dark-brown);
+            border-radius: 0;
+            margin: 8px;
+            margin-bottom: 0;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        #mainCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+
+        /* 하단 도구바 */
+        .bottom-toolbar {
+            background: var(--muted-taupe);
+            padding: 12px 8px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* 도구 버튼 행 */
+        .tool-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .tool-btn {
+            width: 52px;
+            height: 52px;
+            background: var(--pure-white);
+            border-radius: 14px;
+            border: 3px solid var(--dark-brown);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 0 var(--dark-brown);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .tool-btn:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        .tool-btn.active {
+            background: var(--soft-beige);
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        /* 옵션 행 (색상, 굵기) */
+        .option-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .color-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid var(--dark-brown);
+            cursor: pointer;
+        }
+
+        .color-btn.active {
+            box-shadow: 0 0 0 3px var(--pure-white), 0 0 0 6px var(--dark-brown);
+        }
+
+        .size-slider {
+            width: 120px;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--deep-green);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* 스티커 선택 패널 */
+        .sticker-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--pure-white);
+            border-top: 3px solid var(--dark-brown);
+            border-radius: 20px 20px 0 0;
+            padding: 16px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            z-index: 100;
+        }
+
+        .sticker-panel.active {
+            transform: translateY(0);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--dark-brown);
+        }
+
+        .panel-close {
+            width: 32px;
+            height: 32px;
+            background: var(--muted-taupe);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 16px;
+        }
+
+        .sticker-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .sticker-item {
+            aspect-ratio: 1;
+            background: #f9f9f9;
+            border-radius: 12px;
+            border: 2px solid #eee;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sticker-item:active {
+            background: var(--soft-beige);
+        }
+
+        /* 컨펌 모달 */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .confirm-overlay.active {
+            display: flex;
+        }
+
+        .confirm-box {
+            background: var(--pure-white);
+            padding: 24px;
+            border-radius: 20px;
+            border: 4px solid var(--dark-brown);
+            text-align: center;
+            width: 280px;
+        }
+
+        .confirm-msg {
+            font-size: 20px;
+            color: var(--dark-brown);
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .confirm-btns {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            font-family: 'Gaegu', cursive;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .confirm-yes {
+            background: #8B0000;
+            color: white;
+        }
+
+        .confirm-no {
+            background: var(--muted-taupe);
+            color: white;
+        }
+
+        /* 붓 종류 */
+        .brush-type-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .brush-type-btn {
+            padding: 6px 12px;
+            border: 2px solid var(--dark-brown);
+            border-radius: 8px;
+            background: #f9f9f9;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--dark-brown);
+        }
+
+        .brush-type-btn.active {
+            background: var(--deep-green);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- 상단 헤더 -->
+        <header class="app-header">
+            <button id="btn-back" class="header-btn">←</button>
+            <h1 class="header-title">한자 쓰기 스튜디오</h1>
+            <div class="header-actions">
+                <button id="btn-undo" class="header-btn">↩️</button>
+                <button id="btn-clear" class="header-btn">🗑️</button>
+            </div>
+        </header>
+
+        <!-- 캔버스 영역 -->
+        <div class="canvas-area">
+            <canvas id="mainCanvas"></canvas>
+        </div>
+
+        <!-- 하단 도구바 -->
+        <div class="bottom-toolbar">
+            <!-- 도구 버튼들 -->
+            <div class="tool-row">
+                <button class="tool-btn active" data-mode="draw">🖌️</button>
+                <button class="tool-btn" data-mode="sticker">🐻</button>
+                <button class="tool-btn" data-mode="pan">🖐️</button>
+                <button class="tool-btn" data-mode="eraser">🧽</button>
+            </div>
+
+            <!-- 붓 종류 -->
+            <div class="brush-type-row" id="brush-types">
+                <button class="brush-type-btn active" data-brush="normal">연필</button>
+                <button class="brush-type-btn" data-brush="calligraphy">서예</button>
+                <button class="brush-type-btn" data-brush="glow">형광</button>
+            </div>
+
+            <!-- 색상 + 굵기 -->
+            <div class="option-row">
+                <button class="color-btn active" data-color="#000000" style="background:#000000"></button>
+                <button class="color-btn" data-color="#312117" style="background:#312117"></button>
+                <button class="color-btn" data-color="#8B0000" style="background:#8B0000"></button>
+                <button class="color-btn" data-color="#0F4221" style="background:#0F4221"></button>
+                <button class="color-btn" data-color="#00008B" style="background:#00008B"></button>
+                <button class="color-btn" data-color="#FFD700" style="background:#FFD700"></button>
+                <input type="range" class="size-slider" id="sizeSlider" min="2" max="30" value="8">
+            </div>
+        </div>
+
+        <!-- 스티커 선택 패널 -->
+        <div id="sticker-panel" class="sticker-panel">
+            <div class="panel-header">
+                <span class="panel-title">칭찬 스티커</span>
+                <button id="btn-close-sticker" class="panel-close">✕</button>
+            </div>
+            <div class="sticker-grid" id="sticker-grid">
+                <!-- 스티커들이 동적으로 추가됨 -->
+            </div>
+        </div>
+
+        <!-- 컨펌 모달 -->
+        <div id="confirm-overlay" class="confirm-overlay">
+            <div class="confirm-box">
+                <div class="confirm-msg" id="confirm-msg">초기화할까요?</div>
+                <div class="confirm-btns">
+                    <button id="confirm-yes" class="confirm-btn confirm-yes">네</button>
+                    <button id="confirm-no" class="confirm-btn confirm-no">아니오</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 캔버스 설정
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        const bgImg = new Image();
+        bgImg.src = '../img/hanja.png';
+
+        // 상태 변수
+        let bgOpacity = 0.5;
+        let zoomLevel = 1.0;
+        let panOffset = { x: 0, y: 0 };
+        let lastTouchPos = { x: 0, y: 0 };
+
+        let diaryData = { actions: [] };
+        let mode = 'draw';
+        let brushType = 'normal';
+        let isDrawing = false;
+        let isPanning = false;
+        let activeColor = '#000000';
+        let activeSize = 8;
+        let currentSticker = '🐻';
+        const storageKey = 'hanjaStage2:mobile';
+        let saveTimer = null;
+
+        // DOM 요소
+        const toolBtns = document.querySelectorAll('.tool-btn');
+        const colorBtns = document.querySelectorAll('.color-btn');
+        const brushTypeBtns = document.querySelectorAll('.brush-type-btn');
+        const sizeSlider = document.getElementById('sizeSlider');
+        const stickerPanel = document.getElementById('sticker-panel');
+        const stickerGrid = document.getElementById('sticker-grid');
+        const confirmOverlay = document.getElementById('confirm-overlay');
+
+        // 스티커 목록
+        const emojis = ['🐻','✅','⭐','❤️','👍','🎉','🍀','✨','🥇','🔥','💎','🌈'];
+
+        // 초기화
+        function init() {
+            initCanvas();
+            initStickers();
+            loadState();
+            bgImg.onload = render;
+            if (bgImg.complete) render();
+        }
+
+        function initCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            render();
+        }
+
+        function initStickers() {
+            stickerGrid.innerHTML = '';
+            emojis.forEach(emoji => {
+                const item = document.createElement('button');
+                item.className = 'sticker-item';
+                item.textContent = emoji;
+                item.addEventListener('click', () => selectSticker(emoji));
+                stickerGrid.appendChild(item);
+            });
+        }
+
+        // 상태 저장/불러오기
+        function scheduleSave() {
+            if (saveTimer) clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveState, 300);
+        }
+
+        function saveState() {
+            const payload = {
+                bgOpacity,
+                zoomLevel,
+                panOffset,
+                activeColor,
+                activeSize,
+                brushType,
+                currentSticker,
+                diaryData
+            };
+            localStorage.setItem(storageKey, JSON.stringify(payload));
+        }
+
+        function loadState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+                if (!saved) return;
+
+                bgOpacity = saved.bgOpacity ?? bgOpacity;
+                zoomLevel = saved.zoomLevel ?? zoomLevel;
+                panOffset = saved.panOffset ?? panOffset;
+                activeColor = saved.activeColor ?? activeColor;
+                activeSize = saved.activeSize ?? activeSize;
+                brushType = saved.brushType ?? brushType;
+                currentSticker = saved.currentSticker ?? currentSticker;
+                diaryData = saved.diaryData ?? diaryData;
+
+                sizeSlider.value = activeSize;
+
+                colorBtns.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.color === activeColor);
+                });
+
+                brushTypeBtns.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.brush === brushType);
+                });
+
+                render();
+            } catch (e) {
+                console.error('Failed to load state:', e);
+            }
+        }
+
+        // 렌더링
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+
+            ctx.translate(canvas.width / 2 + panOffset.x, canvas.height / 2 + panOffset.y);
+            ctx.scale(zoomLevel, zoomLevel);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+            // 배경 이미지
+            ctx.save();
+            ctx.globalAlpha = bgOpacity;
+            if (bgImg.complete && bgImg.naturalWidth > 0) {
+                const scale = Math.min(canvas.width / bgImg.width, canvas.height / bgImg.height) * 0.9;
+                const x = (canvas.width - bgImg.width * scale) / 2;
+                const y = (canvas.height - bgImg.height * scale) / 2;
+                ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
+            }
+            ctx.restore();
+
+            // 액션 그리기
+            diaryData.actions.forEach(action => drawAction(ctx, action));
+
+            ctx.restore();
+        }
+
+        function drawAction(targetCtx, action) {
+            targetCtx.save();
+
+            if (action.type === 'line' || action.type === 'eraser') {
+                if (action.type === 'eraser') {
+                    targetCtx.globalCompositeOperation = "destination-out";
+                } else {
+                    targetCtx.strokeStyle = action.color;
+                    if (action.brush === 'normal') {
+                        targetCtx.globalAlpha = 0.8;
+                    } else if (action.brush === 'calligraphy') {
+                        targetCtx.lineCap = 'butt';
+                    } else if (action.brush === 'glow') {
+                        targetCtx.lineCap = 'butt';
+                        targetCtx.lineJoin = 'miter';
+                        targetCtx.globalAlpha = 0.3;
+                        targetCtx.shadowBlur = 10;
+                        targetCtx.shadowColor = action.color;
+                    }
+                }
+
+                targetCtx.lineWidth = action.size;
+                targetCtx.lineCap = (action.brush === 'glow') ? 'butt' : 'round';
+                targetCtx.lineJoin = 'round';
+                targetCtx.beginPath();
+
+                action.points.forEach((p, i) => {
+                    if (i === 0) targetCtx.moveTo(p.x, p.y);
+                    else targetCtx.lineTo(p.x, p.y);
+                });
+
+                targetCtx.stroke();
+            } else if (action.type === 'sticker') {
+                targetCtx.font = `${action.size}px Arial`;
+                targetCtx.textAlign = 'center';
+                targetCtx.textBaseline = 'middle';
+                targetCtx.fillText(action.content, action.x, action.y);
+            }
+
+            targetCtx.restore();
+        }
+
+        // 터치 좌표 변환
+        function getTouchPos(touch) {
+            const rect = canvas.getBoundingClientRect();
+            const sx = touch.clientX - rect.left;
+            const sy = touch.clientY - rect.top;
+
+            const x = (sx - (canvas.width / 2 + panOffset.x)) / zoomLevel + canvas.width / 2;
+            const y = (sy - (canvas.height / 2 + panOffset.y)) / zoomLevel + canvas.height / 2;
+
+            return { x, y, sx, sy };
+        }
+
+        // 터치 이벤트
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const pos = getTouchPos(touch);
+            lastTouchPos = { x: touch.clientX, y: touch.clientY };
+
+            if (mode === 'pan') {
+                isPanning = true;
+            } else if (mode === 'sticker') {
+                diaryData.actions.push({
+                    type: 'sticker',
+                    x: pos.x,
+                    y: pos.y,
+                    content: currentSticker,
+                    size: activeSize * 4
+                });
+                render();
+                scheduleSave();
+            } else if (mode === 'eraser') {
+                // 스티커 지우기 체크
+                let deleted = false;
+                for (let i = diaryData.actions.length - 1; i >= 0; i--) {
+                    const a = diaryData.actions[i];
+                    if (a.type === 'sticker') {
+                        const dist = Math.sqrt((pos.x - a.x) ** 2 + (pos.y - a.y) ** 2);
+                        if (dist < a.size / 2) {
+                            diaryData.actions.splice(i, 1);
+                            deleted = true;
+                            render();
+                            scheduleSave();
+                            break;
+                        }
+                    }
+                }
+                if (!deleted) {
+                    isDrawing = true;
+                    diaryData.actions.push({
+                        type: 'eraser',
+                        brush: 'normal',
+                        points: [pos],
+                        color: '#fff',
+                        size: activeSize * 2
+                    });
+                }
+            } else {
+                isDrawing = true;
+                diaryData.actions.push({
+                    type: 'line',
+                    brush: brushType,
+                    points: [pos],
+                    color: activeColor,
+                    size: activeSize
+                });
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const pos = getTouchPos(touch);
+
+            if (isPanning) {
+                panOffset.x += touch.clientX - lastTouchPos.x;
+                panOffset.y += touch.clientY - lastTouchPos.y;
+                lastTouchPos = { x: touch.clientX, y: touch.clientY };
+                render();
+            } else if (isDrawing) {
+                diaryData.actions[diaryData.actions.length - 1].points.push(pos);
+                render();
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', () => {
+            isDrawing = false;
+            isPanning = false;
+            scheduleSave();
+        });
+
+        // 도구 버튼 이벤트
+        toolBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const newMode = btn.dataset.mode;
+                setMode(newMode);
+
+                if (newMode === 'sticker') {
+                    stickerPanel.classList.add('active');
+                }
+            });
+        });
+
+        function setMode(m) {
+            mode = m;
+            toolBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === m);
+            });
+
+            // 붓 종류는 그리기 모드에서만 표시
+            document.getElementById('brush-types').style.display =
+                (m === 'draw') ? 'flex' : 'none';
+        }
+
+        // 색상 버튼 이벤트
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                activeColor = btn.dataset.color;
+                colorBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                scheduleSave();
+            });
+        });
+
+        // 붓 종류 버튼 이벤트
+        brushTypeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                brushType = btn.dataset.brush;
+                brushTypeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                scheduleSave();
+            });
+        });
+
+        // 굵기 슬라이더
+        sizeSlider.addEventListener('input', () => {
+            activeSize = parseInt(sizeSlider.value);
+            scheduleSave();
+        });
+
+        // 스티커 선택
+        function selectSticker(emoji) {
+            currentSticker = emoji;
+            stickerPanel.classList.remove('active');
+            setMode('sticker');
+        }
+
+        document.getElementById('btn-close-sticker').addEventListener('click', () => {
+            stickerPanel.classList.remove('active');
+        });
+
+        // 뒤로가기
+        document.getElementById('btn-back').addEventListener('click', () => {
+            // 모바일 상태 업데이트
+            const mobileState = JSON.parse(localStorage.getItem('mobileGameState') || '{}');
+            mobileState.stage2Completed = true;
+            localStorage.setItem('mobileGameState', JSON.stringify(mobileState));
+
+            window.location.href = 'index.html?completed=2';
+        });
+
+        // 취소 (Undo)
+        document.getElementById('btn-undo').addEventListener('click', () => {
+            if (diaryData.actions.length > 0) {
+                diaryData.actions.pop();
+                render();
+                scheduleSave();
+            }
+        });
+
+        // 초기화
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            showConfirm("모든 그림과 스티커를 초기화할까요?", () => {
+                diaryData.actions = [];
+                render();
+                scheduleSave();
+            });
+        });
+
+        // 컨펌 모달
+        let confirmCallback = null;
+
+        function showConfirm(msg, onYes) {
+            document.getElementById('confirm-msg').textContent = msg;
+            confirmCallback = onYes;
+            confirmOverlay.classList.add('active');
+        }
+
+        document.getElementById('confirm-yes').addEventListener('click', () => {
+            if (confirmCallback) confirmCallback();
+            confirmOverlay.classList.remove('active');
+        });
+
+        document.getElementById('confirm-no').addEventListener('click', () => {
+            confirmOverlay.classList.remove('active');
+        });
+
+        // 화면 리사이즈
+        window.addEventListener('resize', initCanvas);
+
+        // 시작
+        init();
+    </script>
+</body>
+</html>
