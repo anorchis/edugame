@@ -841,7 +841,7 @@ body {
                     <img id="npc-sam-1" src="../img/sam1.png" alt="Sam 1" class="absolute bottom-[30px] left-[250px] w-[50px] h-auto z-0">
                     <img id="npc-sam-2" src="../img/sam2.png" alt="Sam 2" class="absolute bottom-[30px] left-[250px] w-[50px] h-auto z-0 hidden">
                     <img id="npc-bori-3" src="../img/bori3.png" alt="Bori 3" class="absolute bottom-[30px] left-[340px] w-[50px] h-auto z-0">
-                    <img id="npc-bori-4" src="../img/bori4.png" alt="Bori 4" class="absolute bottom-[30px] left-[380px] w-[50px] h-auto z-0 hidden">
+                    <img id="npc-bori-4" src="../img/bori4.png" alt="Bori 4" class="absolute bottom-[30px] left-[340px] w-[50px] h-auto z-0 hidden">
 
                     <!-- Game UI Overlay (Example: Score, Level) -->
                     <div class="absolute top-3 left-4 text-white text-lg drop-shadow-md" style="font-family: 'Pretendard', sans-serif;">
@@ -1287,7 +1287,7 @@ function init() {
             e.preventDefault();
             if (!state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 8.5;
+                state.village.stage3JumpVelocity = 8;
                 playJumpSound();
             }
         }
@@ -1426,7 +1426,7 @@ function init() {
             e.stopPropagation();
             if (state.village.stage3Active && !state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 8.5;
+                state.village.stage3JumpVelocity = 8;
                 playJumpSound();
             }
         };
@@ -1673,7 +1673,7 @@ function updateVillageLoop(timestamp) {
 
         // 점프 물리
         if (state.village.stage3Jumping) {
-            state.village.stage3JumpVelocity -= 0.4;
+            state.village.stage3JumpVelocity -= 0.35;
             state.village.playerY += state.village.stage3JumpVelocity;
             if (state.village.playerY <= state.village.stage3GroundY) {
                 state.village.playerY = state.village.stage3GroundY;
@@ -2644,7 +2644,7 @@ function showVictory() {
     function walkToCenter(timestamp) {
         // 점프 중이면 먼저 착지시킴
         if (state.village.stage3Jumping || state.village.playerY > state.village.stage3GroundY) {
-            state.village.stage3JumpVelocity -= 0.4;
+            state.village.stage3JumpVelocity -= 0.35;
             state.village.playerY += state.village.stage3JumpVelocity;
             if (state.village.playerY <= state.village.stage3GroundY) {
                 state.village.playerY = state.village.stage3GroundY;
