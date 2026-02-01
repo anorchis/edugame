@@ -835,13 +835,13 @@ body {
                     </div>
 
                     <img id="npc-ok-1" src="../img/ok1.png" alt="Ok 1" class="absolute bottom-[30px] left-[30px] w-[50px] h-auto z-0">
-                    <img id="npc-ok-2" src="../img/ok2.png" alt="Ok 2" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0 hidden">
+                    <img id="npc-ok-2" src="../img/ok2.png" alt="Ok 2" class="absolute bottom-[30px] left-[30px] w-[50px] h-auto z-0 hidden">
                     <!-- NPC: Bori Dosa -->
                     <img id="npc-bori" src="../img/bori.png" alt="Bori Dosa" class="absolute bottom-[30px] left-[174px] w-[55px] h-auto filter drop-shadow-lg z-0 animate-float">
                     <img id="npc-sam-1" src="../img/sam1.png" alt="Sam 1" class="absolute bottom-[30px] left-[250px] w-[50px] h-auto z-0">
-                    <img id="npc-sam-2" src="../img/sam2.png" alt="Sam 2" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0 hidden">
+                    <img id="npc-sam-2" src="../img/sam2.png" alt="Sam 2" class="absolute bottom-[30px] left-[250px] w-[50px] h-auto z-0 hidden">
                     <img id="npc-bori-3" src="../img/bori3.png" alt="Bori 3" class="absolute bottom-[30px] left-[340px] w-[50px] h-auto z-0">
-                    <img id="npc-bori-4" src="../img/bori4.png" alt="Bori 4" class="absolute bottom-[30px] left-[430px] w-[50px] h-auto z-0 hidden">
+                    <img id="npc-bori-4" src="../img/bori4.png" alt="Bori 4" class="absolute bottom-[30px] left-[380px] w-[50px] h-auto z-0 hidden">
 
                     <!-- Game UI Overlay (Example: Score, Level) -->
                     <div class="absolute top-3 left-4 text-white text-lg drop-shadow-md" style="font-family: 'Pretendard', sans-serif;">
@@ -990,7 +990,7 @@ const state = {
         stage3Items: [],
         // 몬스터 접근 시스템
         stage3MonsterApproachSpeed: 0.02,  // 접근 속도 (아주 느리게)
-        stage3MonsterBaseX: 580,           // 몬스터 시작 위치 (40px 왼쪽으로)
+        stage3MonsterBaseX: 520,           // 몬스터 시작 위치 (더 왼쪽으로)
         stage3MonsterKnockback: 0,         // 넉백 거리
         // 런 애니메이션 타이머
         stage3RunAnimTimer: 0,
@@ -1287,7 +1287,7 @@ function init() {
             e.preventDefault();
             if (!state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 10;
+                state.village.stage3JumpVelocity = 8.5;
                 playJumpSound();
             }
         }
@@ -1426,7 +1426,7 @@ function init() {
             e.stopPropagation();
             if (state.village.stage3Active && !state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 10;
+                state.village.stage3JumpVelocity = 8.5;
                 playJumpSound();
             }
         };
@@ -2322,7 +2322,7 @@ function startStage3() {
     stageBgScroll.classList.remove('hidden');
     setupStage3Background();
     const stage3Width = stageBgScroll.parentElement.clientWidth;
-    state.village.stage3MonsterBaseX = Math.max(380, stage3Width - 80);
+    state.village.stage3MonsterBaseX = Math.max(320, stage3Width - 140);
 
     // Initialize monster movement
     state.village.stage3MonsterX = state.village.stage3MonsterBaseX;
