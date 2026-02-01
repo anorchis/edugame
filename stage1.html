@@ -84,6 +84,23 @@
             box-shadow: 0 0 50px #000;
         }
         .title-magic { font-size: 2.25rem; font-weight: 900; margin-bottom: 1rem; color: #f59e0b; font-family: 'Nanum Brush Script', cursive; text-shadow: 0 0 20px rgba(251, 191, 36, 1); }
+        .tts-fallback {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff7d1;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            z-index: 120;
+            pointer-events: none;
+        }
+        .tts-fallback.show { opacity: 1; }
     </style>
 </head>
 <body>
@@ -94,6 +111,7 @@
             <div id="magicChar" class="text-[12rem] leading-none magic-glow"></div>
             <div id="magicDesc" class="text-4xl mt-4 bg-black/80 px-8 py-2 rounded-full border-2 border-orange-500"></div>
         </div>
+        <div id="ttsFallback" class="tts-fallback"></div>
 
         <div id="lobbyArea" class="inner-modal">
             <div class="scroll-content">
@@ -438,7 +456,43 @@
             location.reload();
         }
 
-        function speak(t) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang = 'ko-KR'; m.rate = 1.2; window.speechSynthesis.speak(m); }
+        let ttsUnlocked = false;
+        let ttsFallbackTimer = null;
+
+        function unlockTTS() {
+            if (!('speechSynthesis' in window) || ttsUnlocked) return;
+            ttsUnlocked = true;
+            const u = new SpeechSynthesisUtterance(' ');
+            u.lang = 'ko-KR';
+            u.volume = 0;
+            window.speechSynthesis.speak(u);
+            window.speechSynthesis.cancel();
+        }
+
+        function showTtsFallback(text) {
+            const el = document.getElementById('ttsFallback');
+            if (!el) return;
+            el.textContent = text;
+            el.classList.add('show');
+            if (ttsFallbackTimer) clearTimeout(ttsFallbackTimer);
+            ttsFallbackTimer = setTimeout(() => el.classList.remove('show'), 1200);
+        }
+
+        function speak(t) {
+            if (!('speechSynthesis' in window)) {
+                showTtsFallback(t);
+                return;
+            }
+            unlockTTS();
+            window.speechSynthesis.resume();
+            window.speechSynthesis.cancel();
+            const m = new SpeechSynthesisUtterance(t);
+            m.lang = 'ko-KR';
+            m.rate = 1.2;
+            window.speechSynthesis.speak(m);
+        }
+
+        document.addEventListener('pointerdown', unlockTTS, { once: true });
     </script>
 </body>
 </html>

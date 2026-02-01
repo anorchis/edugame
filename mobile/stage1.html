@@ -107,6 +107,23 @@
             color: #3b82f6;
             text-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
         }
+        .tts-fallback {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff7d1;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            z-index: 200;
+            pointer-events: none;
+        }
+        .tts-fallback.show { opacity: 1; }
 
         /* 카드 그리드 영역 */
         .grid-area {
@@ -451,6 +468,7 @@
             <div id="magic-char" class="magic-char"></div>
             <div id="magic-desc" class="magic-desc"></div>
         </div>
+        <div id="ttsFallback" class="tts-fallback"></div>
 
         <!-- 결과 화면 -->
         <div id="result-screen" class="result-screen">
@@ -811,6 +829,7 @@
         }
 
         let ttsUnlocked = false;
+        let ttsFallbackTimer = null;
         function getKoreanVoice() {
             const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
             return voices.find(v => v.lang === 'ko-KR') || voices.find(v => v.lang.startsWith('ko')) || null;
@@ -826,19 +845,30 @@
             window.speechSynthesis.cancel();
         }
 
+        function showTtsFallback(text) {
+            const el = document.getElementById('ttsFallback');
+            if (!el) return;
+            el.textContent = text;
+            el.classList.add('show');
+            if (ttsFallbackTimer) clearTimeout(ttsFallbackTimer);
+            ttsFallbackTimer = setTimeout(() => el.classList.remove('show'), 1200);
+        }
+
         // TTS
         function speak(text) {
-            if ('speechSynthesis' in window) {
-                unlockTTS();
-                window.speechSynthesis.resume();
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                const voice = getKoreanVoice();
-                if (voice) utterance.voice = voice;
-                utterance.lang = 'ko-KR';
-                utterance.rate = 1.2;
-                window.speechSynthesis.speak(utterance);
+            if (!('speechSynthesis' in window)) {
+                showTtsFallback(text);
+                return;
             }
+            unlockTTS();
+            window.speechSynthesis.resume();
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voice = getKoreanVoice();
+            if (voice) utterance.voice = voice;
+            utterance.lang = 'ko-KR';
+            utterance.rate = 1.2;
+            window.speechSynthesis.speak(utterance);
         }
 
         function setReturnToVillageAfterBori() {
