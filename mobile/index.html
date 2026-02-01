@@ -1287,7 +1287,7 @@ function init() {
             e.preventDefault();
             if (!state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 12;
+                state.village.stage3JumpVelocity = 8;
                 playJumpSound();
             }
         }
@@ -1426,7 +1426,7 @@ function init() {
             e.stopPropagation();
             if (state.village.stage3Active && !state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 12;
+                state.village.stage3JumpVelocity = 8;
                 playJumpSound();
             }
         };
