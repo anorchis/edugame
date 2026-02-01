@@ -276,6 +276,31 @@ body {
             animation: monster-wobble 0.3s ease-in-out infinite, monster-hit 0.2s ease-out;
         }
 
+        #movement-instruction {
+            gap: 10px;
+        }
+
+        .stage3-touch-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.8);
+            color: #fff;
+            font-size: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+        }
+
+        #stage3-attack-btn {
+            background: linear-gradient(180deg,#ef4444,#dc2626);
+        }
+
+        #stage3-jump-btn {
+            background: linear-gradient(180deg,#3b82f6,#2563eb);
+        }
+
         /* Stage 3: Player hit blink effect */
         @keyframes player-blink {
             0%, 100% { opacity: 1; }
@@ -602,7 +627,9 @@ body {
 
             <!-- Movement Instruction Overlay (Hidden initially) -->
             <div id="movement-instruction" class="hidden absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-xl px-6 py-4 flex items-center justify-center z-40">
+                <button id="stage3-attack-btn" class="stage3-touch-btn" aria-label="한자 발사">⚔️</button>
                 <p class="text-2xl text-gray-400 font-bold text-center">방향키(←, →)를 눌러 이동하세요</p>
+                <button id="stage3-jump-btn" class="stage3-touch-btn" aria-label="점프">⬆️</button>
             </div>
 
             <!-- Dialogue Box (Hidden initially) -->
@@ -704,8 +731,8 @@ body {
 
                     <!-- End Points -->
                     <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item" style="left: 200px;" data-base="1">
-                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 285px; transform: scale(1.5);" data-base="2">
-                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 370px; transform: scale(0.85);" data-base="3">
+                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 283px; transform: scale(1.5);" data-base="2">
+                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 366px; transform: scale(0.85);" data-base="3">
 
                     <!-- Player Character -->
                     <img src="../img/run1.png" alt="Player" class="absolute bottom-[32px] left-[105px] w-11 h-auto filter drop-shadow-lg z-10">
@@ -1291,19 +1318,10 @@ function init() {
         }, { passive: true });
 
         // Stage 3 터치 컨트롤 (점프 + 공격 버튼)
-        const stage3Controls = document.createElement('div');
-        stage3Controls.id = 'stage3-touch-controls';
-        stage3Controls.style.cssText = 'position:absolute;bottom:10px;right:10px;display:none;flex-direction:column;gap:8px;z-index:70;';
-        stage3Controls.innerHTML = `
-            <button id="touch-attack" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(180deg,#ef4444,#dc2626);border:3px solid #fef2f2;font-size:24px;color:white;box-shadow:0 4px 0 #b91c1c;">⚔️</button>
-            <button id="touch-jump" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(180deg,#3b82f6,#2563eb);border:3px solid #eff6ff;font-size:24px;color:white;box-shadow:0 4px 0 #1d4ed8;">⬆️</button>
-        `;
-        gameContainer.appendChild(stage3Controls);
+        const touchAttack = document.getElementById('stage3-attack-btn');
+        const touchJump = document.getElementById('stage3-jump-btn');
 
-        const touchAttack = document.getElementById('touch-attack');
-        const touchJump = document.getElementById('touch-jump');
-
-        touchAttack.addEventListener('touchstart', (e) => {
+        const handleAttack = (e) => {
             e.preventDefault();
             e.stopPropagation();
             if (state.village.stage3Active && !state.village.stage3Attacking) {
@@ -1314,9 +1332,9 @@ function init() {
                 shootHanja();
                 setTimeout(() => { state.village.stage3Attacking = false; }, 400);
             }
-        }, { passive: false });
+        };
 
-        touchJump.addEventListener('touchstart', (e) => {
+        const handleJump = (e) => {
             e.preventDefault();
             e.stopPropagation();
             if (state.village.stage3Active && !state.village.stage3Jumping) {
@@ -1324,7 +1342,16 @@ function init() {
                 state.village.stage3JumpVelocity = 9;
                 playJumpSound();
             }
-        }, { passive: false });
+        };
+
+        if (touchAttack) {
+            touchAttack.addEventListener('touchstart', handleAttack, { passive: false });
+            touchAttack.addEventListener('click', handleAttack);
+        }
+        if (touchJump) {
+            touchJump.addEventListener('touchstart', handleJump, { passive: false });
+            touchJump.addEventListener('click', handleJump);
+        }
     }
 }
 
@@ -2047,8 +2074,8 @@ function checkBaseCollision() {
     // scale transforms from center, so we need to adjust left position
     const basePositions = [
         { id: 1, left: 200, width: 70, scale: 1 },
-        { id: 2, left: 285, width: 70, scale: 1.5 },
-        { id: 3, left: 370, width: 70, scale: 0.85 }
+        { id: 2, left: 283, width: 70, scale: 1.5 },
+        { id: 3, left: 366, width: 70, scale: 0.85 }
     ].map(bp => {
         const scaledWidth = bp.width * bp.scale;
         const offsetX = (bp.width - scaledWidth) / 2;
@@ -2242,7 +2269,7 @@ function startStage3() {
 
     const instructionP = movementInstruction.querySelector('p');
     if (instructionP) {
-        instructionP.textContent = "⬆️ 점프 / ⚔️ 한자 발사!";
+                instructionP.textContent = "스페이스바로 한자 발사! ↑키로 점프!";
     }
     movementInstruction.classList.remove('hidden');
 
@@ -2252,8 +2279,10 @@ function startStage3() {
     }
 
     // 모바일 터치 컨트롤 표시
-    const stage3Controls = document.getElementById('stage3-touch-controls');
-    if (stage3Controls) stage3Controls.style.display = 'flex';
+    const stage3AttackBtn = document.getElementById('stage3-attack-btn');
+    const stage3JumpBtn = document.getElementById('stage3-jump-btn');
+    if (stage3AttackBtn) stage3AttackBtn.style.display = 'inline-flex';
+    if (stage3JumpBtn) stage3JumpBtn.style.display = 'inline-flex';
 }
 
 // Stage 3: Initialize hanja queue for a level
@@ -2658,8 +2687,10 @@ function returnToVillage() {
     }
 
     // 모바일 터치 컨트롤 숨김
-    const stage3Controls = document.getElementById('stage3-touch-controls');
-    if (stage3Controls) stage3Controls.style.display = 'none';
+    const stage3AttackBtn = document.getElementById('stage3-attack-btn');
+    const stage3JumpBtn = document.getElementById('stage3-jump-btn');
+    if (stage3AttackBtn) stage3AttackBtn.style.display = 'none';
+    if (stage3JumpBtn) stage3JumpBtn.style.display = 'none';
 }
 
 function resetHanjaScore() {
@@ -2670,13 +2701,32 @@ function resetHanjaScore() {
     alert('마력 기록이 초기화되었습니다.');
 }
 
+let stage3TtsUnlocked = false;
+function unlockStage3TTS() {
+    if (!('speechSynthesis' in window) || stage3TtsUnlocked) return;
+    stage3TtsUnlocked = true;
+    const u = new SpeechSynthesisUtterance(' ');
+    u.lang = 'ko-KR';
+    u.volume = 0;
+    speechSynthesis.speak(u);
+    speechSynthesis.cancel();
+}
+
+function getStage3KoreanVoice() {
+    const voices = speechSynthesis.getVoices();
+    return voices.find(v => v.lang === 'ko-KR') || voices.find(v => v.lang.startsWith('ko')) || null;
+}
+
 // Stage 3: TTS speak hanja
 function speakHanja(deut, eum) {
     if ('speechSynthesis' in window) {
-        // Cancel any ongoing speech
+        unlockStage3TTS();
+        speechSynthesis.resume();
         speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(`${deut} ${eum}`);
+        const voice = getStage3KoreanVoice();
+        if (voice) utterance.voice = voice;
         utterance.lang = 'ko-KR';
         utterance.rate = 0.9;
         utterance.pitch = 1;

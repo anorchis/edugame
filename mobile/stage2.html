@@ -171,6 +171,22 @@
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
+        .color-picker {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid var(--dark-brown);
+            padding: 0;
+            background: transparent;
+        }
+        .color-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+            padding: 0;
+        }
+        .color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
 
         /* 스티커 선택 패널 */
         .sticker-panel {
@@ -357,6 +373,7 @@
                 <button class="color-btn" data-color="#0F4221" style="background:#0F4221"></button>
                 <button class="color-btn" data-color="#00008B" style="background:#00008B"></button>
                 <button class="color-btn" data-color="#FFD700" style="background:#FFD700"></button>
+                <input id="colorPicker" class="color-picker" type="color" value="#000000" aria-label="색상 선택">
                 <input type="range" class="size-slider" id="sizeSlider" min="2" max="30" value="8">
             </div>
         </div>
@@ -393,6 +410,7 @@
 
         // 상태 변수
         let bgOpacity = 0.5;
+        let bgScale = 1.0;
         let zoomLevel = 1.0;
         let panOffset = { x: 0, y: 0 };
         let lastTouchPos = { x: 0, y: 0 };
@@ -402,9 +420,17 @@
         let brushType = 'normal';
         let isDrawing = false;
         let isPanning = false;
+        let isPinching = false;
+        let pinchStartDist = 0;
+        let pinchStartScale = 1;
         let activeColor = '#000000';
         let activeSize = 8;
         let currentSticker = '🐻';
+        let placingSticker = null;
+        let placingStart = null;
+        let selectedStickerIndex = null;
+        let stickerDragMode = null;
+        let stickerDragOffset = { x: 0, y: 0 };
         const storageKey = 'hanjaStage2:mobile';
         let saveTimer = null;
 
@@ -413,6 +439,7 @@
         const colorBtns = document.querySelectorAll('.color-btn');
         const brushTypeBtns = document.querySelectorAll('.brush-type-btn');
         const sizeSlider = document.getElementById('sizeSlider');
+        const colorPicker = document.getElementById('colorPicker');
         const stickerPanel = document.getElementById('sticker-panel');
         const stickerGrid = document.getElementById('sticker-grid');
         const confirmOverlay = document.getElementById('confirm-overlay');
@@ -456,6 +483,7 @@
         function saveState() {
             const payload = {
                 bgOpacity,
+                bgScale,
                 zoomLevel,
                 panOffset,
                 activeColor,
@@ -473,6 +501,7 @@
                 if (!saved) return;
 
                 bgOpacity = saved.bgOpacity ?? bgOpacity;
+                bgScale = saved.bgScale ?? bgScale;
                 zoomLevel = saved.zoomLevel ?? zoomLevel;
                 panOffset = saved.panOffset ?? panOffset;
                 activeColor = saved.activeColor ?? activeColor;
@@ -482,6 +511,7 @@
                 diaryData = saved.diaryData ?? diaryData;
 
                 sizeSlider.value = activeSize;
+                if (colorPicker) colorPicker.value = activeColor;
 
                 colorBtns.forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.color === activeColor);
@@ -510,7 +540,7 @@
             ctx.save();
             ctx.globalAlpha = bgOpacity;
             if (bgImg.complete && bgImg.naturalWidth > 0) {
-                const scale = Math.min(canvas.width / bgImg.width, canvas.height / bgImg.height) * 0.9;
+                const scale = Math.min(canvas.width / bgImg.width, canvas.height / bgImg.height) * 0.9 * bgScale;
                 const x = (canvas.width - bgImg.width * scale) / 2;
                 const y = (canvas.height - bgImg.height * scale) / 2;
                 ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
@@ -519,6 +549,41 @@
 
             // 액션 그리기
             diaryData.actions.forEach(action => drawAction(ctx, action));
+
+            if (placingSticker) {
+                ctx.save();
+                ctx.globalAlpha = 0.6;
+                ctx.font = `${placingSticker.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(placingSticker.content, placingSticker.x, placingSticker.y);
+                ctx.restore();
+            }
+
+            if (selectedStickerIndex !== null && diaryData.actions[selectedStickerIndex]) {
+                const a = diaryData.actions[selectedStickerIndex];
+                if (a.type === 'sticker') {
+                    const half = a.size / 2;
+                    ctx.save();
+                    ctx.strokeStyle = '#2563eb';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([6, 4]);
+                    ctx.strokeRect(a.x - half, a.y - half, a.size, a.size);
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = '#2563eb';
+                    const handle = 6;
+                    const handles = [
+                        { x: a.x - half, y: a.y - half },
+                        { x: a.x + half, y: a.y - half },
+                        { x: a.x + half, y: a.y + half },
+                        { x: a.x - half, y: a.y + half }
+                    ];
+                    handles.forEach(h => {
+                        ctx.fillRect(h.x - handle, h.y - handle, handle * 2, handle * 2);
+                    });
+                    ctx.restore();
+                }
+            }
 
             ctx.restore();
         }
@@ -577,26 +642,96 @@
             return { x, y, sx, sy };
         }
 
+        function clamp(val, min, max) {
+            return Math.max(min, Math.min(max, val));
+        }
+
+        function distance(a, b) {
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            return Math.hypot(dx, dy);
+        }
+
+        function hitTestSticker(pos) {
+            for (let i = diaryData.actions.length - 1; i >= 0; i--) {
+                const a = diaryData.actions[i];
+                if (a.type !== 'sticker') continue;
+                const half = a.size / 2;
+                if (pos.x >= a.x - half && pos.x <= a.x + half &&
+                    pos.y >= a.y - half && pos.y <= a.y + half) {
+                    return i;
+                }
+            }
+            return null;
+        }
+
+        function hitTestStickerHandle(pos, a) {
+            const half = a.size / 2;
+            const handles = [
+                { x: a.x - half, y: a.y - half, key: 'nw' },
+                { x: a.x + half, y: a.y - half, key: 'ne' },
+                { x: a.x + half, y: a.y + half, key: 'se' },
+                { x: a.x - half, y: a.y + half, key: 'sw' }
+            ];
+            for (const h of handles) {
+                if (distance(pos, h) <= 12) return h.key;
+            }
+            return null;
+        }
+
         // 터치 이벤트
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
+
+            if (e.touches.length === 2) {
+                const p1 = getTouchPos(e.touches[0]);
+                const p2 = getTouchPos(e.touches[1]);
+                isPinching = true;
+                pinchStartDist = distance(p1, p2);
+                pinchStartScale = bgScale;
+                return;
+            }
+
             const touch = e.touches[0];
             const pos = getTouchPos(touch);
             lastTouchPos = { x: touch.clientX, y: touch.clientY };
 
             if (mode === 'pan') {
                 isPanning = true;
-            } else if (mode === 'sticker') {
-                diaryData.actions.push({
+                return;
+            }
+
+            if (mode === 'sticker') {
+                const hitIndex = hitTestSticker(pos);
+                if (hitIndex !== null) {
+                    selectedStickerIndex = hitIndex;
+                    const a = diaryData.actions[selectedStickerIndex];
+                    const handle = hitTestStickerHandle(pos, a);
+                    if (handle) {
+                        stickerDragMode = 'resize';
+                    } else {
+                        stickerDragMode = 'move';
+                        stickerDragOffset = { x: pos.x - a.x, y: pos.y - a.y };
+                    }
+                    render();
+                    return;
+                }
+
+                selectedStickerIndex = null;
+                stickerDragMode = null;
+                placingStart = pos;
+                placingSticker = {
                     type: 'sticker',
                     x: pos.x,
                     y: pos.y,
                     content: currentSticker,
-                    size: activeSize * 4
-                });
+                    size: Math.max(24, activeSize * 4)
+                };
                 render();
-                scheduleSave();
-            } else if (mode === 'eraser') {
+                return;
+            }
+
+            if (mode === 'eraser') {
                 // 스티커 지우기 체크
                 let deleted = false;
                 for (let i = diaryData.actions.length - 1; i >= 0; i--) {
@@ -622,21 +757,34 @@
                         size: activeSize * 2
                     });
                 }
-            } else {
-                isDrawing = true;
-                diaryData.actions.push({
-                    type: 'line',
-                    brush: brushType,
-                    points: [pos],
-                    color: activeColor,
-                    size: activeSize
-                });
+                return;
             }
+
+            isDrawing = true;
+            diaryData.actions.push({
+                type: 'line',
+                brush: brushType,
+                points: [pos],
+                color: activeColor,
+                size: activeSize
+            });
         }, { passive: false });
 
         canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
+
+            if (isPinching && e.touches.length === 2) {
+                const p1 = getTouchPos(e.touches[0]);
+                const p2 = getTouchPos(e.touches[1]);
+                const dist = distance(p1, p2);
+                const ratio = dist / Math.max(1, pinchStartDist);
+                bgScale = clamp(pinchStartScale * ratio, 0.5, 2.5);
+                render();
+                return;
+            }
+
             const touch = e.touches[0];
+            if (!touch) return;
             const pos = getTouchPos(touch);
 
             if (isPanning) {
@@ -644,16 +792,51 @@
                 panOffset.y += touch.clientY - lastTouchPos.y;
                 lastTouchPos = { x: touch.clientX, y: touch.clientY };
                 render();
-            } else if (isDrawing) {
+                return;
+            }
+
+            if (placingSticker && placingStart) {
+                const size = clamp(distance(pos, placingStart) * 2, 24, 220);
+                placingSticker.size = size;
+                render();
+                return;
+            }
+
+            if (selectedStickerIndex !== null && stickerDragMode) {
+                const a = diaryData.actions[selectedStickerIndex];
+                if (stickerDragMode === 'move') {
+                    a.x = pos.x - stickerDragOffset.x;
+                    a.y = pos.y - stickerDragOffset.y;
+                } else if (stickerDragMode === 'resize') {
+                    const newSize = clamp(distance(pos, { x: a.x, y: a.y }) * 2, 24, 240);
+                    a.size = newSize;
+                }
+                render();
+                return;
+            }
+
+            if (isDrawing) {
                 diaryData.actions[diaryData.actions.length - 1].points.push(pos);
                 render();
             }
         }, { passive: false });
 
-        canvas.addEventListener('touchend', () => {
+        canvas.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                isPinching = false;
+            }
+            if (placingSticker) {
+                diaryData.actions.push(placingSticker);
+                placingSticker = null;
+                placingStart = null;
+                scheduleSave();
+            }
+            if (selectedStickerIndex !== null && stickerDragMode) {
+                scheduleSave();
+            }
             isDrawing = false;
             isPanning = false;
-            scheduleSave();
+            stickerDragMode = null;
         });
 
         // 도구 버튼 이벤트
@@ -685,9 +868,18 @@
                 activeColor = btn.dataset.color;
                 colorBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
+                if (colorPicker) colorPicker.value = activeColor;
                 scheduleSave();
             });
         });
+
+        if (colorPicker) {
+            colorPicker.addEventListener('input', (e) => {
+                activeColor = e.target.value;
+                colorBtns.forEach(b => b.classList.remove('active'));
+                scheduleSave();
+            });
+        }
 
         // 붓 종류 버튼 이벤트
         brushTypeBtns.forEach(btn => {

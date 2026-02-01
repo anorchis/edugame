@@ -586,6 +586,8 @@
             total = data.score || 0;
             stage = data.level || 1;
 
+            const storedId = localStorage.getItem('mobileCurrentUserId');
+            document.getElementById('lobby-username').textContent = storedId || '수련 대원';
             document.getElementById('lobby-score').textContent = total;
             document.getElementById('lobby-level').textContent = `Stage ${stage}`;
             document.getElementById('continue-stage').textContent = `(Stage ${stage})`;
