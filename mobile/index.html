@@ -541,7 +541,37 @@ body {
                 font-size: 14px;
             }
         }
+
+        /* 모바일 게임 화면 스케일링 */
+        @media (max-width: 520px) {
+            #game-view .relative {
+                transform-origin: center center;
+            }
+        }
+
+        /* base 터치 활성화 */
+        .base-item.base-activated {
+            pointer-events: auto !important;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
     </style>
+    <script>
+        // 모바일 게임 컨테이너 스케일링
+        function scaleGameContainer() {
+            const gameBox = document.querySelector('#game-view .relative');
+            if (!gameBox) return;
+            const screenWidth = window.innerWidth;
+            if (screenWidth < 520) {
+                const scale = (screenWidth - 20) / 490; // 490px 기준, 좌우 10px 여백
+                gameBox.style.transform = `scale(${scale}) translateY(-6px)`;
+            } else {
+                gameBox.style.transform = 'translateY(-6px)';
+            }
+        }
+        window.addEventListener('load', scaleGameContainer);
+        window.addEventListener('resize', scaleGameContainer);
+    </script>
 </head>
 <body class="bg-gray-900 overflow-hidden select-none">
 
@@ -1214,49 +1244,49 @@ function init() {
     // ========== 모바일 터치 컨트롤 ==========
     const gameContainer = document.querySelector('#game-view .relative');
     if (gameContainer) {
-        // 터치 영역 생성 (왼쪽/오른쪽)
-        const touchLeft = document.createElement('div');
-        touchLeft.id = 'touch-left';
-        touchLeft.style.cssText = 'position:absolute;left:0;top:0;width:40%;height:100%;z-index:60;';
+        // 터치 이동: 게임 컨테이너에서 좌/우 영역 터치로 이동
+        let moveTouchId = null;
 
-        const touchRight = document.createElement('div');
-        touchRight.id = 'touch-right';
-        touchRight.style.cssText = 'position:absolute;right:0;top:0;width:40%;height:100%;z-index:60;';
+        gameContainer.addEventListener('touchstart', (e) => {
+            // base나 버튼 터치는 제외
+            if (e.target.closest('.base-item') || e.target.closest('button')) return;
 
-        gameContainer.appendChild(touchLeft);
-        gameContainer.appendChild(touchRight);
+            if (state.village.active && !state.village.stage3Active && moveTouchId === null) {
+                const touch = e.changedTouches[0];
+                const rect = gameContainer.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left;
+                const centerX = rect.width / 2;
 
-        // 왼쪽 터치 - 왼쪽 이동
-        touchLeft.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (state.village.active) {
-                state.keys.ArrowLeft = true;
+                moveTouchId = touch.identifier;
+
+                if (touchX < centerX) {
+                    state.keys.ArrowLeft = true;
+                } else {
+                    state.keys.ArrowRight = true;
+                }
+
                 if (!movementInstruction.classList.contains('hidden')) {
                     movementInstruction.classList.add('hidden');
                 }
             }
-        }, { passive: false });
+        }, { passive: true });
 
-        touchLeft.addEventListener('touchend', (e) => {
-            e.preventDefault();
+        gameContainer.addEventListener('touchend', (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === moveTouchId) {
+                    moveTouchId = null;
+                    state.keys.ArrowLeft = false;
+                    state.keys.ArrowRight = false;
+                    break;
+                }
+            }
+        }, { passive: true });
+
+        gameContainer.addEventListener('touchcancel', (e) => {
+            moveTouchId = null;
             state.keys.ArrowLeft = false;
-        }, { passive: false });
-
-        // 오른쪽 터치 - 오른쪽 이동
-        touchRight.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (state.village.active) {
-                state.keys.ArrowRight = true;
-                if (!movementInstruction.classList.contains('hidden')) {
-                    movementInstruction.classList.add('hidden');
-                }
-            }
-        }, { passive: false });
-
-        touchRight.addEventListener('touchend', (e) => {
-            e.preventDefault();
             state.keys.ArrowRight = false;
-        }, { passive: false });
+        }, { passive: true });
 
         // Stage 3 터치 컨트롤 (점프 + 공격 버튼)
         const stage3Controls = document.createElement('div');
@@ -3090,6 +3120,23 @@ bases.forEach(base => {
         if (!state.village.basesActive) return;
         openBaseModal(parseInt(base.dataset.base));
     });
+
+    // 모바일 터치 이벤트
+    base.addEventListener('touchstart', (e) => {
+        if (!state.village.basesActive) return;
+        e.preventDefault();
+        e.stopPropagation();
+        base.classList.add('base-hover');
+        playHoverSound();
+    }, { passive: false });
+
+    base.addEventListener('touchend', (e) => {
+        if (!state.village.basesActive) return;
+        e.preventDefault();
+        e.stopPropagation();
+        base.classList.remove('base-hover');
+        openBaseModal(parseInt(base.dataset.base));
+    }, { passive: false });
 });
 
 // Modal events
