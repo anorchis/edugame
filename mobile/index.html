@@ -769,9 +769,9 @@ body {
                     </div>
 
                     <!-- End Points -->
-                    <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item" style="left: 198px;" data-base="1">
-                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 279px; transform: scale(1.5);" data-base="2">
-                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 358px; transform: scale(0.85);" data-base="3">
+                    <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item" style="left: 196px;" data-base="1">
+                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 277px; transform: scale(1.5);" data-base="2">
+                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 356px; transform: scale(0.85);" data-base="3">
 
                     <!-- Player Character -->
                     <img src="../img/run1.png" alt="Player" class="absolute bottom-[32px] left-[75px] w-11 h-auto filter drop-shadow-lg z-10">
@@ -834,13 +834,13 @@ body {
                         <!-- Queue items will be added dynamically -->
                     </div>
 
-                    <img id="npc-ok-1" src="../img/ok1.png" alt="Ok 1" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0">
+                    <img id="npc-ok-1" src="../img/ok1.png" alt="Ok 1" class="absolute bottom-[30px] left-[30px] w-[50px] h-auto z-0">
                     <img id="npc-ok-2" src="../img/ok2.png" alt="Ok 2" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0 hidden">
                     <!-- NPC: Bori Dosa -->
                     <img id="npc-bori" src="../img/bori.png" alt="Bori Dosa" class="absolute bottom-[30px] left-[174px] w-[55px] h-auto filter drop-shadow-lg z-0 animate-float">
                     <img id="npc-sam-1" src="../img/sam1.png" alt="Sam 1" class="absolute bottom-[30px] left-[250px] w-[50px] h-auto z-0">
                     <img id="npc-sam-2" src="../img/sam2.png" alt="Sam 2" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0 hidden">
-                    <img id="npc-bori-3" src="../img/bori3.png" alt="Bori 3" class="absolute bottom-[30px] left-[390px] w-[50px] h-auto z-0">
+                    <img id="npc-bori-3" src="../img/bori3.png" alt="Bori 3" class="absolute bottom-[30px] left-[340px] w-[50px] h-auto z-0">
                     <img id="npc-bori-4" src="../img/bori4.png" alt="Bori 4" class="absolute bottom-[30px] left-[430px] w-[50px] h-auto z-0 hidden">
 
                     <!-- Game UI Overlay (Example: Score, Level) -->
@@ -1287,7 +1287,7 @@ function init() {
             e.preventDefault();
             if (!state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 11;
+                state.village.stage3JumpVelocity = 10;
                 playJumpSound();
             }
         }
@@ -1426,7 +1426,7 @@ function init() {
             e.stopPropagation();
             if (state.village.stage3Active && !state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 11;
+                state.village.stage3JumpVelocity = 10;
                 playJumpSound();
             }
         };
@@ -1673,7 +1673,7 @@ function updateVillageLoop(timestamp) {
 
         // 점프 물리
         if (state.village.stage3Jumping) {
-            state.village.stage3JumpVelocity -= 0.5;
+            state.village.stage3JumpVelocity -= 0.4;
             state.village.playerY += state.village.stage3JumpVelocity;
             if (state.village.playerY <= state.village.stage3GroundY) {
                 state.village.playerY = state.village.stage3GroundY;
@@ -2644,7 +2644,7 @@ function showVictory() {
     function walkToCenter(timestamp) {
         // 점프 중이면 먼저 착지시킴
         if (state.village.stage3Jumping || state.village.playerY > state.village.stage3GroundY) {
-            state.village.stage3JumpVelocity -= 0.5;
+            state.village.stage3JumpVelocity -= 0.4;
             state.village.playerY += state.village.stage3JumpVelocity;
             if (state.village.playerY <= state.village.stage3GroundY) {
                 state.village.playerY = state.village.stage3GroundY;
