@@ -184,7 +184,7 @@
                             <span>컬러피커</span>
                         </div>
                         
-                        <div class="section-title" style="margin-top:20px;">투명도 조절</div>
+                        <div class="section-title" style="margin-top:20px;">배경 투명도</div>
                         <input type="range" id="bgOpacityRange" min="0" max="1" step="0.1" value="0.5" oninput="bgOpacity = parseFloat(this.value); render(); scheduleSave();">
                         
                         <div class="section-title" style="margin-top:20px;">칭찬 스티커</div>
@@ -198,8 +198,6 @@
     <script>
         const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
-        const drawLayer = document.createElement('canvas');
-        const drawCtx = drawLayer.getContext('2d');
         const bgImg = new Image();
         bgImg.src = 'img/hanja.png'; 
         
@@ -345,8 +343,6 @@
         function initCanvas() {
             canvas.width = canvas.parentElement.clientWidth;
             canvas.height = canvas.parentElement.clientHeight;
-            drawLayer.width = canvas.width;
-            drawLayer.height = canvas.height;
             render();
         }
 
@@ -379,18 +375,8 @@
             if (bgImg.complete) ctx.drawImage(bgImg, x, y, bgImg.width * scale, bgImg.height * scale);
             ctx.restore();
 
-            drawCtx.setTransform(1, 0, 0, 1, 0, 0);
-            drawCtx.clearRect(0, 0, drawLayer.width, drawLayer.height);
-            drawCtx.save();
-            drawCtx.translate(canvas.width / 2 + panOffset.x, canvas.height / 2 + panOffset.y);
-            drawCtx.scale(zoomLevel, zoomLevel);
-            drawCtx.translate(-canvas.width / 2, -canvas.height / 2);
-            diaryData.actions.forEach(action => drawAction(drawCtx, action));
-            if (tempStickerAction) drawAction(drawCtx, tempStickerAction);
-            drawCtx.restore();
-            ctx.drawImage(drawLayer, 0, 0);
-
             diaryData.actions.forEach((action, index) => {
+                drawAction(ctx, action);
                 if (index === selectedActionIndex && action.type === 'sticker') {
                     ctx.save();
                     ctx.strokeStyle = "#0F4221"; ctx.lineWidth = 2 / zoomLevel; ctx.setLineDash([5, 5]);
@@ -402,6 +388,7 @@
                 }
             });
 
+            if (tempStickerAction) drawAction(ctx, tempStickerAction);
             ctx.restore();
 
             if (isMouseOverCanvas) {

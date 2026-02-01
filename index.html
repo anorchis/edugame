@@ -54,28 +54,6 @@ body {
         .animate-fade-out {
             animation: fade-out 1.5s ease-out forwards;
         }
-        @keyframes tts-flash {
-            0% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-2px) scale(1.05); }
-            100% { transform: translateY(0) scale(1); }
-        }
-        .tts-fallback {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff7d1;
-            padding: 8px 16px;
-            border-radius: 999px;
-            font-size: 1rem;
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
-            z-index: 45;
-            pointer-events: none;
-        }
-        .tts-fallback.show { opacity: 1; }
-        .stage3-tts-flash { animation: tts-flash 0.6s ease-in-out 2; }
 
         /* Base item styles */
         .base-item {
@@ -560,9 +538,8 @@ body {
 
             <!-- Movement Instruction Overlay (Hidden initially) -->
             <div id="movement-instruction" class="hidden absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-xl px-6 py-4 flex items-center justify-center z-40">
-                <p class="text-2xl text-gray-400 font-bold text-center">캐릭터를 드래그하세요</p>
+                <p class="text-2xl text-gray-400 font-bold text-center">방향키(←, →)를 눌러 이동하세요</p>
             </div>
-            <div id="tts-fallback" class="tts-fallback"></div>
 
             <!-- Dialogue Box (Hidden initially) -->
             <div id="dialogue-box" class="hidden absolute bottom-10 left-10 right-10 bg-black/80 border-4 border-white rounded-xl p-6 min-h-[150px] flex flex-col justify-start items-start z-50">
@@ -829,9 +806,6 @@ const state = {
         frameInterval: 100, // Animation speed (ms)
         currentImageIndex: 1, // 1, 2, 3
         speed: 4, // Movement speed
-        dragging: false,
-        dragPointerId: null,
-        dragOffsetX: 0,
         boriInteraction: false, // Has interacted with Bori?
         boriDialogueFinished: false, // Has dialogue finished?
         isEnteringGate: false,
@@ -1044,7 +1018,6 @@ const dialogueText = document.getElementById('dialogue-text');
 const dialogueIndicator = document.getElementById('dialogue-indicator');
 const skipButton = document.getElementById('skip-button');
 const movementInstruction = document.getElementById('movement-instruction'); // New element
-const ttsFallback = document.getElementById('tts-fallback');
 const bgmToggle = document.getElementById('bgm-toggle');
 
 // Game View Elements
@@ -1149,8 +1122,6 @@ function init() {
         });
     }
 
-    document.addEventListener('pointerdown', unlockStage3TTS, { once: true });
-
     
     // Spacebar to advance dialogue
     window.addEventListener('keydown', (e) => {
@@ -1166,7 +1137,7 @@ function init() {
             state.keys[e.key] = true;
 
             // Hide instruction on first move
-            if (!movementInstruction.classList.contains('hidden') && /방향키|드래그/.test(movementInstruction.querySelector('p').textContent)) {
+            if (!movementInstruction.classList.contains('hidden') && movementInstruction.querySelector('p').textContent.includes("방향키")) {
                 movementInstruction.classList.add('hidden');
             }
         }
@@ -1205,43 +1176,6 @@ function init() {
             state.keys[e.key] = false;
         }
     });
-
-    if (playerImage && gameView) {
-        playerImage.addEventListener('pointerdown', (e) => {
-            if (!state.village.active || state.village.stage3Active || state.dialogueActive) return;
-            if (e.pointerType === 'mouse' && e.button !== 0) return;
-            const rect = gameView.getBoundingClientRect();
-            const localX = e.clientX - rect.left;
-            state.village.dragging = true;
-            state.village.dragPointerId = e.pointerId;
-            state.village.dragOffsetX = localX - state.village.playerX;
-            playerImage.setPointerCapture(e.pointerId);
-            state.keys.ArrowLeft = false;
-            state.keys.ArrowRight = false;
-            if (!movementInstruction.classList.contains('hidden')) {
-                movementInstruction.classList.add('hidden');
-            }
-        });
-
-        gameView.addEventListener('pointermove', (e) => {
-            if (!state.village.dragging || e.pointerId !== state.village.dragPointerId) return;
-            const rect = gameView.getBoundingClientRect();
-            const localX = e.clientX - rect.left;
-            const nextX = localX - state.village.dragOffsetX;
-            state.village.playerX = Math.max(-11, Math.min(453, nextX));
-            playerImage.style.left = `${state.village.playerX}px`;
-        });
-
-        const stopDrag = (e) => {
-            if (!state.village.dragging) return;
-            if (e && e.pointerId !== state.village.dragPointerId) return;
-            state.village.dragging = false;
-            state.village.dragPointerId = null;
-        };
-        gameView.addEventListener('pointerup', stopDrag);
-        gameView.addEventListener('pointercancel', stopDrag);
-        gameView.addEventListener('pointerleave', stopDrag);
-    }
 }
 
 // Auth View Switcher
@@ -1365,7 +1299,7 @@ function finishVillageIntro() {
     // Show new movement instruction
     const instructionP = movementInstruction.querySelector('p');
     if (instructionP) {
-        instructionP.textContent = "캐릭터를 드래그하세요";
+        instructionP.textContent = "방향키(←, →)를 사용하여 이동하세요";
     }
     movementInstruction.classList.remove('hidden');
 }
@@ -1459,9 +1393,7 @@ function updateVillageLoop(timestamp) {
     }
 
     // 1. Update Movement
-    if (state.village.dragging) {
-        state.village.isMoving = true;
-    } else if (state.keys.ArrowRight) {
+    if (state.keys.ArrowRight) {
         state.village.direction = 'right';
         state.village.isMoving = true;
         state.village.playerX += state.village.speed;
@@ -2523,49 +2455,17 @@ function resetHanjaScore() {
 }
 
 // Stage 3: TTS speak hanja
-let stage3TtsUnlocked = false;
-let ttsFallbackTimer = null;
-
-function unlockStage3TTS() {
-    if (!('speechSynthesis' in window) || stage3TtsUnlocked) return;
-    stage3TtsUnlocked = true;
-    const u = new SpeechSynthesisUtterance(' ');
-    u.lang = 'ko-KR';
-    u.volume = 0;
-    speechSynthesis.speak(u);
-    speechSynthesis.cancel();
-}
-
-function flashStage3Reading() {
-    if (!stage3CurrentHanja) return;
-    stage3CurrentHanja.classList.remove('stage3-tts-flash');
-    void stage3CurrentHanja.offsetWidth;
-    stage3CurrentHanja.classList.add('stage3-tts-flash');
-}
-
-function showTtsFallback(text) {
-    if (!ttsFallback) return;
-    ttsFallback.textContent = text;
-    ttsFallback.classList.add('show');
-    if (ttsFallbackTimer) clearTimeout(ttsFallbackTimer);
-    ttsFallbackTimer = setTimeout(() => ttsFallback.classList.remove('show'), 1200);
-}
-
 function speakHanja(deut, eum) {
-    const text = `${deut} ${eum}`;
-    flashStage3Reading();
-    if (!('speechSynthesis' in window)) {
-        showTtsFallback(text);
-        return;
+    if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech
+        speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(`${deut} ${eum}`);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        speechSynthesis.speak(utterance);
     }
-    unlockStage3TTS();
-    speechSynthesis.resume();
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ko-KR';
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    speechSynthesis.speak(utterance);
 }
 
 // Stage 3: Shoot hanja projectile
