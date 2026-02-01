@@ -1006,6 +1006,16 @@
         // 화면 리사이즈
         window.addEventListener('resize', initCanvas);
 
+        // 안드로이드 뒤로 가기 버튼 처리
+        history.replaceState({ page: 'stage2' }, '');
+        window.addEventListener('popstate', function(e) {
+            e.preventDefault();
+            const mobileState = JSON.parse(localStorage.getItem('mobileGameState') || '{}');
+            mobileState.returnAfterBori = true;
+            localStorage.setItem('mobileGameState', JSON.stringify(mobileState));
+            window.location.href = 'index.html';
+        });
+
         // 시작
         init();
     </script>

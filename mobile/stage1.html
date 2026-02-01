@@ -893,6 +893,14 @@
         });
         document.getElementById('btn-save').addEventListener('click', finishGame);
 
+        // 안드로이드 뒤로 가기 버튼 처리
+        history.replaceState({ page: 'stage1' }, '');
+        window.addEventListener('popstate', function(e) {
+            e.preventDefault();
+            setReturnToVillageAfterBori();
+            window.location.href = 'index.html';
+        });
+
         // 초기화
         initLobby();
         document.addEventListener('pointerdown', unlockTTS, { once: true });

@@ -1675,6 +1675,12 @@ function updateVillageLoop(timestamp) {
         if (state.village.stage3Jumping) {
             state.village.stage3JumpVelocity -= 0.35;
             state.village.playerY += state.village.stage3JumpVelocity;
+            // 최대 점프 높이 제한 (bg 영역 안에서만)
+            const maxJumpHeight = 95;
+            if (state.village.playerY > maxJumpHeight) {
+                state.village.playerY = maxJumpHeight;
+                state.village.stage3JumpVelocity = 0;
+            }
             if (state.village.playerY <= state.village.stage3GroundY) {
                 state.village.playerY = state.village.stage3GroundY;
                 state.village.stage3Jumping = false;
@@ -3446,6 +3452,38 @@ document.addEventListener('keydown', (e) => {
         openBaseModal(state.village.baseCollision);
     }
 });
+
+// 안드로이드 뒤로 가기 버튼 처리
+(function() {
+    // 초기 상태 저장
+    history.replaceState({ page: 'bg4' }, '');
+
+    // 뒤로 가기 버튼 이벤트 처리
+    window.addEventListener('popstate', function(e) {
+        // stage3 진행 중이면 마을로 돌아가기
+        if (state.village.stage3Active) {
+            e.preventDefault();
+            history.pushState({ page: 'bg4' }, '');
+            returnToVillage();
+            return;
+        }
+
+        // 다른 경우에도 초기화 방지
+        if (e.state && e.state.page === 'bg4') {
+            return;
+        }
+
+        // 상태가 없으면 다시 pushState
+        history.pushState({ page: 'bg4' }, '');
+    });
+})();
+
+// stage3 시작할 때 history state 추가
+const originalStartStage3 = startStage3;
+startStage3 = function() {
+    history.pushState({ page: 'stage3' }, '');
+    originalStartStage3();
+};
 
 // Run Init
 init();</script>
