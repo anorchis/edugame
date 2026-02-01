@@ -1673,7 +1673,7 @@ function updateVillageLoop(timestamp) {
 
         // 점프 물리
         if (state.village.stage3Jumping) {
-            state.village.stage3JumpVelocity -= 1.5;
+            state.village.stage3JumpVelocity -= 0.15;
             state.village.playerY += state.village.stage3JumpVelocity;
             // 최대 점프 높이 제한 (bg 영역 안에서만)
             const maxJumpHeight = 95;
@@ -2653,7 +2653,7 @@ function showVictory() {
     function walkToCenter(timestamp) {
         // 점프 중이면 먼저 착지시킴
         if (state.village.stage3Jumping || state.village.playerY > state.village.stage3GroundY) {
-            state.village.stage3JumpVelocity -= 0.1;
+            state.village.stage3JumpVelocity -= 0.15;
             state.village.playerY += state.village.stage3JumpVelocity;
             if (state.village.playerY <= state.village.stage3GroundY) {
                 state.village.playerY = state.village.stage3GroundY;
@@ -3055,7 +3055,7 @@ function updateStage3Obstacles(timestamp) {
             // Collision check
             if (playerRight > obsLeft && playerLeft < obsRight) {
                 // If player is on the ground (not jumping high enough)
-                if (state.village.playerY < state.village.stage3GroundY + 25) {
+                if (state.village.playerY < state.village.stage3GroundY + 30) {
                     damagePlayer();
                     obs.passed = true; // Don't damage again from same obstacle
                 }
