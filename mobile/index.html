@@ -3148,8 +3148,8 @@ function damagePlayer() {
     // Play damage sound
     playDamageSound();
 
-    // Check game over
-    if (state.village.stage3PlayerHP <= 0) {
+    // Check game over (몬스터 HP가 0이면 게임오버 안함)
+    if (state.village.stage3PlayerHP <= 0 && state.village.stage3MonsterHP > 0) {
         triggerGameOver();
     }
 }
