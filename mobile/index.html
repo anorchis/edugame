@@ -281,12 +281,12 @@ body {
         }
 
         .stage3-touch-btn {
-            width: 44px;
-            height: 44px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             border: 2px solid rgba(255,255,255,0.8);
             color: #fff;
-            font-size: 20px;
+            font-size: 22px;
             display: none;
             align-items: center;
             justify-content: center;
@@ -626,7 +626,7 @@ body {
             </div>
 
             <!-- Movement Instruction Overlay (Hidden initially) -->
-            <div id="movement-instruction" class="hidden absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-xl px-6 py-4 flex items-center justify-center z-40">
+            <div id="movement-instruction" class="hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-xl px-6 py-4 flex items-center justify-center z-40">
                 <button id="stage3-attack-btn" class="stage3-touch-btn" aria-label="한자 발사">⚔️</button>
                 <p class="text-2xl text-gray-400 font-bold text-center">방향키(←, →)를 눌러 이동하세요</p>
                 <button id="stage3-jump-btn" class="stage3-touch-btn" aria-label="점프">⬆️</button>
@@ -731,8 +731,8 @@ body {
 
                     <!-- End Points -->
                     <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item" style="left: 200px;" data-base="1">
-                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 283px; transform: scale(1.5);" data-base="2">
-                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 366px; transform: scale(0.85);" data-base="3">
+                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 281px; transform: scale(1.5);" data-base="2">
+                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 360px; transform: scale(0.85);" data-base="3">
 
                     <!-- Player Character -->
                     <img src="../img/run1.png" alt="Player" class="absolute bottom-[32px] left-[105px] w-11 h-auto filter drop-shadow-lg z-10">
@@ -1284,11 +1284,11 @@ function init() {
                 const touch = e.changedTouches[0];
                 const rect = gameContainer.getBoundingClientRect();
                 const touchX = touch.clientX - rect.left;
-                const centerX = rect.width / 2;
+                const playerCenter = state.village.playerX + 22;
 
                 moveTouchId = touch.identifier;
 
-                if (touchX < centerX) {
+                if (touchX < playerCenter) {
                     state.keys.ArrowLeft = true;
                 } else {
                     state.keys.ArrowRight = true;
@@ -1297,6 +1297,19 @@ function init() {
                 if (!movementInstruction.classList.contains('hidden')) {
                     movementInstruction.classList.add('hidden');
                 }
+            }
+        }, { passive: true });
+
+        gameContainer.addEventListener('touchmove', (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier !== moveTouchId) continue;
+                const rect = gameContainer.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left;
+                const playerCenter = state.village.playerX + 22;
+                state.keys.ArrowLeft = touchX < playerCenter;
+                state.keys.ArrowRight = touchX >= playerCenter;
+                break;
             }
         }, { passive: true });
 
@@ -2074,8 +2087,8 @@ function checkBaseCollision() {
     // scale transforms from center, so we need to adjust left position
     const basePositions = [
         { id: 1, left: 200, width: 70, scale: 1 },
-        { id: 2, left: 283, width: 70, scale: 1.5 },
-        { id: 3, left: 366, width: 70, scale: 0.85 }
+        { id: 2, left: 281, width: 70, scale: 1.5 },
+        { id: 3, left: 360, width: 70, scale: 0.85 }
     ].map(bp => {
         const scaledWidth = bp.width * bp.scale;
         const offsetX = (bp.width - scaledWidth) / 2;

@@ -683,7 +683,7 @@
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
 
-            if (e.touches.length === 2) {
+            if (mode === 'pan' && e.touches.length === 2) {
                 const p1 = getTouchPos(e.touches[0]);
                 const p2 = getTouchPos(e.touches[1]);
                 isPinching = true;
@@ -773,7 +773,7 @@
         canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
 
-            if (isPinching && e.touches.length === 2) {
+            if (isPinching && mode === 'pan' && e.touches.length === 2) {
                 const p1 = getTouchPos(e.touches[0]);
                 const p2 = getTouchPos(e.touches[1]);
                 const dist = distance(p1, p2);

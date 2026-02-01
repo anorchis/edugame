@@ -115,7 +115,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
         }
 
         .card-grid {
@@ -124,6 +126,7 @@
             grid-template-columns: repeat(4, 1fr);
             width: 100%;
             max-width: 400px;
+            align-content: start;
         }
 
         /* 카드 스타일 */
@@ -690,6 +693,7 @@
             if (!active || flippedCards.length >= 2) return;
             if (el.classList.contains('flipped') || el.classList.contains('matched')) return;
 
+            unlockTTS();
             el.classList.add('flipped');
             flippedCards.push({ el, d });
 
