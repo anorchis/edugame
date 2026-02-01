@@ -544,7 +544,7 @@ body {
 
         /* 모바일 게임 화면 스케일링 */
         @media (max-width: 520px) {
-            #game-view .relative {
+            #mini-game-box {
                 transform-origin: center center;
             }
         }
@@ -555,19 +555,26 @@ body {
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
+
+        .base-item {
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
     </style>
     <script>
         // 모바일 게임 컨테이너 스케일링
         function scaleGameContainer() {
-            const gameBox = document.querySelector('#game-view .relative');
+            const gameBox = document.getElementById('mini-game-box');
             if (!gameBox) return;
-            const screenWidth = window.innerWidth;
-            if (screenWidth < 520) {
-                const scale = (screenWidth - 20) / 490; // 490px 기준, 좌우 10px 여백
-                gameBox.style.transform = `scale(${scale}) translateY(-6px)`;
-            } else {
-                gameBox.style.transform = 'translateY(-6px)';
-            }
+            const baseWidth = 490;
+            const baseHeight = 160;
+            const padding = 16; // keep away from screen edges
+            const availableWidth = Math.max(0, window.innerWidth - padding * 2);
+            const availableHeight = Math.max(0, window.innerHeight - padding * 2);
+            const scale = Math.min(availableWidth / baseWidth, availableHeight / baseHeight);
+            const finalScale = Math.min(1, scale);
+            gameBox.style.transformOrigin = 'center center';
+            gameBox.style.transform = `translateY(-6px) scale(${finalScale})`;
         }
         window.addEventListener('load', scaleGameContainer);
         window.addEventListener('resize', scaleGameContainer);
@@ -692,7 +699,7 @@ body {
             <!-- Game View Overlay (Hidden initially, shown after login) -->
             <div id="game-view" class="hidden absolute inset-0 z-30 flex items-center justify-center">
                 <!-- Mini Game Container -->
-                <div class="relative w-[490px] h-[160px] rounded-xl shadow-2xl overflow-hidden bg-black transform -translate-y-6">
+                <div id="mini-game-box" class="relative w-[490px] h-[160px] rounded-xl shadow-2xl overflow-hidden bg-black transform -translate-y-6">
                     <!-- Game Background -->
                     <div id="stage-bg" class="absolute inset-0 overflow-hidden">
                         <div id="stage-bg-static" class="absolute inset-0 bg-cover bg-no-repeat bg-center" style="background-image: url('../img/bg4.png?v=1769771621');"></div>
@@ -703,9 +710,9 @@ body {
                     </div>
 
                     <!-- End Points -->
-                    <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item pointer-events-none" style="left: 240px;" data-base="1">
-                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item pointer-events-none" style="left: 325px; transform: scale(1.5);" data-base="2">
-                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item pointer-events-none" style="left: 410px; transform: scale(0.85);" data-base="3">
+                    <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item" style="left: 240px;" data-base="1">
+                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 325px; transform: scale(1.5);" data-base="2">
+                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 410px; transform: scale(0.85);" data-base="3">
 
                     <!-- Player Character -->
                     <img src="../img/run1.png" alt="Player" class="absolute bottom-[32px] left-[105px] w-11 h-auto filter drop-shadow-lg z-10">
