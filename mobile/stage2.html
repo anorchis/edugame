@@ -853,9 +853,11 @@
                 diaryData.actions.push(placingSticker);
                 placingSticker = null;
                 placingStart = null;
+                render();  // 배치 후 즉시 렌더링 (선명한 스티커 표시)
                 scheduleSave();
             }
             if (selectedStickerIndex !== null && stickerDragMode) {
+                render();  // 크기 조절 후 렌더링
                 scheduleSave();
             }
             isDrawing = false;

@@ -667,8 +667,8 @@ body {
             </div>
 
             <!-- Stage 3 Touch Controls (positioned outside instruction box) -->
-            <button id="stage3-attack-btn" class="stage3-touch-btn" aria-label="한자 발사">發</button>
-            <button id="stage3-jump-btn" class="stage3-touch-btn" aria-label="점프">跳</button>
+            <button id="stage3-attack-btn" class="stage3-touch-btn" aria-label="한자 발사">💥</button>
+            <button id="stage3-jump-btn" class="stage3-touch-btn" aria-label="점프">🦘</button>
             <div id="tts-fallback" class="tts-fallback"></div>
 
             <!-- Dialogue Box (Hidden initially) -->
@@ -838,9 +838,9 @@ body {
                     <img id="npc-ok-2" src="../img/ok2.png" alt="Ok 2" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0 hidden">
                     <!-- NPC: Bori Dosa -->
                     <img id="npc-bori" src="../img/bori.png" alt="Bori Dosa" class="absolute bottom-[30px] left-[174px] w-[55px] h-auto filter drop-shadow-lg z-0 animate-float">
-                    <img id="npc-sam-1" src="../img/sam1.png" alt="Sam 1" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0">
+                    <img id="npc-sam-1" src="../img/sam1.png" alt="Sam 1" class="absolute bottom-[30px] left-[250px] w-[50px] h-auto z-0">
                     <img id="npc-sam-2" src="../img/sam2.png" alt="Sam 2" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0 hidden">
-                    <img id="npc-bori-3" src="../img/bori3.png" alt="Bori 3" class="absolute bottom-[30px] left-[430px] w-[50px] h-auto z-0">
+                    <img id="npc-bori-3" src="../img/bori3.png" alt="Bori 3" class="absolute bottom-[30px] left-[390px] w-[50px] h-auto z-0">
                     <img id="npc-bori-4" src="../img/bori4.png" alt="Bori 4" class="absolute bottom-[30px] left-[430px] w-[50px] h-auto z-0 hidden">
 
                     <!-- Game UI Overlay (Example: Score, Level) -->
@@ -947,10 +947,10 @@ const state = {
         baseCollision: null, // Base that player is colliding with
         stage3Active: false,
         stage3BgOffset: 0,
-        stage3BgSpeed: 2,
+        stage3BgSpeed: 1.5,
         stage3BgWidth: 0,
         stage3ObstacleX: 0,
-        stage3ObstacleSpeed: 3,
+        stage3ObstacleSpeed: 2,
         stage3ObstacleActive: false,
         stage3Jumping: false,
         stage3JumpVelocity: 0,
@@ -989,8 +989,8 @@ const state = {
         // 아이템 시스템
         stage3Items: [],
         // 몬스터 접근 시스템
-        stage3MonsterApproachSpeed: 0.04,  // 접근 속도 (느리게)
-        stage3MonsterBaseX: 620,           // 몬스터 시작 위치 (더 오른쪽)
+        stage3MonsterApproachSpeed: 0.02,  // 접근 속도 (아주 느리게)
+        stage3MonsterBaseX: 580,           // 몬스터 시작 위치 (40px 왼쪽으로)
         stage3MonsterKnockback: 0,         // 넉백 거리
         // 런 애니메이션 타이머
         stage3RunAnimTimer: 0,
@@ -2322,7 +2322,7 @@ function startStage3() {
     stageBgScroll.classList.remove('hidden');
     setupStage3Background();
     const stage3Width = stageBgScroll.parentElement.clientWidth;
-    state.village.stage3MonsterBaseX = Math.max(420, stage3Width - 40);
+    state.village.stage3MonsterBaseX = Math.max(380, stage3Width - 80);
 
     // Initialize monster movement
     state.village.stage3MonsterX = state.village.stage3MonsterBaseX;
