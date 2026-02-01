@@ -435,6 +435,7 @@
         let selectedStickerIndex = null;
         let stickerDragMode = null;
         let stickerDragOffset = { x: 0, y: 0 };
+        let stickerResizeStart = null;
         const storageKey = 'hanjaStage2:mobile';
         let saveTimer = null;
 
@@ -726,21 +727,42 @@
             }
 
             if (mode === 'sticker') {
+                // 1. 이미 선택된 스티커가 있으면 핸들/이동 체크
+                if (selectedStickerIndex !== null) {
+                    const selectedAction = diaryData.actions[selectedStickerIndex];
+                    if (selectedAction && selectedAction.type === 'sticker') {
+                        // 핸들(꼭지점) 터치 체크
+                        const handle = hitTestStickerHandle(pos, selectedAction);
+                        if (handle) {
+                            stickerDragMode = 'resize';
+                            stickerResizeStart = { size: selectedAction.size };
+                            render();
+                            return;
+                        }
+                        // 스티커 내부 터치 체크 (이동)
+                        const half = selectedAction.size / 2;
+                        if (pos.x >= selectedAction.x - half && pos.x <= selectedAction.x + half &&
+                            pos.y >= selectedAction.y - half && pos.y <= selectedAction.y + half) {
+                            stickerDragMode = 'move';
+                            stickerDragOffset = { x: pos.x - selectedAction.x, y: pos.y - selectedAction.y };
+                            render();
+                            return;
+                        }
+                    }
+                }
+
+                // 2. 다른 스티커 선택
                 const hitIndex = hitTestSticker(pos);
                 if (hitIndex !== null) {
                     selectedStickerIndex = hitIndex;
                     const a = diaryData.actions[selectedStickerIndex];
-                    const handle = hitTestStickerHandle(pos, a);
-                    if (handle) {
-                        stickerDragMode = 'resize';
-                    } else {
-                        stickerDragMode = 'move';
-                        stickerDragOffset = { x: pos.x - a.x, y: pos.y - a.y };
-                    }
+                    stickerDragMode = 'move';
+                    stickerDragOffset = { x: pos.x - a.x, y: pos.y - a.y };
                     render();
                     return;
                 }
 
+                // 3. 빈 공간 터치 - 새 스티커 배치 시작
                 selectedStickerIndex = null;
                 stickerDragMode = null;
                 placingStart = pos;

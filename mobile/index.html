@@ -667,8 +667,8 @@ body {
             </div>
 
             <!-- Stage 3 Touch Controls (positioned outside instruction box) -->
-            <button id="stage3-attack-btn" class="stage3-touch-btn" aria-label="한자 발사">💥</button>
-            <button id="stage3-jump-btn" class="stage3-touch-btn" aria-label="점프">🦘</button>
+            <button id="stage3-attack-btn" class="stage3-touch-btn" aria-label="한자 발사">發</button>
+            <button id="stage3-jump-btn" class="stage3-touch-btn" aria-label="점프">跳</button>
             <div id="tts-fallback" class="tts-fallback"></div>
 
             <!-- Dialogue Box (Hidden initially) -->
@@ -769,9 +769,9 @@ body {
                     </div>
 
                     <!-- End Points -->
-                    <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item" style="left: 200px;" data-base="1">
-                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 281px; transform: scale(1.5);" data-base="2">
-                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 360px; transform: scale(0.85);" data-base="3">
+                    <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item" style="left: 198px;" data-base="1">
+                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 279px; transform: scale(1.5);" data-base="2">
+                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 358px; transform: scale(0.85);" data-base="3">
 
                     <!-- Player Character -->
                     <img src="../img/run1.png" alt="Player" class="absolute bottom-[32px] left-[75px] w-11 h-auto filter drop-shadow-lg z-10">
@@ -1287,7 +1287,7 @@ function init() {
             e.preventDefault();
             if (!state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 9;
+                state.village.stage3JumpVelocity = 11;
                 playJumpSound();
             }
         }
@@ -1426,7 +1426,7 @@ function init() {
             e.stopPropagation();
             if (state.village.stage3Active && !state.village.stage3Jumping) {
                 state.village.stage3Jumping = true;
-                state.village.stage3JumpVelocity = 9;
+                state.village.stage3JumpVelocity = 11;
                 playJumpSound();
             }
         };
@@ -1673,7 +1673,7 @@ function updateVillageLoop(timestamp) {
 
         // 점프 물리
         if (state.village.stage3Jumping) {
-            state.village.stage3JumpVelocity -= 0.6;
+            state.village.stage3JumpVelocity -= 0.5;
             state.village.playerY += state.village.stage3JumpVelocity;
             if (state.village.playerY <= state.village.stage3GroundY) {
                 state.village.playerY = state.village.stage3GroundY;
@@ -2644,7 +2644,7 @@ function showVictory() {
     function walkToCenter(timestamp) {
         // 점프 중이면 먼저 착지시킴
         if (state.village.stage3Jumping || state.village.playerY > state.village.stage3GroundY) {
-            state.village.stage3JumpVelocity -= 0.6;
+            state.village.stage3JumpVelocity -= 0.5;
             state.village.playerY += state.village.stage3JumpVelocity;
             if (state.village.playerY <= state.village.stage3GroundY) {
                 state.village.playerY = state.village.stage3GroundY;
