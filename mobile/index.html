@@ -13,6 +13,7 @@
 
 body {
     font-family: 'Noto Sans KR', sans-serif;
+    
 }
 
 /* Custom styles for the dialogue text to look game-like */
@@ -566,15 +567,7 @@ body {
         function scaleGameContainer() {
             const gameBox = document.getElementById('mini-game-box');
             if (!gameBox) return;
-            const baseWidth = 490;
-            const baseHeight = 160;
-            const padding = 16; // keep away from screen edges
-            const availableWidth = Math.max(0, window.innerWidth - padding * 2);
-            const availableHeight = Math.max(0, window.innerHeight - padding * 2);
-            const scale = Math.min(availableWidth / baseWidth, availableHeight / baseHeight);
-            const finalScale = Math.min(1, scale);
-            gameBox.style.transformOrigin = 'center center';
-            gameBox.style.transform = `translateY(-6px) scale(${finalScale})`;
+            gameBox.style.transform = 'translateY(-6px)';
         }
         window.addEventListener('load', scaleGameContainer);
         window.addEventListener('resize', scaleGameContainer);
@@ -702,10 +695,10 @@ body {
                 <div id="mini-game-box" class="relative w-[490px] h-[160px] rounded-xl shadow-2xl overflow-hidden bg-black transform -translate-y-6">
                     <!-- Game Background -->
                     <div id="stage-bg" class="absolute inset-0 overflow-hidden">
-                        <div id="stage-bg-static" class="absolute inset-0 bg-cover bg-no-repeat bg-center" style="background-image: url('../img/bg4.png?v=1769771621');"></div>
+                        <div id="stage-bg-static" class="absolute inset-0 bg-contain bg-no-repeat bg-center" style="background-image: url('../img/bg4.png?v=1769771621');"></div>
                         <div id="stage-bg-scroll" class="absolute inset-0 hidden">
-                            <div id="stage-bg-tile-1" class="absolute inset-y-0 left-0 bg-cover bg-no-repeat bg-center"></div>
-                            <div id="stage-bg-tile-2" class="absolute inset-y-0 left-0 bg-cover bg-no-repeat bg-center"></div>
+                            <div id="stage-bg-tile-1" class="absolute inset-y-0 left-0 bg-contain bg-no-repeat bg-center"></div>
+                            <div id="stage-bg-tile-2" class="absolute inset-y-0 left-0 bg-contain bg-no-repeat bg-center"></div>
                         </div>
                     </div>
 
