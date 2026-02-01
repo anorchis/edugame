@@ -800,29 +800,58 @@
             mobileState.stage1Completed = true;
             localStorage.setItem('mobileGameState', JSON.stringify(mobileState));
 
+            setReturnToVillageAfterBori();
             window.location.href = 'index.html';
+        }
+
+        let ttsUnlocked = false;
+        function getKoreanVoice() {
+            const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+            return voices.find(v => v.lang === 'ko-KR') || voices.find(v => v.lang.startsWith('ko')) || null;
+        }
+
+        function unlockTTS() {
+            if (!('speechSynthesis' in window) || ttsUnlocked) return;
+            ttsUnlocked = true;
+            const u = new SpeechSynthesisUtterance(' ');
+            u.lang = 'ko-KR';
+            u.volume = 0;
+            window.speechSynthesis.speak(u);
+            window.speechSynthesis.cancel();
         }
 
         // TTS
         function speak(text) {
             if ('speechSynthesis' in window) {
+                unlockTTS();
+                window.speechSynthesis.resume();
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
+                const voice = getKoreanVoice();
+                if (voice) utterance.voice = voice;
                 utterance.lang = 'ko-KR';
                 utterance.rate = 1.2;
                 window.speechSynthesis.speak(utterance);
             }
         }
 
+        function setReturnToVillageAfterBori() {
+            const mobileState = JSON.parse(localStorage.getItem('mobileGameState') || '{}');
+            mobileState.returnAfterBori = true;
+            localStorage.setItem('mobileGameState', JSON.stringify(mobileState));
+        }
+
         // 이벤트 리스너
         document.getElementById('btn-continue').addEventListener('click', () => startGame(false));
         document.getElementById('btn-new').addEventListener('click', () => startGame(true));
         document.getElementById('btn-back').addEventListener('click', () => {
+            setReturnToVillageAfterBori();
             window.location.href = 'index.html';
         });
         document.getElementById('btn-exit').addEventListener('click', () => {
             if (confirm('정말 나가시겠습니까? 진행 중인 내용이 저장되지 않습니다.')) {
                 if (timer) clearInterval(timer);
+                setReturnToVillageAfterBori();
                 window.location.href = 'index.html';
             }
         });
@@ -830,6 +859,7 @@
 
         // 초기화
         initLobby();
+        document.addEventListener('pointerdown', unlockTTS, { once: true });
         speak("수련장에 잘 왔다! 준비됐으면 시작해볼까?");
     </script>
 </body>

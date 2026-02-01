@@ -721,6 +721,7 @@
             // 모바일 상태 업데이트
             const mobileState = JSON.parse(localStorage.getItem('mobileGameState') || '{}');
             mobileState.stage2Completed = true;
+            mobileState.returnAfterBori = true;
             localStorage.setItem('mobileGameState', JSON.stringify(mobileState));
 
             window.location.href = 'index.html';

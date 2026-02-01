@@ -16,7 +16,7 @@ body {
     
 }
 
-/* Custom styles for the dialogue text to look game-like */
+/* Custom sty어렵les for the dialogue text to look game-like */
 #dialogue-text {
     font-family: 'Nanum Pen Script', cursive; /* More 'comic' or 'handwritten' feel */
     font-size: 2.5rem;
@@ -703,9 +703,9 @@ body {
                     </div>
 
                     <!-- End Points -->
-                    <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item" style="left: 240px;" data-base="1">
-                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 325px; transform: scale(1.5);" data-base="2">
-                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 410px; transform: scale(0.85);" data-base="3">
+                    <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item" style="left: 200px;" data-base="1">
+                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item" style="left: 285px; transform: scale(1.5);" data-base="2">
+                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item" style="left: 370px; transform: scale(0.85);" data-base="3">
 
                     <!-- Player Character -->
                     <img src="../img/run1.png" alt="Player" class="absolute bottom-[32px] left-[105px] w-11 h-auto filter drop-shadow-lg z-10">
@@ -771,7 +771,7 @@ body {
                     <img id="npc-ok-1" src="../img/ok1.png" alt="Ok 1" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0">
                     <img id="npc-ok-2" src="../img/ok2.png" alt="Ok 2" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0 hidden">
                     <!-- NPC: Bori Dosa -->
-                    <img id="npc-bori" src="../img/bori.png" alt="Bori Dosa" class="absolute bottom-[30px] left-[214px] w-[55px] h-auto filter drop-shadow-lg z-0 animate-float">
+                    <img id="npc-bori" src="../img/bori.png" alt="Bori Dosa" class="absolute bottom-[30px] left-[174px] w-[55px] h-auto filter drop-shadow-lg z-0 animate-float">
                     <img id="npc-sam-1" src="../img/sam1.png" alt="Sam 1" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0">
                     <img id="npc-sam-2" src="../img/sam2.png" alt="Sam 2" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0 hidden">
                     <img id="npc-bori-3" src="../img/bori3.png" alt="Bori 3" class="absolute bottom-[30px] left-[430px] w-[50px] h-auto z-0">
@@ -1207,6 +1207,8 @@ function init() {
         }
     });
 
+    enterVillageAfterBoriReturn();
+
     window.addEventListener('keydown', (e) => {
         if (!state.village.active || !state.village.stage3Active) return;
         if (e.code === 'ArrowUp') {
@@ -1378,6 +1380,7 @@ function handleLogin() {
     if (user && user.password === pw) {
         // Login Success
         state.currentUser = { id: id, ...user };
+        localStorage.setItem('mobileCurrentUserId', id);
         console.log(`Logged in as ${id}, Level: ${user.level}`);
         
         // Hide Auth Overlay and Show Game View
@@ -1398,6 +1401,63 @@ function handleLogin() {
     } else {
         showAlert("아이디 또는 비밀번호가 잘못되었습니다.");
     }
+}
+
+function enterVillageAfterBoriReturn() {
+    const mobileState = JSON.parse(localStorage.getItem('mobileGameState') || '{}');
+    if (!mobileState.returnAfterBori) return false;
+    delete mobileState.returnAfterBori;
+    localStorage.setItem('mobileGameState', JSON.stringify(mobileState));
+
+    const lastId = localStorage.getItem('mobileCurrentUserId');
+    if (lastId) {
+        const users = JSON.parse(localStorage.getItem('edugame_users') || '{}');
+        const user = users[lastId];
+        if (user) {
+            state.currentUser = { id: lastId, ...user };
+            if (gameLevelDisplay) {
+                gameLevelDisplay.textContent = user.level;
+            }
+        }
+    }
+
+    startScreen.classList.add('hidden');
+    startScreen.style.display = 'none';
+    authOverlay.classList.add('hidden');
+    gameView.classList.remove('hidden');
+
+    state.dialogueActive = false;
+    dialogueBox.classList.add('hidden');
+    skipButton.classList.add('hidden');
+
+    startVillageBgm();
+    state.village.active = true;
+    state.village.playerX = 152;
+    state.village.boriInteraction = true;
+    state.village.boriDialogueFinished = true;
+    setNpcVisibility(false);
+
+    if (npcBori) {
+        npcBori.src = "../img/bori2.png";
+        npcBori.classList.add('animate-fade-out');
+    }
+
+    activateBases();
+
+    if (bgmToggle) {
+        bgmToggle.classList.remove('hidden');
+        bgmToggle.classList.toggle('muted', state.bgmMuted);
+        bgmToggle.setAttribute('aria-pressed', state.bgmMuted ? 'true' : 'false');
+    }
+
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "학습할 단계를 선택하세요";
+    }
+    movementInstruction.classList.remove('hidden');
+
+    requestAnimationFrame(updateVillageLoop);
+    return true;
 }
 
 // Start Village Scene Logic
@@ -1585,9 +1645,9 @@ function updateVillageLoop(timestamp) {
     // Bori Width ~96px. Bori Left position ~= 660 - 161 - 96 = 403px.
     // Let's set a stop point before Bori, e.g., at X=325.
 
-    if (state.village.playerX >= 192 && !state.village.boriDialogueFinished) { // Check if player reaches Bori
+    if (state.village.playerX >= 152 && !state.village.boriDialogueFinished) { // Check if player reaches Bori
         // Stop player from moving past Bori
-        state.village.playerX = 192;
+        state.village.playerX = 152;
         
         // Trigger interaction if not yet triggered
         if (!state.village.boriInteraction) {
@@ -1986,9 +2046,9 @@ function checkBaseCollision() {
     // Base positions and widths (considering scale and center-based transform)
     // scale transforms from center, so we need to adjust left position
     const basePositions = [
-        { id: 1, left: 240, width: 70, scale: 1 },
-        { id: 2, left: 325, width: 70, scale: 1.5 },
-        { id: 3, left: 410, width: 70, scale: 0.85 }
+        { id: 1, left: 200, width: 70, scale: 1 },
+        { id: 2, left: 285, width: 70, scale: 1.5 },
+        { id: 3, left: 370, width: 70, scale: 0.85 }
     ].map(bp => {
         const scaledWidth = bp.width * bp.scale;
         const offsetX = (bp.width - scaledWidth) / 2;
@@ -2570,7 +2630,7 @@ function returnToVillage() {
         state.village.certificateShown = false;
         setNpcVisibility(true);
     } else {
-        state.village.basesActive = true;
+        activateBases();
     }
 
     // Reset player position
@@ -2593,7 +2653,7 @@ function returnToVillage() {
 
     const instructionP = movementInstruction.querySelector('p');
     if (instructionP) {
-        instructionP.textContent = "사람들을 만나세요";
+        instructionP.textContent = state.village.stage3Completed ? "사람들을 만나세요" : "학습할 단계를 선택하세요";
         instructionP.classList.remove('level-clear-text');
     }
 
