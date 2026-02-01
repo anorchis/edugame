@@ -2,516 +2,3186 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>마법천자문: 8급 한자 수호대 (모바일)</title>
-
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-
-    <!-- Common Mobile Styles -->
-    <link rel="stylesheet" href="common.css">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마법천자문: 8급 한자 수호대</title>
+    <script src="mobile-detect.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body {
-            background: linear-gradient(180deg, #0c0a1d 0%, #1a1035 50%, #0c0a1d 100%);
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* Custom styles for the dialogue text to look game-like */
+#dialogue-text {
+    font-family: 'Nanum Pen Script', cursive; /* More 'comic' or 'handwritten' feel */
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 0px #000;
+}
+
+/* Scanline effect or CRT effect optional, keeping it clean for now */
+</style>
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes shake-and-fade {
+            0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+            10% { transform: translate(-2px, -1px) rotate(-1deg); }
+            20% { transform: translate(2px, 1px) rotate(1deg); }
+            30% { transform: translate(-2px, 1px) rotate(1deg); }
+            40% { transform: translate(2px, -1px) rotate(-1deg); }
+            50%, 90% { transform: translate(0, 0) rotate(0); opacity: 1; }
+            100% { transform: translate(0, 20px) rotate(5deg); opacity: 0; }
         }
 
-        /* 인트로 화면 */
-        .intro-screen {
-            width: 100%;
-            height: 100%;
+        .animate-enter-gate {
+            animation: shake-and-fade 1.2s ease-in-out forwards;
+        }
+        @keyframes fade-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .animate-fade-out {
+            animation: fade-out 1.5s ease-out forwards;
+        }
+
+        /* Base item styles */
+        .base-item {
+            transition: filter 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            cursor: default;
+        }
+
+        /* Base activated (after bori disappears) - glowing effect */
+        .base-item.base-activated {
+            pointer-events: auto !important;
+            cursor: pointer;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 16px rgba(255, 255, 255, 0.4));
+            animation: base-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes base-pulse {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 16px rgba(255, 255, 255, 0.4)); }
+            50% { filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.6)); }
+        }
+
+        /* Hover or collision state - outline following image shape using multiple drop-shadows */
+        .base-item.base-hover {
+            filter:
+                drop-shadow(0 0 1px white)
+                drop-shadow(0 0 1px white)
+                drop-shadow(0 0 2px white)
+                drop-shadow(0 0 2px white)
+                drop-shadow(0 0 4px rgba(255, 255, 255, 0.9))
+                drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+            animation: none;
+        }
+
+        /* Scale up animation on click/enter */
+        .base-item.base-click {
+            animation: base-scale-click 0.3s ease-out forwards;
+        }
+
+        @keyframes base-scale-click {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* For base-2 which has scale(1.5) */
+        #base-2.base-click {
+            animation: base-scale-click-2 0.3s ease-out forwards;
+        }
+
+        @keyframes base-scale-click-2 {
+            0% { transform: scale(1.5); }
+            50% { transform: scale(1.65); }
+            100% { transform: scale(1.5); }
+        }
+
+        /* For base-3 which has scale(0.85) */
+        #base-3.base-click {
+            animation: base-scale-click-3 0.3s ease-out forwards;
+        }
+
+        @keyframes base-scale-click-3 {
+            0% { transform: scale(0.85); }
+            50% { transform: scale(0.935); }
+            100% { transform: scale(0.85); }
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            padding: 24px;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #1a1a1a;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            padding: 30px;
+            color: #fff;
+            max-width: 500px;
             text-align: center;
             position: relative;
-            overflow: hidden;
+            transform: translateY(-50px);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
         }
 
-        /* 배경 이미지 */
-        .intro-bg {
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #stage-modal {
+            z-index: 1100;
+        }
+
+        .stage-modal-content {
+            width: 960px;
+            height: 540px;
+            background: #000;
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stage-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: 1px solid #fff;
+            border-radius: 9999px;
+            padding: 6px 12px;
+            font-weight: 700;
+        }
+
+        .stage-modal-frame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+            background: #000;
+        }
+
+        .hanja-shot {
+            position: absolute;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            color: #facc15;
+            text-shadow: 0 0 6px rgba(250, 204, 21, 0.8);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .hanja-queue-item {
+            width: 28px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #facc15;
+            font-weight: bold;
+        }
+
+        @keyframes monster-hit {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(2) sepia(1) saturate(5) hue-rotate(-50deg); }
+        }
+
+        .monster-hit {
+            animation: monster-hit 0.2s ease-out;
+        }
+
+        @keyframes monster-defeat {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(0) rotate(45deg); opacity: 0; }
+        }
+
+        .monster-defeat {
+            animation: monster-defeat 0.5s ease-out forwards;
+        }
+
+        @keyframes level-clear {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .level-clear-text {
+            animation: level-clear 0.5s ease-out;
+        }
+
+        /* Stage 3: Monster wobble animation */
+        @keyframes monster-wobble {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-3px) rotate(-2deg); }
+            75% { transform: translateX(3px) rotate(2deg); }
+        }
+
+        .monster-wobble {
+            animation: monster-wobble 0.3s ease-in-out infinite;
+        }
+
+        #stage3-monster.monster-hit {
+            animation: monster-wobble 0.3s ease-in-out infinite, monster-hit 0.2s ease-out;
+        }
+
+        /* Stage 3: Player hit blink effect */
+        @keyframes player-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .player-hit {
+            animation: player-blink 0.15s ease-in-out 10;
+        }
+
+        /* Stage 3: Screen flash on damage */
+        @keyframes screen-flash {
+            0% { background-color: rgba(255, 0, 0, 0.4); }
+            100% { background-color: transparent; }
+        }
+
+        .screen-flash {
             position: absolute;
             inset: 0;
-            background: url('../img/bg.png') center/cover no-repeat;
+            pointer-events: none;
+            animation: screen-flash 0.3s ease-out forwards;
+            z-index: 50;
+        }
+
+        /* Stage 3: Player HP hearts */
+        .player-hp-container {
+            display: flex;
+            gap: 2px;
+        }
+
+        .player-heart {
+            font-size: 16px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .player-heart.lost {
             opacity: 0.3;
-            filter: blur(2px);
+            transform: scale(0.8);
         }
 
-        /* 컨텐츠 래퍼 */
-        .intro-content {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 24px;
-            max-width: 360px;
+        @keyframes heart-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
         }
 
-        /* 로고/타이틀 영역 */
-        .game-logo {
-            margin-bottom: 8px;
+        .player-heart.damage {
+            animation: heart-pulse 0.3s ease-out;
         }
 
-        .game-logo img {
-            width: 120px;
-            height: auto;
-            filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.5));
-            animation: float 3s ease-in-out infinite;
+        .player-glow {
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.25)) !important;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .game-title {
-            font-family: 'Nanum Pen Script', cursive;
-            font-size: 42px;
-            font-weight: 700;
-            color: #fbbf24;
-            text-shadow:
-                0 0 20px rgba(251, 191, 36, 0.8),
-                0 4px 8px rgba(0, 0, 0, 0.8);
-            line-height: 1.2;
-        }
-
-        .game-subtitle {
-            font-size: 16px;
-            color: #9ca3af;
-            font-weight: 500;
-            letter-spacing: 2px;
-        }
-
-        /* 캐릭터 이미지 */
-        .characters {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            margin: 16px 0;
-        }
-
-        .character-img {
-            width: 80px;
-            height: auto;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
-        }
-
-        .character-img.bori {
-            animation: float 3s ease-in-out infinite;
-        }
-
-        /* 메뉴 버튼들 */
-        .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            width: 100%;
-        }
-
-        .menu-btn {
-            width: 100%;
-            padding: 18px 24px;
-            font-size: 20px;
-            font-weight: 700;
-            border-radius: 16px;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.1s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .menu-btn:active {
-            transform: translateY(4px);
-        }
-
-        .menu-btn.start {
-            background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
-            color: #fff;
-            box-shadow: 0 6px 0 #92400e, 0 8px 16px rgba(0, 0, 0, 0.4);
-        }
-
-        .menu-btn.start:active {
-            box-shadow: 0 2px 0 #92400e, 0 4px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        .menu-btn.continue {
-            background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
-            color: #fff;
-            box-shadow: 0 6px 0 #1d4ed8, 0 8px 16px rgba(0, 0, 0, 0.4);
-        }
-
-        .menu-btn.continue:active {
-            box-shadow: 0 2px 0 #1d4ed8, 0 4px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        .menu-btn.web-version {
-            background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
-            color: #fff;
-            box-shadow: 0 6px 0 #374151, 0 8px 16px rgba(0, 0, 0, 0.4);
-            font-size: 16px;
-            padding: 14px 20px;
-        }
-
-        .menu-btn.web-version:active {
-            box-shadow: 0 2px 0 #374151, 0 4px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        /* 스테이지 선택 화면 */
-        .stage-select-screen {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            padding: 24px;
-            padding-top: calc(24px + env(safe-area-inset-top, 0));
-        }
-
-        .stage-select-screen.active {
-            display: flex;
-        }
-
-        .intro-screen.hidden {
-            display: none;
-        }
-
-        .screen-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #fbbf24;
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .stages-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            flex: 1;
-            overflow-y: auto;
-            padding-bottom: 80px;
-        }
-
-        .stage-card {
-            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-            border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-
-        .stage-card:active {
-            transform: scale(0.98);
-        }
-
-        .stage-card.locked {
-            opacity: 0.5;
+        .firework {
+            position: absolute;
+            width: 0;
+            height: 0;
             pointer-events: none;
         }
 
-        .stage-card.completed {
-            border-color: #22c55e;
+        .firework-core {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(250, 204, 21, 0.9);
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.9);
+            transform: translate(-3px, -3px);
+            animation: firework-core 900ms ease-out forwards;
         }
 
-        .stage-icon {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            flex-shrink: 0;
+        .firework-spark {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 999px;
+            background: var(--c, #facc15);
+            box-shadow: 0 0 6px var(--c, #facc15);
+            animation: firework-spark 900ms ease-out forwards;
         }
 
-        .stage-card.locked .stage-icon {
-            background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+        @keyframes firework-core {
+            0% { transform: translate(-3px, -3px) scale(0.6); opacity: 1; }
+            100% { transform: translate(-3px, -3px) scale(2.2); opacity: 0; }
         }
 
-        .stage-info {
-            flex: 1;
+        @keyframes firework-spark {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
         }
 
-        .stage-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 4px;
+        #bgm-toggle.muted::after {
+            content: '';
+            position: absolute;
+            left: 6px;
+            right: 6px;
+            top: 50%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.95);
+            transform: rotate(-35deg);
+            border-radius: 2px;
         }
 
-        .stage-desc {
-            font-size: 14px;
-            color: #9ca3af;
+        /* Stage 3: Obstacle styling */
+        .stage3-obstacle {
+            position: absolute;
+            bottom: 32px;
+            width: 24px;
+            height: auto;
+            pointer-events: none;
         }
 
-        .stage-status {
-            font-size: 24px;
+        .stage3-item {
+            position: absolute;
+            bottom: 70px;
+            width: 16px;
+            height: auto;
+            pointer-events: none;
+            filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.8));
+            animation: item-float 0.5s ease-in-out infinite alternate;
         }
 
-        /* 하단 네비게이션 */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 16px;
-            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
-            background: linear-gradient(0deg, rgba(12,10,29,1) 0%, transparent 100%);
+        @keyframes item-float {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-3px); }
         }
 
-        /* 로딩 화면 */
-        .loading-screen {
-            position: fixed;
+        /* Stage 3: Game Over overlay */
+        .game-over-overlay {
+            position: absolute;
             inset: 0;
-            background: #0c0a1d;
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 100;
-            transition: opacity 0.5s;
         }
 
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
+        .game-over-text {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            margin-bottom: 20px;
         }
 
-        .loading-text {
-            margin-top: 16px;
+        .game-over-btn {
+            background: #facc15;
+            color: #000;
+            font-weight: bold;
+            padding: 8px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
             font-size: 16px;
-            color: #9ca3af;
+            transition: transform 0.2s, background 0.2s;
         }
 
-        /* 버전 정보 */
-        .version-info {
-            position: absolute;
-            bottom: calc(16px + env(safe-area-inset-bottom, 0));
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            color: rgba(255,255,255,0.3);
+        .game-over-btn:hover {
+            background: #fde047;
+            transform: scale(1.05);
+        }
+
+        /* Certificate Modal */
+        .certificate-modal {
+            background: linear-gradient(135deg, rgba(20, 20, 20, 0.96), rgba(5, 5, 5, 0.98));
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            border-radius: 18px;
+            padding: 28px;
+            width: min(520px, 92vw);
+            color: #fff7d1;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            position: relative;
+        }
+
+        .certificate-title {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #ffd166;
+            margin-bottom: 10px;
+        }
+
+        .certificate-subtitle {
+            font-size: 14px;
+            color: #fef3c7;
+            margin-bottom: 18px;
+        }
+
+        .certificate-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 12px 0;
+        }
+
+        .certificate-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #fde68a;
+            margin: 6px 0 20px;
+        }
+
+        .certificate-date {
+            font-size: 14px;
+            color: #fcd34d;
+            margin-top: 6px;
+        }
+
+        .certificate-ornament {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #facc15, transparent);
+            margin: 14px 0;
+        }
+
+        .certificate-btn {
+            margin-top: 18px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            font-weight: 700;
+            padding: 10px 18px;
+            border-radius: 999px;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .certificate-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* 모바일 인증서 반응형 */
+        @media (max-width: 600px) {
+            .certificate-modal {
+                padding: 20px 16px;
+                width: 95vw;
+                max-height: 85vh;
+                overflow-y: auto;
+            }
+            .certificate-title {
+                font-size: 20px;
+            }
+            .certificate-subtitle {
+                font-size: 12px;
+            }
+            .certificate-name {
+                font-size: 18px;
+            }
+            .certificate-text {
+                font-size: 14px;
+                margin: 4px 0 12px;
+            }
+            .certificate-date {
+                font-size: 12px;
+            }
+            .certificate-ornament {
+                margin: 10px 0;
+            }
+            .certificate-btn {
+                margin-top: 14px;
+                padding: 8px 14px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
-<body class="portrait-only">
-    <!-- 가로 모드 경고 -->
-    <div class="landscape-warning">
-        <div class="landscape-warning-icon">📱</div>
-        <div class="landscape-warning-text">세로 모드로 플레이해주세요</div>
+<body class="bg-gray-900 overflow-hidden select-none">
+
+    <!-- Game Container -->
+    <div id="game-container" class="relative w-full h-screen mx-auto max-w-7xl bg-black shadow-2xl overflow-hidden">
+        
+        <!-- Background Layer -->
+        <div id="background-layer" class="absolute inset-0 bg-cover bg-center transition-all duration-500" style="background-image: url('../img/bg.png');"></div>
+
+        <!-- Canvas Layer (For later stages) -->
+        <canvas id="game-canvas" class="absolute inset-0 block w-full h-full opacity-0 pointer-events-none"></canvas>
+
+        <!-- UI Layer -->
+        <div id="ui-layer" class="absolute inset-0 flex flex-col items-center justify-center z-10">
+            
+            <!-- Start Screen Overlay -->
+            <div id="start-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center cursor-pointer bg-black/10 hover:bg-black/20 transition-colors">
+                <div class="text-center animate-pulse" style="transform: translateY(-30px);">
+                    <h1 class="text-6xl font-extrabold text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] mb-4 tracking-wider">
+                        마법천자문<br>
+                        <span class="text-yellow-400 text-5xl">8급 한자 수호대</span>
+                    </h1>
+                    <p class="text-2xl text-white mt-8 bg-black/50 px-6 py-2 rounded-full inline-block backdrop-blur-sm border border-white/30">
+                        화면을 클릭하여 시작하세요
+                    </p>
+                </div>
+            </div>
+
+            <!-- Movement Instruction Overlay (Hidden initially) -->
+            <div id="movement-instruction" class="hidden absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-black/70 rounded-xl px-6 py-4 flex items-center justify-center z-40">
+                <p class="text-2xl text-gray-400 font-bold text-center">방향키(←, →)를 눌러 이동하세요</p>
+            </div>
+
+            <!-- Dialogue Box (Hidden initially) -->
+            <div id="dialogue-box" class="hidden absolute bottom-10 left-10 right-10 bg-black/80 border-4 border-white rounded-xl p-6 min-h-[150px] flex flex-col justify-start items-start z-50">
+                <p id="dialogue-text" class="text-2xl text-white font-mono leading-relaxed"></p>
+                <div id="dialogue-indicator" class="self-end text-yellow-400 animate-bounce mt-auto hidden">▼</div>
+            </div>
+
+            <!-- Skip Button (Hidden initially) -->
+            <button id="skip-button" class="hidden absolute top-5 right-5 bg-white/20 hover:bg-white/40 text-white font-bold py-2 px-4 rounded-full border border-white/50 backdrop-blur-sm transition-all z-50">
+                SKIP >>
+            </button>
+
+            <!-- BGM Toggle (Hidden initially) -->
+            <button id="bgm-toggle" class="hidden absolute top-5 left-5 bg-white/20 hover:bg-white/40 text-white rounded-full border border-white/50 backdrop-blur-sm transition-all z-50 p-2" aria-label="Toggle BGM" aria-pressed="false">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M11 4.5L6.5 8H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.5L11 19.5a1 1 0 0 0 1.6-.8V5.3a1 1 0 0 0-1.6-.8zM16 8.5a1 1 0 0 1 1.4 0 5 5 0 0 1 0 7.1 1 1 0 1 1-1.4-1.4 3 3 0 0 0 0-4.3 1 1 0 0 1 0-1.4z"/>
+                </svg>
+            </button>
+
+            <!-- Auth Overlay (Hidden initially, shown after intro dialogue) -->
+            <div id="auth-overlay" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center">
+                <!-- Auth Container (Shadcn UI Style) -->
+                <div id="auth-container" class="w-full max-w-[316px] bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-lg relative transform" style="transform: translateY(-25px);">
+                    
+                    <div class="relative z-10">
+                        <!-- Main Menu -->
+                        <div id="auth-menu" class="flex flex-col gap-4">
+                            <div class="flex flex-col space-y-1 text-center">
+                                <h1 class="text-xl font-semibold tracking-tight text-white">마법천자문</h1>
+                                <p class="text-xs text-zinc-400">8급 한자 수호대에 오신 것을 환영합니다</p>
+                            </div>
+                            
+                            <div class="grid gap-2">
+                                <button id="btn-show-login" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 bg-zinc-50 text-zinc-900 shadow hover:bg-zinc-50/90 h-8 px-3 py-1">
+                                    로그인
+                                </button>
+                                <button id="btn-show-signup" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 border border-zinc-800 bg-transparent shadow-sm hover:bg-zinc-800 hover:text-zinc-50 h-8 px-3 py-1 text-zinc-50">
+                                    회원가입
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Login Form -->
+                        <div id="login-form" class="hidden flex flex-col gap-4">
+                            <div class="flex flex-col space-y-1 text-center">
+                                <h1 class="text-xl font-semibold tracking-tight text-white">로그인</h1>
+                                <p class="text-xs text-zinc-400">계정 정보를 입력해주세요</p>
+                            </div>
+                            
+                            <div class="grid gap-2">
+                                <input type="text" id="login-id" placeholder="아이디" class="flex h-8 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
+                                <input type="password" id="login-pw" placeholder="비밀번호" class="flex h-8 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
+                                <button id="btn-login-submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 bg-zinc-50 text-zinc-900 shadow hover:bg-zinc-50/90 h-8 px-3 py-1 mt-1">
+                                    접속하기
+                                </button>
+                            </div>
+                            
+                            <button class="btn-back text-xs text-zinc-400 hover:text-zinc-50 underline-offset-4 hover:underline text-center">
+                                뒤로가기
+                            </button>
+                        </div>
+
+                        <!-- Signup Form -->
+                        <div id="signup-form" class="hidden flex flex-col gap-4">
+                            <div class="flex flex-col space-y-1 text-center">
+                                <h1 class="text-xl font-semibold tracking-tight text-white">회원가입</h1>
+                                <p class="text-xs text-zinc-400">새로운 계정을 생성합니다</p>
+                            </div>
+
+                            <div class="grid gap-2">
+                                <input type="text" id="signup-id" placeholder="새 아이디" class="flex h-8 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
+                                <input type="password" id="signup-pw" placeholder="새 비밀번호" class="flex h-8 w-full rounded-md border border-zinc-800 bg-transparent px-3 py-1 text-sm text-zinc-50 shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50">
+                                <button id="btn-signup-submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50 bg-zinc-50 text-zinc-900 shadow hover:bg-zinc-50/90 h-8 px-3 py-1 mt-1">
+                                    가입하기
+                                </button>
+                            </div>
+                            
+                            <button class="btn-back text-xs text-zinc-400 hover:text-zinc-50 underline-offset-4 hover:underline text-center">
+                                뒤로가기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game View Overlay (Hidden initially, shown after login) -->
+            <div id="game-view" class="hidden absolute inset-0 z-30 flex items-center justify-center">
+                <!-- Mini Game Container -->
+                <div class="relative w-[490px] h-[160px] rounded-xl shadow-2xl overflow-hidden bg-black transform -translate-y-6">
+                    <!-- Game Background -->
+                    <div id="stage-bg" class="absolute inset-0 overflow-hidden">
+                        <div id="stage-bg-static" class="absolute inset-0 bg-cover bg-no-repeat bg-center" style="background-image: url('../img/bg4.png?v=1769771621');"></div>
+                        <div id="stage-bg-scroll" class="absolute inset-0 hidden">
+                            <div id="stage-bg-tile-1" class="absolute inset-y-0 left-0 bg-cover bg-no-repeat bg-center"></div>
+                            <div id="stage-bg-tile-2" class="absolute inset-y-0 left-0 bg-cover bg-no-repeat bg-center"></div>
+                        </div>
+                    </div>
+
+                    <!-- End Points -->
+                    <img id="base-1" src="../img/base1.png?v=1769771621" alt="End Point 1" class="absolute bottom-[35px] w-[70px] h-auto base-item pointer-events-none" style="left: 240px;" data-base="1">
+                    <img id="base-2" src="../img/base2.png?v=1769771621" alt="End Point 2" class="absolute bottom-[50px] w-[70px] h-auto base-item pointer-events-none" style="left: 325px; transform: scale(1.5);" data-base="2">
+                    <img id="base-3" src="../img/base3.png?v=1769771621" alt="End Point 3" class="absolute bottom-[30px] w-[70px] h-auto base-item pointer-events-none" style="left: 410px; transform: scale(0.85);" data-base="3">
+
+                    <!-- Player Character -->
+                    <img src="../img/run1.png" alt="Player" class="absolute bottom-[32px] left-[105px] w-11 h-auto filter drop-shadow-lg z-10">
+
+                    <!-- Stage 3 Obstacle -->
+                    <img id="stage3-obstacle" src="../img/obstacle1.png" alt="Obstacle" class="absolute bottom-[32px] w-[24px] h-auto hidden">
+
+                    <!-- Stage 3 Projectiles -->
+                    <div id="stage3-projectiles" class="absolute inset-0 pointer-events-none"></div>
+
+                    <!-- Stage 3 Monster -->
+                    <img id="stage3-monster" src="../img/monster1/motion1.png" alt="Monster" class="absolute bottom-[20px] w-[70px] h-auto hidden" style="right: 30px;">
+
+                    <!-- Stage 3 UI: Monster Health Bar -->
+                    <div id="stage3-hp-bar" class="absolute top-2 left-1/2 transform -translate-x-1/2 w-48 h-4 bg-gray-800 rounded-full overflow-hidden hidden border border-white/30">
+                        <div id="stage3-hp-fill" class="h-full bg-gradient-to-r from-red-600 to-red-400 transition-all duration-200" style="width: 100%;"></div>
+                    </div>
+
+                    <!-- Stage 3 UI: Player HP (Hearts) -->
+                    <div id="stage3-player-hp" class="absolute top-2 left-[77px] player-hp-container hidden">
+                        <span class="player-heart">❤️</span>
+                        <span class="player-heart">❤️</span>
+                        <span class="player-heart">❤️</span>
+                    </div>
+                    <!-- Stage 3 UI: Return to Village -->
+                    <button id="stage3-return-btn" class="absolute top-2 right-3 bg-white/20 hover:bg-white/40 text-white rounded-full border border-white/50 backdrop-blur-sm transition-all z-40 p-2 hidden" aria-label="Return to Village">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M4 12l7-7v4h6a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3h-6v4l-7-7z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Stage 3: Obstacles Container -->
+                    <div id="stage3-obstacles" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+                    <!-- Stage 3: Items Container -->
+                    <div id="stage3-items" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+                    <!-- Stage 3: Screen Flash Container -->
+                    <div id="stage3-screen-flash-container" class="absolute inset-0 pointer-events-none"></div>
+
+                    <!-- Stage 3: Game Over Overlay -->
+                    <div id="stage3-game-over" class="game-over-overlay hidden">
+                        <div class="game-over-text">게임 오버</div>
+                        <button id="stage3-restart-btn" class="game-over-btn">다시 시작</button>
+                    </div>
+
+                    <!-- Stage 3 UI: Level Indicator -->
+                    <div id="stage3-level" class="absolute top-2 right-[65px] text-white text-sm font-bold hidden" style="font-family: 'Pretendard', sans-serif;">
+                        Level 1/3
+                    </div>
+
+                    <!-- Stage 3 UI: Current Hanja Display -->
+                    <div id="stage3-current-hanja" class="absolute bottom-2 left-3 bg-black/70 rounded-lg px-3 py-1 hidden">
+                        <span id="stage3-hanja-char" class="text-2xl text-yellow-400 font-bold">火</span>
+                        <span id="stage3-hanja-reading" class="text-sm text-white ml-2">불 화</span>
+                    </div>
+
+                    <!-- Stage 3 UI: Hanja Queue Preview -->
+                    <div id="stage3-hanja-queue" class="absolute bottom-2 right-3 flex gap-1 hidden">
+                        <!-- Queue items will be added dynamically -->
+                    </div>
+
+                    <img id="npc-ok-1" src="../img/ok1.png" alt="Ok 1" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0">
+                    <img id="npc-ok-2" src="../img/ok2.png" alt="Ok 2" class="absolute bottom-[30px] left-[80px] w-[50px] h-auto z-0 hidden">
+                    <!-- NPC: Bori Dosa -->
+                    <img id="npc-bori" src="../img/bori.png" alt="Bori Dosa" class="absolute bottom-[30px] left-[214px] w-[55px] h-auto filter drop-shadow-lg z-0 animate-float">
+                    <img id="npc-sam-1" src="../img/sam1.png" alt="Sam 1" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0">
+                    <img id="npc-sam-2" src="../img/sam2.png" alt="Sam 2" class="absolute bottom-[30px] left-[290px] w-[50px] h-auto z-0 hidden">
+                    <img id="npc-bori-3" src="../img/bori3.png" alt="Bori 3" class="absolute bottom-[30px] left-[430px] w-[50px] h-auto z-0">
+                    <img id="npc-bori-4" src="../img/bori4.png" alt="Bori 4" class="absolute bottom-[30px] left-[430px] w-[50px] h-auto z-0 hidden">
+
+                    <!-- Game UI Overlay (Example: Score, Level) -->
+                    <div class="absolute top-3 left-4 text-white text-lg drop-shadow-md" style="font-family: 'Pretendard', sans-serif;">
+                        한자마을
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dialogue Box (Hidden initially) -->
+            <div id="dialogue-box" class="hidden absolute bottom-10 left-10 right-10 bg-black/80 border-4 border-white rounded-xl p-6 min-h-[150px] flex flex-col justify-start items-start z-50">
+                <p id="dialogue-text" class="text-2xl text-white font-mono leading-relaxed"></p>
+                <div id="dialogue-indicator" class="self-end text-yellow-400 animate-bounce mt-auto hidden">▼</div>
+            </div>
+
+            <!-- Skip Button (Hidden initially) -->
+            <button id="skip-button" class="hidden absolute top-5 right-5 bg-white/20 hover:bg-white/40 text-white font-bold py-2 px-4 rounded-full border border-white/50 backdrop-blur-sm transition-all z-50">
+                SKIP >>
+            </button>
+
+        </div>
+
     </div>
 
-    <div class="mobile-container">
-        <!-- 로딩 화면 -->
-        <div id="loading-screen" class="loading-screen">
-            <div class="spinner"></div>
-            <div class="loading-text">로딩 중...</div>
-        </div>
-
-        <!-- 인트로 화면 -->
-        <div id="intro-screen" class="intro-screen">
-            <div class="intro-bg"></div>
-            <div class="intro-content fade-in">
-                <div class="game-logo">
-                    <img src="../img/hanja.png" alt="마법천자문">
-                </div>
-                <h1 class="game-title">마법천자문</h1>
-                <p class="game-subtitle">8급 한자 수호대</p>
-
-                <div class="characters">
-                    <img src="../img/run1.png" alt="주인공" class="character-img">
-                    <img src="../img/bori.png" alt="보리도사" class="character-img bori">
-                </div>
-
-                <div class="menu-buttons">
-                    <button id="btn-start" class="menu-btn start pulse">게임 시작</button>
-                    <button id="btn-continue" class="menu-btn continue" style="display: none;">이어하기</button>
-                    <button id="btn-web" class="menu-btn web-version">웹 버전으로 보기</button>
-                </div>
-            </div>
-            <div class="version-info">Mobile v1.0</div>
-        </div>
-
-        <!-- 스테이지 선택 화면 -->
-        <div id="stage-select-screen" class="stage-select-screen">
-            <h2 class="screen-title">스테이지 선택</h2>
-
-            <div class="stages-grid">
-                <!-- Stage 1: 카드 매칭 -->
-                <div class="stage-card" data-stage="1">
-                    <div class="stage-icon">🀄</div>
-                    <div class="stage-info">
-                        <div class="stage-name">수련장 1: 한자 카드</div>
-                        <div class="stage-desc">같은 뜻의 한자 카드를 찾아 짝을 맞춰요</div>
-                    </div>
-                    <div class="stage-status">▶</div>
-                </div>
-
-                <!-- Stage 2: 그림판 -->
-                <div class="stage-card" data-stage="2">
-                    <div class="stage-icon">🎨</div>
-                    <div class="stage-info">
-                        <div class="stage-name">수련장 2: 한자 그리기</div>
-                        <div class="stage-desc">손가락으로 한자를 직접 써봐요</div>
-                    </div>
-                    <div class="stage-status">▶</div>
-                </div>
-
-                <!-- Stage 3: 사이드스크롤러 -->
-                <div class="stage-card" data-stage="3">
-                    <div class="stage-icon">⚔️</div>
-                    <div class="stage-info">
-                        <div class="stage-name">수련장 3: 마을 지키기</div>
-                        <div class="stage-desc">몬스터를 물리치고 마을을 지켜요</div>
-                    </div>
-                    <div class="stage-status">▶</div>
-                </div>
-            </div>
-
-            <div class="bottom-nav">
-                <button id="btn-back-intro" class="btn btn-secondary" style="width: 100%;">뒤로가기</button>
-            </div>
+    <!-- Base Modal -->
+    <div id="base-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <h2 id="modal-title" class="text-2xl font-bold mb-4">학습 모드</h2>
+            <p id="modal-description" class="text-lg mb-6">여기서 한자를 학습할 수 있습니다.</p>
+            <button id="modal-start" class="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors">
+                시작하기
+            </button>
         </div>
     </div>
 
-    <script>
-        // DOM 요소
-        const loadingScreen = document.getElementById('loading-screen');
-        const introScreen = document.getElementById('intro-screen');
-        const stageSelectScreen = document.getElementById('stage-select-screen');
-        const btnStart = document.getElementById('btn-start');
-        const btnContinue = document.getElementById('btn-continue');
-        const btnWeb = document.getElementById('btn-web');
-        const btnBackIntro = document.getElementById('btn-back-intro');
-        const stageCards = document.querySelectorAll('.stage-card');
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">알림</h2>
+            <p id="alert-message" class="text-lg mb-6"></p>
+            <button id="alert-ok" class="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors">
+                확인
+            </button>
+        </div>
+    </div>
 
-        // 게임 상태
-        let gameState = {
-            stage1Completed: false,
-            stage2Completed: false,
-            stage3Completed: false
+    <!-- Certificate Modal -->
+    <div id="certificate-modal" class="modal-overlay hidden">
+        <div class="certificate-modal">
+            <div class="certificate-title">8급 한자 마스터 인증서</div>
+            <div class="certificate-subtitle">Magic Hanja Master Certificate</div>
+            <div class="certificate-ornament"></div>
+            <div class="certificate-text">이 인증서는 아래의 수험자가</div>
+            <div id="certificate-name" class="certificate-name">수호자</div>
+            <div class="certificate-text">모든 수련을 마치고 마을의 평화를 되찾았음을 증명합니다.</div>
+            <div class="certificate-ornament"></div>
+            <div id="certificate-date" class="certificate-date"></div>
+            <button id="certificate-home" class="certificate-btn">처음으로</button>
+        </div>
+    </div>
+
+    <!-- Stage Modal (iframe) -->
+    <div id="stage-modal" class="modal-overlay">
+        <div class="stage-modal-content">
+            <button id="stage-modal-close" class="stage-modal-close">닫기</button>
+            <iframe id="stage-frame" class="stage-modal-frame" title="Stage 1"></iframe>
+        </div>
+    </div>
+
+    <script>// Game State
+const state = {
+    started: false, // True once dialogue intro starts
+    dialogueActive: false,
+    currentLineIndex: 0,
+    isTyping: false,
+    typingSpeed: 50, // ms per char
+    timeoutId: null,
+    currentAudio: null, // Track playing dialogue audio
+    bgmAudio: null, // Track background music
+    bgmMuted: false,
+    currentUser: null, // Logged in user info
+    
+    // Village Scene State (bg4)
+    village: {
+        active: false,
+        playerX: 55, // Initial X position
+        playerY: 150, // Fixed Y position (adjust based on container height)
+        direction: 'right', // 'right' or 'left'
+        isMoving: false,
+        animationFrame: 0,
+        lastFrameTime: 0,
+        frameInterval: 100, // Animation speed (ms)
+        currentImageIndex: 1, // 1, 2, 3
+        speed: 4, // Movement speed
+        boriInteraction: false, // Has interacted with Bori?
+        boriDialogueFinished: false, // Has dialogue finished?
+        isEnteringGate: false,
+        basesActive: false, // Are bases interactive?
+        selectedBase: null, // Currently selected/hovered base (1, 2, or 3)
+        baseCollision: null, // Base that player is colliding with
+        stage3Active: false,
+        stage3BgOffset: 0,
+        stage3BgSpeed: 2,
+        stage3BgWidth: 0,
+        stage3ObstacleX: 0,
+        stage3ObstacleSpeed: 3,
+        stage3ObstacleActive: false,
+        stage3Jumping: false,
+        stage3JumpVelocity: 0,
+        stage3GroundY: 32,
+        stage3Attacking: false,
+        stage3AttackFrame: 1,
+        stage3AttackTimer: 0,
+        stage3Projectiles: [],
+        // Stage 3 몬스터 시스템
+        stage3Level: 1,           // 현재 레벨 (1, 2, 3)
+        stage3HanjaQueue: [],     // 발사할 한자 큐
+        stage3CurrentHanjaIndex: 0,
+        stage3MonsterHP: 240,
+        stage3MonsterMaxHP: 240,
+        stage3MonsterX: 400,      // 몬스터 X 위치
+        stage3MonsterActive: false,
+        stage3GameStarted: false,
+        stage3Victory: false,
+        stage3Completed: false,
+        npcMetOk: false,
+        npcMetSam: false,
+        npcMetBori: false,
+        npcSpokenOk: false,
+        npcSpokenSam: false,
+        npcSpokenBori: false,
+        certificateShown: false,
+        // 플레이어 체력 시스템
+        stage3PlayerHP: 3,
+        stage3PlayerMaxHP: 3,
+        stage3Invincible: false,
+        stage3InvincibleTimer: 0,
+        // 장애물 시스템
+        stage3Obstacles: [],
+        stage3ObstacleSpawnTimer: 0,
+        stage3ObstacleSpawnInterval: 2500, // 2.5초 기본 간격
+        // 아이템 시스템
+        stage3Items: [],
+        // 몬스터 접근 시스템
+        stage3MonsterApproachSpeed: 0.1,   // 접근 속도
+        stage3MonsterBaseX: 520,           // 몬스터 시작 위치
+        stage3MonsterKnockback: 0,         // 넉백 거리
+        // 런 애니메이션 타이머
+        stage3RunAnimTimer: 0,
+        stage3RunAnimInterval: 100
+    },
+    
+    keys: {
+        ArrowRight: false,
+        ArrowLeft: false
+    }
+};
+
+// Dialogue Data
+const introLines = [
+    "하...다음 주가 벌써 한자 8급 시험이네...",
+    "책만 보면 왜 이렇게 잠이 오냐...",
+    "응? (모니터를 발견하며)",
+    "'할수록 머리가 좋아지는 게임'?",
+    "세상에 그런 게임이 어딨어~",
+    "에이, 속는 셈 치고 딱 한 판만 해볼까?"
+];
+
+const boriLines = [
+    "허허, 어서 오게나!",
+    "나는 이 한자 세계를 지키는 보리 도사라네.",
+    "자네가 바로 예언 속의 그 아이로군.",
+    "악당들이 8급 한자들을 모두 훔쳐갔다네!",
+    "숲, 산, 그리고 던전을 지나며 한자를 되찾아주게.",
+    "준비가 되었다면... 출발하게나!"
+];
+
+const villageIntroLines = [
+    "어? 여긴 어디지?",
+    "저 분한테 물어봐야겠다!"
+];
+
+let currentDialogueSet = introLines; // Track which dialogue to show
+let dialogueMode = null;
+
+// Audio Mapping
+const audioFiles = [
+    "../sound/intro1.m4a",
+    "../sound/intro2.m4a",
+    "../sound/intro3.m4a",
+    "../sound/intro4.m4a",
+    "../sound/intro5.m4a",
+    "../sound/intro6.m4a",
+    "../sound/intro7.m4a",
+    null // No audio for the last line
+];
+
+const boriAudioFiles = [
+    "../sound/bori1.m4a",
+    "../sound/bori2.m4a",
+    "../sound/bori3.m4a",
+    "../sound/bori4.m4a",
+    "../sound/bori5.m4a",
+    "../sound/bori6.m4a"
+];
+
+const villageIntroAudioFiles = [
+    "../sound/okong1.m4a",
+    "../sound/okong2.m4a"
+];
+
+const villageBgmFile = "../sound/music.mp3";
+
+function startVillageBgm() {
+    if (!state.bgmAudio) {
+        state.bgmAudio = new Audio(villageBgmFile);
+        state.bgmAudio.loop = true;
+        state.bgmAudio.volume = 0.25;
+    }
+    if (!state.bgmMuted && state.bgmAudio.paused) {
+        state.bgmAudio.play().catch(e => console.log("BGM play failed:", e));
+    }
+}
+
+function setBgmMuted(muted) {
+    state.bgmMuted = muted;
+    if (bgmToggle) {
+        bgmToggle.classList.toggle('muted', muted);
+        bgmToggle.setAttribute('aria-pressed', muted ? 'true' : 'false');
+    }
+    if (!state.bgmAudio) return;
+    if (muted) {
+        state.bgmAudio.pause();
+    } else {
+        state.bgmAudio.play().catch(e => console.log("BGM play failed:", e));
+    }
+}
+
+// Stage 3 한자 데이터 (획수 기준 레벨 분류)
+const stage3HanjaData = {
+    level1: [ // 1~4획 (24자)
+        { char: '一', eum: '일', deut: '한' },
+        { char: '七', eum: '칠', deut: '일곱' },
+        { char: '九', eum: '구', deut: '아홉' },
+        { char: '二', eum: '이', deut: '두' },
+        { char: '人', eum: '인', deut: '사람' },
+        { char: '八', eum: '팔', deut: '여덟' },
+        { char: '十', eum: '십', deut: '열' },
+        { char: '三', eum: '삼', deut: '석' },
+        { char: '土', eum: '토', deut: '흙' },
+        { char: '大', eum: '대', deut: '큰' },
+        { char: '女', eum: '녀', deut: '여자' },
+        { char: '寸', eum: '촌', deut: '마디' },
+        { char: '小', eum: '소', deut: '작을' },
+        { char: '山', eum: '산', deut: '뫼' },
+        { char: '中', eum: '중', deut: '가운데' },
+        { char: '五', eum: '오', deut: '다섯' },
+        { char: '六', eum: '육', deut: '여섯' },
+        { char: '日', eum: '일', deut: '날' },
+        { char: '月', eum: '월', deut: '달' },
+        { char: '木', eum: '목', deut: '나무' },
+        { char: '水', eum: '수', deut: '물' },
+        { char: '火', eum: '화', deut: '불' },
+        { char: '父', eum: '부', deut: '아버지' },
+        { char: '王', eum: '왕', deut: '임금' }
+    ],
+    level2: [ // 5~8획 (17자)
+        { char: '兄', eum: '형', deut: '형' },
+        { char: '北', eum: '북', deut: '북녘' },
+        { char: '四', eum: '사', deut: '넉' },
+        { char: '外', eum: '외', deut: '바깥' },
+        { char: '母', eum: '모', deut: '어머니' },
+        { char: '民', eum: '민', deut: '백성' },
+        { char: '生', eum: '생', deut: '날' },
+        { char: '白', eum: '백', deut: '흰' },
+        { char: '先', eum: '선', deut: '먼저' },
+        { char: '年', eum: '년', deut: '해' },
+        { char: '西', eum: '서', deut: '서녘' },
+        { char: '弟', eum: '제', deut: '아우' },
+        { char: '東', eum: '동', deut: '동녘' },
+        { char: '金', eum: '금', deut: '쇠' },
+        { char: '長', eum: '장', deut: '길' },
+        { char: '門', eum: '문', deut: '문' },
+        { char: '靑', eum: '청', deut: '푸를' }
+    ],
+    level3: [ // 9획+ (9자)
+        { char: '南', eum: '남', deut: '남녘' },
+        { char: '室', eum: '실', deut: '집' },
+        { char: '軍', eum: '군', deut: '군사' },
+        { char: '校', eum: '교', deut: '학교' },
+        { char: '國', eum: '국', deut: '나라' },
+        { char: '敎', eum: '교', deut: '가르칠' },
+        { char: '萬', eum: '만', deut: '일만' },
+        { char: '學', eum: '학', deut: '배울' },
+        { char: '韓', eum: '한', deut: '나라이름' }
+    ]
+};
+
+// DOM Elements (Game UI)
+const gameContainer = document.getElementById('game-container');
+const startScreen = document.getElementById('start-screen'); // Click to start intro
+const dialogueBox = document.getElementById('dialogue-box');
+const dialogueText = document.getElementById('dialogue-text');
+const dialogueIndicator = document.getElementById('dialogue-indicator');
+const skipButton = document.getElementById('skip-button');
+const movementInstruction = document.getElementById('movement-instruction'); // New element
+const bgmToggle = document.getElementById('bgm-toggle');
+
+// Game View Elements
+const gameView = document.getElementById('game-view');
+const gameLevelDisplay = document.getElementById('game-level-display');
+const playerImage = gameView.querySelector('img[alt="Player"]'); // Select the player image
+const npcBori = document.getElementById('npc-bori'); // Select Bori NPC
+const npcOk1 = document.getElementById('npc-ok-1');
+const npcOk2 = document.getElementById('npc-ok-2');
+const npcSam1 = document.getElementById('npc-sam-1');
+const npcSam2 = document.getElementById('npc-sam-2');
+const npcBori3 = document.getElementById('npc-bori-3');
+const npcBori4 = document.getElementById('npc-bori-4');
+const stageBgStatic = document.getElementById('stage-bg-static');
+const stageBgScroll = document.getElementById('stage-bg-scroll');
+const stageBgTile1 = document.getElementById('stage-bg-tile-1');
+const stageBgTile2 = document.getElementById('stage-bg-tile-2');
+const stage3Obstacle = document.getElementById('stage3-obstacle');
+const stage3Projectiles = document.getElementById('stage3-projectiles');
+
+// Stage 3 UI Elements
+const stage3Monster = document.getElementById('stage3-monster');
+const stage3HpBar = document.getElementById('stage3-hp-bar');
+const stage3HpFill = document.getElementById('stage3-hp-fill');
+const stage3LevelDisplay = document.getElementById('stage3-level');
+const stage3CurrentHanja = document.getElementById('stage3-current-hanja');
+const stage3HanjaChar = document.getElementById('stage3-hanja-char');
+const stage3HanjaReading = document.getElementById('stage3-hanja-reading');
+const stage3HanjaQueue = document.getElementById('stage3-hanja-queue');
+const stage3PlayerHp = document.getElementById('stage3-player-hp');
+const stage3ObstaclesContainer = document.getElementById('stage3-obstacles');
+const stage3ItemsContainer = document.getElementById('stage3-items');
+const stage3ScreenFlashContainer = document.getElementById('stage3-screen-flash-container');
+const stage3GameOver = document.getElementById('stage3-game-over');
+const stage3RestartBtn = document.getElementById('stage3-restart-btn');
+const stage3ReturnBtn = document.getElementById('stage3-return-btn');
+const certificateModal = document.getElementById('certificate-modal');
+const certificateName = document.getElementById('certificate-name');
+const certificateDate = document.getElementById('certificate-date');
+const certificateHome = document.getElementById('certificate-home');
+
+// DOM Elements (Auth UI)
+const authOverlay = document.getElementById('auth-overlay');
+const authMenu = document.getElementById('auth-menu');
+const loginForm = document.getElementById('login-form');
+const signupForm = document.getElementById('signup-form');
+const btnShowLogin = document.getElementById('btn-show-login');
+const btnShowSignup = document.getElementById('btn-show-signup');
+const btnLoginSubmit = document.getElementById('btn-login-submit');
+const btnSignupSubmit = document.getElementById('btn-signup-submit');
+const loginIdInput = document.getElementById('login-id');
+const loginPwInput = document.getElementById('login-pw');
+const signupIdInput = document.getElementById('signup-id');
+const signupPwInput = document.getElementById('signup-pw');
+const backButtons = document.querySelectorAll('.btn-back');
+
+// Initialize
+function init() {
+    // Initial setup: Show start screen, hide auth overlay and game view
+    startScreen.classList.remove('hidden');
+    authOverlay.classList.add('hidden');
+    gameView.classList.add('hidden');
+
+    // Start Screen Event Listener (to begin dialogue intro)
+    startScreen.addEventListener('click', startGameSequence);
+    
+    // Auth Event Listeners
+    btnShowLogin.addEventListener('click', () => showAuthView('login'));
+    btnShowSignup.addEventListener('click', () => showAuthView('signup'));
+    
+    backButtons.forEach(btn => {
+        btn.addEventListener('click', () => showAuthView('menu'));
+    });
+
+    btnSignupSubmit.addEventListener('click', handleSignup);
+    btnLoginSubmit.addEventListener('click', handleLogin);
+
+    // Skip Button Event Listener (for dialogue intro)
+    skipButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent global click from firing
+        if (currentDialogueSet === introLines) {
+            finishIntro();
+        } else if (currentDialogueSet === boriLines) {
+            finishBoriDialogue();
+        } else if (currentDialogueSet === villageIntroLines) {
+            finishVillageIntro();
+        }
+    });
+
+    // Global click to advance dialogue if active
+    document.addEventListener('click', (e) => {
+        // Only advance dialogue if dialogue is active and click is not on auth overlay or skip button
+        if (state.dialogueActive && !authOverlay.contains(e.target) && !skipButton.contains(e.target)) {
+            advanceDialogue();
+        }
+    });
+
+    if (bgmToggle) {
+        bgmToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setBgmMuted(!state.bgmMuted);
+        });
+    }
+
+    
+    // Spacebar to advance dialogue
+    window.addEventListener('keydown', (e) => {
+        if (state.dialogueActive && (e.code === 'Space' || e.key === ' ')) {
+            e.preventDefault(); // Prevent page scroll
+            advanceDialogue();
+        }
+    });
+
+    // Movement Key Listeners
+    window.addEventListener('keydown', (e) => {
+        if (state.village.active && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+            state.keys[e.key] = true;
+
+            // Hide instruction on first move
+            if (!movementInstruction.classList.contains('hidden') && movementInstruction.querySelector('p').textContent.includes("방향키")) {
+                movementInstruction.classList.add('hidden');
+            }
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (!state.village.active || !state.village.stage3Active) return;
+        if (e.code === 'ArrowUp') {
+            e.preventDefault();
+            if (!state.village.stage3Jumping) {
+                state.village.stage3Jumping = true;
+                state.village.stage3JumpVelocity = 9;
+                playJumpSound();
+            }
+        }
+        if (e.code === 'Space') {
+            e.preventDefault();
+            if (!state.village.stage3Attacking) {
+                state.village.stage3Attacking = true;
+                state.village.stage3AttackFrame = 1;
+                state.village.stage3AttackTimer = performance.now();
+                playerImage.src = '../img/attack1.png';
+
+                // Shoot hanja projectile
+                shootHanja();
+
+                setTimeout(() => {
+                    state.village.stage3Attacking = false;
+                }, 400);
+            }
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (state.village.active && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+            state.keys[e.key] = false;
+        }
+    });
+
+    // ========== 모바일 터치 컨트롤 ==========
+    const gameContainer = document.querySelector('#game-view .relative');
+    if (gameContainer) {
+        // 터치 영역 생성 (왼쪽/오른쪽)
+        const touchLeft = document.createElement('div');
+        touchLeft.id = 'touch-left';
+        touchLeft.style.cssText = 'position:absolute;left:0;top:0;width:40%;height:100%;z-index:60;';
+
+        const touchRight = document.createElement('div');
+        touchRight.id = 'touch-right';
+        touchRight.style.cssText = 'position:absolute;right:0;top:0;width:40%;height:100%;z-index:60;';
+
+        gameContainer.appendChild(touchLeft);
+        gameContainer.appendChild(touchRight);
+
+        // 왼쪽 터치 - 왼쪽 이동
+        touchLeft.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (state.village.active) {
+                state.keys.ArrowLeft = true;
+                if (!movementInstruction.classList.contains('hidden')) {
+                    movementInstruction.classList.add('hidden');
+                }
+            }
+        }, { passive: false });
+
+        touchLeft.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            state.keys.ArrowLeft = false;
+        }, { passive: false });
+
+        // 오른쪽 터치 - 오른쪽 이동
+        touchRight.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (state.village.active) {
+                state.keys.ArrowRight = true;
+                if (!movementInstruction.classList.contains('hidden')) {
+                    movementInstruction.classList.add('hidden');
+                }
+            }
+        }, { passive: false });
+
+        touchRight.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            state.keys.ArrowRight = false;
+        }, { passive: false });
+
+        // Stage 3 터치 컨트롤 (점프 + 공격 버튼)
+        const stage3Controls = document.createElement('div');
+        stage3Controls.id = 'stage3-touch-controls';
+        stage3Controls.style.cssText = 'position:absolute;bottom:10px;right:10px;display:none;flex-direction:column;gap:8px;z-index:70;';
+        stage3Controls.innerHTML = `
+            <button id="touch-attack" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(180deg,#ef4444,#dc2626);border:3px solid #fef2f2;font-size:24px;color:white;box-shadow:0 4px 0 #b91c1c;">⚔️</button>
+            <button id="touch-jump" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(180deg,#3b82f6,#2563eb);border:3px solid #eff6ff;font-size:24px;color:white;box-shadow:0 4px 0 #1d4ed8;">⬆️</button>
+        `;
+        gameContainer.appendChild(stage3Controls);
+
+        const touchAttack = document.getElementById('touch-attack');
+        const touchJump = document.getElementById('touch-jump');
+
+        touchAttack.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (state.village.stage3Active && !state.village.stage3Attacking) {
+                state.village.stage3Attacking = true;
+                state.village.stage3AttackFrame = 1;
+                state.village.stage3AttackTimer = performance.now();
+                playerImage.src = '../img/attack1.png';
+                shootHanja();
+                setTimeout(() => { state.village.stage3Attacking = false; }, 400);
+            }
+        }, { passive: false });
+
+        touchJump.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (state.village.stage3Active && !state.village.stage3Jumping) {
+                state.village.stage3Jumping = true;
+                state.village.stage3JumpVelocity = 9;
+                playJumpSound();
+            }
+        }, { passive: false });
+    }
+}
+
+// Auth View Switcher
+function showAuthView(view) {
+    authMenu.classList.add('hidden');
+    loginForm.classList.add('hidden');
+    signupForm.classList.add('hidden');
+
+    if (view === 'menu') authMenu.classList.remove('hidden');
+    else if (view === 'login') loginForm.classList.remove('hidden');
+    else if (view === 'signup') signupForm.classList.remove('hidden');
+}
+
+// Handle Sign Up
+function handleSignup() {
+    const id = signupIdInput.value.trim();
+    const pw = signupPwInput.value.trim();
+
+    if (!id || !pw) {
+        showAlert("아이디와 비밀번호를 모두 입력해주세요.");
+        return;
+    }
+
+    const users = JSON.parse(localStorage.getItem('edugame_users') || '{}');
+
+    if (users[id]) {
+        showAlert("이미 존재하는 아이디입니다.");
+        return;
+    }
+
+    // Save new user
+    users[id] = { password: pw, level: 1 }; // Default level 1
+    localStorage.setItem('edugame_users', JSON.stringify(users));
+    
+    showAlert("가입이 완료되었습니다! 로그인해주세요.");
+    showAuthView('login');
+}
+
+// Handle Login
+function handleLogin() {
+    const id = loginIdInput.value.trim();
+    const pw = loginPwInput.value.trim();
+
+    if (!id || !pw) {
+        showAlert("아이디와 비밀번호를 모두 입력해주세요.");
+        return;
+    }
+
+    const users = JSON.parse(localStorage.getItem('edugame_users') || '{}');
+    const user = users[id];
+
+    if (user && user.password === pw) {
+        // Login Success
+        state.currentUser = { id: id, ...user };
+        console.log(`Logged in as ${id}, Level: ${user.level}`);
+        
+        // Hide Auth Overlay and Show Game View
+        authOverlay.classList.add('hidden');
+        gameView.classList.remove('hidden');
+        
+        // Update Level Display
+        if(gameLevelDisplay) {
+            gameLevelDisplay.textContent = user.level;
+        }
+
+        // Clean up UI elements
+        dialogueBox.classList.add('hidden');
+        skipButton.classList.add('hidden');
+        
+        console.log("Game View Started");
+        startVillageScene(); // Start Village Logic
+    } else {
+        showAlert("아이디 또는 비밀번호가 잘못되었습니다.");
+    }
+}
+
+// Start Village Scene Logic
+function startVillageScene() {
+    startVillageBgm();
+    state.village.npcMetOk = false;
+    state.village.npcMetSam = false;
+    state.village.npcMetBori = false;
+    state.village.npcSpokenOk = false;
+    state.village.npcSpokenSam = false;
+    state.village.npcSpokenBori = false;
+    setNpcVisibility(false);
+    if (bgmToggle) {
+        bgmToggle.classList.remove('hidden');
+        bgmToggle.classList.toggle('muted', state.bgmMuted);
+        bgmToggle.setAttribute('aria-pressed', state.bgmMuted ? 'true' : 'false');
+    }
+    state.village.active = true;
+    state.village.playerX = 33; // Reset position
+    state.village.boriInteraction = false;
+    requestAnimationFrame(updateVillageLoop);
+    
+    // Trigger Village Intro Dialogue
+    setTimeout(triggerVillageIntro, 500); // Slight delay for effect
+}
+
+function triggerVillageIntro() {
+    console.log("Village Intro Dialogue");
+    currentDialogueSet = villageIntroLines;
+    state.dialogueActive = true;
+    dialogueBox.classList.remove('hidden');
+    skipButton.classList.remove('hidden');
+    showLine(0);
+}
+
+function finishVillageIntro() {
+    state.dialogueActive = false;
+    dialogueBox.classList.add('hidden');
+    skipButton.classList.add('hidden');
+    
+    // Stop audio if playing
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+
+    // Show new movement instruction
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "방향키(←, →)를 사용하여 이동하세요";
+    }
+    movementInstruction.classList.remove('hidden');
+}
+
+// Village Scene Game Loop
+function updateVillageLoop(timestamp) {
+    if (!state.village.active) return;
+
+    // Skip movement update if dialogue is active (freeze player)
+    if (state.dialogueActive) {
+         requestAnimationFrame(updateVillageLoop);
+         return;
+    }
+
+    if (state.village.stage3Active) {
+        // Victory 상태면 walkToCenter가 애니메이션을 담당하므로 건너뜀
+        if (state.village.stage3Victory) {
+            // 배경만 유지 (스크롤 없이)
+            stageBgScroll.style.transform = `translateX(${state.village.stage3BgOffset}px)`;
+            requestAnimationFrame(updateVillageLoop);
+            return;
+        }
+
+        // 항상 달리는 애니메이션 (점프/공격 중이 아닐 때)
+        if (!state.village.stage3Jumping && !state.village.stage3Attacking) {
+            if (timestamp - state.village.stage3RunAnimTimer > state.village.stage3RunAnimInterval) {
+                state.village.currentImageIndex++;
+                if (state.village.currentImageIndex > 3) state.village.currentImageIndex = 1;
+                state.village.stage3RunAnimTimer = timestamp;
+                playerImage.src = `img/run${state.village.currentImageIndex}.png`;
+            }
+        }
+
+        // 배경 스크롤 (항상)
+        state.village.stage3BgOffset -= state.village.stage3BgSpeed;
+        if (state.village.stage3BgWidth > 0 && state.village.stage3BgOffset <= -state.village.stage3BgWidth) {
+            state.village.stage3BgOffset += state.village.stage3BgWidth;
+        }
+        stageBgScroll.style.transform = `translateX(${state.village.stage3BgOffset}px)`;
+
+        // 공격 애니메이션
+        if (state.village.stage3Attacking) {
+            if (timestamp - state.village.stage3AttackTimer > 120) {
+                state.village.stage3AttackFrame = state.village.stage3AttackFrame === 1 ? 2 : 1;
+                state.village.stage3AttackTimer = timestamp;
+                playerImage.src = `img/attack${state.village.stage3AttackFrame}.png`;
+            }
+        }
+
+        // 점프 물리
+        if (state.village.stage3Jumping) {
+            state.village.stage3JumpVelocity -= 0.6;
+            state.village.playerY += state.village.stage3JumpVelocity;
+            if (state.village.playerY <= state.village.stage3GroundY) {
+                state.village.playerY = state.village.stage3GroundY;
+                state.village.stage3Jumping = false;
+                state.village.stage3JumpVelocity = 0;
+            }
+            playerImage.src = state.village.stage3JumpVelocity > 0 ? 'img/jump1.png' : 'img/jump2.png';
+        } else {
+            state.village.playerY = state.village.stage3GroundY;
+        }
+
+        // 무적 시간 업데이트
+        if (state.village.stage3Invincible) {
+            if (timestamp - state.village.stage3InvincibleTimer > 1500) {
+                state.village.stage3Invincible = false;
+                playerImage.classList.remove('player-hit');
+            }
+        }
+
+        // 장애물 스폰 및 업데이트
+        updateStage3Obstacles(timestamp);
+
+        // 아이템 업데이트
+        updateStage3Items();
+
+        // 몬스터 움직임 (접근 + 흔들림)
+        updateStage3MonsterMovement();
+
+        // 몬스터 충돌 체크
+        checkMonsterCollision();
+
+        // Update projectiles
+        updateStage3Projectiles();
+
+        playerImage.style.left = `${state.village.playerX}px`;
+        playerImage.style.bottom = `${state.village.playerY}px`;
+        requestAnimationFrame(updateVillageLoop);
+        return;
+    }
+
+    // 1. Update Movement
+    if (state.keys.ArrowRight) {
+        state.village.direction = 'right';
+        state.village.isMoving = true;
+        state.village.playerX += state.village.speed;
+    } else if (state.keys.ArrowLeft) {
+        state.village.direction = 'left';
+        state.village.isMoving = true;
+        state.village.playerX -= state.village.speed;
+    } else {
+        state.village.isMoving = false;
+    }
+
+    // Boundary Checks (Container width ~820px scaled, player width ~44px)
+    if (state.village.playerX < -11) state.village.playerX = -11;
+    if (state.village.playerX > 453) state.village.playerX = 453;
+
+    // Apply Position
+    playerImage.style.left = `${state.village.playerX}px`;
+
+    // Check base collision
+    checkBaseCollision();
+
+    // 2. Handle Animation
+    if (state.village.isMoving) {
+        if (timestamp - state.village.lastFrameTime > state.village.frameInterval) {
+            state.village.currentImageIndex++;
+            if (state.village.currentImageIndex > 3) state.village.currentImageIndex = 1;
+            state.village.lastFrameTime = timestamp;
+            
+            // Update Image Source
+            const prefix = state.village.direction === 'right' ? 'run' : 'left';
+            playerImage.src = `img/${prefix}${state.village.currentImageIndex}.png`;
+        }
+    } else {
+        // Idle State
+        const prefix = state.village.direction === 'right' ? 'run' : 'left';
+        playerImage.src = `img/${prefix}1.png`; // Reset to frame 1
+    }
+
+    // 3. Check Collision with Bori & Interaction
+    // Bori is at right-[161px]. Container 660px.
+    // Bori Width ~96px. Bori Left position ~= 660 - 161 - 96 = 403px.
+    // Let's set a stop point before Bori, e.g., at X=325.
+
+    if (state.village.playerX >= 192 && !state.village.boriDialogueFinished) { // Check if player reaches Bori
+        // Stop player from moving past Bori
+        state.village.playerX = 192;
+        
+        // Trigger interaction if not yet triggered
+        if (!state.village.boriInteraction) {
+            state.village.boriInteraction = true;
+            triggerBoriDialogue();
+        }
+    }
+
+    if (state.village.stage3Completed) {
+        const playerRect = playerImage.getBoundingClientRect();
+        const hitOk = updateNpcContact(playerRect, npcOk1, npcOk2);
+        const hitSam = updateNpcContact(playerRect, npcSam1, npcSam2);
+        const hitBori = updateNpcContact(playerRect, npcBori3, npcBori4);
+
+        if (hitOk && !state.village.npcSpokenOk) {
+            showNpcDialogue("야호! 이제 다시 평화로운 마을이야! 진정한 마법천자문 마스터가 된 걸 축하해!", "../sound/ok.wav");
+            state.village.npcSpokenOk = true;
+        } else if (hitSam && !state.village.npcSpokenSam) {
+            showNpcDialogue("와! 네가 아니었으면 우린 영영 한자를 잃어버릴 뻔했어! 정말 대단해!", "../sound/sam.wav");
+            state.village.npcSpokenSam = true;
+        } else if (hitBori && !state.village.npcSpokenBori) {
+            showNpcDialogue("오오! 장하다, 우리 수호자! 네가 마법 붓의 진정한 주인이 되었구나!", "../sound/bori.wav");
+            state.village.npcSpokenBori = true;
+        }
+
+    }
+
+    // Apply Position
+    playerImage.style.left = `${state.village.playerX}px`;
+
+    requestAnimationFrame(updateVillageLoop);
+}
+
+function triggerBoriDialogue() {
+    console.log("Meeting Bori Dosa!");
+    
+    // Change Appearance
+    npcBori.src = "../img/bori2.png";
+    npcBori.classList.add('animate-float');
+    
+    // Setup Dialogue
+    currentDialogueSet = boriLines;
+    state.dialogueActive = true;
+    dialogueBox.classList.remove('hidden');
+    skipButton.classList.remove('hidden'); // Show skip button
+    
+    // Start Dialogue
+    showLine(0);
+}
+
+// Play audio for the specific line
+function playDialogueAudio(index) {
+    let files = null;
+
+    if (currentDialogueSet === introLines) {
+        files = audioFiles;
+    } else if (currentDialogueSet === boriLines) {
+        files = boriAudioFiles;
+    } else if (currentDialogueSet === villageIntroLines) {
+        files = villageIntroAudioFiles;
+    }
+
+    if (!files) return;
+
+    // Stop any currently playing audio
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+
+    // Check if audio exists for this line
+    if (index < files.length && files[index]) {
+        state.currentAudio = new Audio(files[index]);
+        state.currentAudio.play().catch(e => console.log("Audio play failed:", e));
+    }
+}
+
+// Display a line of dialogue
+function showLine(index) {
+    if (index >= currentDialogueSet.length) {
+        if (currentDialogueSet === introLines) {
+            finishIntro();
+        } else if (currentDialogueSet === boriLines) {
+            finishBoriDialogue();
+        } else if (currentDialogueSet === villageIntroLines) {
+            finishVillageIntro();
+        } else if (dialogueMode === 'npc') {
+            finishNpcDialogue();
+        }
+        return;
+    }
+
+    state.currentLineIndex = index;
+    state.isTyping = true;
+    dialogueIndicator.classList.add('hidden');
+    dialogueText.textContent = ""; // Clear
+    
+    // Play Audio (only for intro)
+    playDialogueAudio(index);
+
+    const line = currentDialogueSet[index];
+    let charIndex = 0;
+
+    function typeChar() {
+        if (charIndex < line.length) {
+            dialogueText.textContent += line[charIndex];
+            charIndex++;
+            state.timeoutId = setTimeout(typeChar, state.typingSpeed);
+        } else {
+            state.isTyping = false;
+            dialogueIndicator.classList.remove('hidden');
+        }
+    }
+    
+    typeChar();
+}
+
+function showNpcDialogue(line, audioSrc) {
+    dialogueMode = 'npc';
+    currentDialogueSet = [line];
+    state.dialogueActive = true;
+    dialogueBox.classList.remove('hidden');
+    skipButton.classList.add('hidden');
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+    if (audioSrc) {
+        state.currentAudio = new Audio(audioSrc);
+        state.currentAudio.play().catch(e => console.log("Audio play failed:", e));
+    }
+    showLine(0);
+}
+
+function finishNpcDialogue() {
+    state.dialogueActive = false;
+    dialogueBox.classList.add('hidden');
+    dialogueMode = null;
+    if (state.village.stage3Completed &&
+        state.village.npcSpokenOk &&
+        state.village.npcSpokenSam &&
+        state.village.npcSpokenBori) {
+        showCertificateModal();
+    }
+}
+
+function showCertificateModal() {
+    if (state.village.certificateShown) return;
+    state.village.certificateShown = true;
+    const name = state.currentUser?.id || 'guest';
+    const date = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+    if (certificateName) certificateName.textContent = name;
+    if (certificateDate) certificateDate.textContent = date;
+    certificateModal.classList.remove('hidden');
+    certificateModal.classList.add('active');
+}
+
+// Advance to next line or complete current typing instantly
+function advanceDialogue() {
+    if (state.isTyping) {
+        // Instant finish
+        clearTimeout(state.timeoutId);
+        dialogueText.textContent = currentDialogueSet[state.currentLineIndex];
+        state.isTyping = false;
+        dialogueIndicator.classList.remove('hidden');
+    } else {
+        // Next line
+        showLine(state.currentLineIndex + 1);
+    }
+}
+
+// Finish Intro (Dialogue) and Transition to Auth Screen
+function finishIntro() {
+    state.dialogueActive = false;
+    dialogueBox.classList.add('hidden');
+    skipButton.classList.add('hidden');
+    
+    // Stop any audio
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+    
+    // Show the Auth Overlay
+    authOverlay.classList.remove('hidden');
+    showAuthView('menu'); // Show the login/signup choice
+    
+    console.log("Intro finished. Showing Login/Signup.");
+}
+
+function finishBoriDialogue() {
+    state.dialogueActive = false;
+    dialogueBox.classList.add('hidden');
+    skipButton.classList.add('hidden'); // Hide skip button
+    
+    // Stop audio if playing
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+    }
+
+    // Bori disappears
+    npcBori.classList.add('animate-fade-out');
+
+    // Allow Movement
+    state.village.boriDialogueFinished = true;
+
+    // Activate bases after bori disappears
+    setTimeout(() => {
+        activateBases();
+    }, 1500); // Wait for bori fade-out animation
+
+    // Show 'Enter Gate' instruction
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "학습할 단계를 선택하세요";
+    }
+    movementInstruction.classList.remove('hidden');
+
+    console.log("Bori Dialogue Finished. Bases activated.");
+}
+
+// Start the Intro Sequence (Dialogue)
+function startGameSequence() {
+    if (state.started) return;
+    state.started = true;
+    
+    // Hide initial start screen, show dialogue box, skip button
+    startScreen.style.display = 'none'; // Hide the "Click to Start" screen
+    state.dialogueActive = true;
+    dialogueBox.classList.remove('hidden');
+    skipButton.classList.remove('hidden');
+    
+    // Start First Line
+    showLine(0);
+}
+
+// Base interaction functions
+const baseModal = document.getElementById('base-modal');
+const modalClose = document.getElementById('modal-close');
+const modalTitle = document.getElementById('modal-title');
+const modalDescription = document.getElementById('modal-description');
+const modalStart = document.getElementById('modal-start');
+const base1 = document.getElementById('base-1');
+const base2 = document.getElementById('base-2');
+const base3 = document.getElementById('base-3');
+const bases = [base1, base2, base3];
+const alertModal = document.getElementById('alert-modal');
+const alertMessage = document.getElementById('alert-message');
+const alertOk = document.getElementById('alert-ok');
+const stageModal = document.getElementById('stage-modal');
+const stageFrame = document.getElementById('stage-frame');
+const stageModalClose = document.getElementById('stage-modal-close');
+
+const baseData = {
+    1: { title: '1단계: 한자 메모리 게임', description: '한자와 음·뜻을 맞춰보아요!' },
+    2: { title: '2단계: 한자 따라쓰기', description: '한자를 보며 따라 써봐요!' },
+    3: { title: '3단계: 한자 몬스터 게임', description: '한자를 쏘아 몬스터를 물리쳐요!' }
+};
+
+// Sound effects using Web Audio API
+let audioContext = null;
+
+function getAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext;
+}
+
+// Hover/collision sound - soft chime
+function playHoverSound() {
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime); // A5
+    oscillator.type = 'sine';
+
+    gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.15);
+}
+
+// Stage 3: Jump sound
+function playJumpSound() {
+    const ctx = getAudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(260, ctx.currentTime + 0.18);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.18);
+}
+
+// Click/select sound - two-tone chime
+function playSelectSound() {
+    const ctx = getAudioContext();
+
+    // First tone
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+    osc1.type = 'sine';
+    gain1.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.15);
+
+    // Second tone (higher)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+    osc2.type = 'sine';
+    gain2.gain.setValueAtTime(0.01, ctx.currentTime);
+    gain2.gain.setValueAtTime(0.2, ctx.currentTime + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc2.start(ctx.currentTime + 0.1);
+    osc2.stop(ctx.currentTime + 0.3);
+}
+
+
+// Activate bases after bori disappears
+function activateBases() {
+    if (state.village.stage3Completed) {
+        state.village.basesActive = false;
+        bases.forEach(base => {
+            base.classList.add('pointer-events-none');
+            base.classList.remove('base-activated', 'base-hover', 'base-click');
+        });
+        return;
+    }
+    state.village.basesActive = true;
+    bases.forEach(base => {
+        base.classList.remove('pointer-events-none');
+        base.classList.add('base-activated');
+    });
+    console.log("Bases activated!");
+}
+
+function setNpcVisibility(afterClear) {
+    if (!npcOk1 || !npcOk2 || !npcSam1 || !npcSam2 || !npcBori3 || !npcBori4) return;
+    if (!afterClear) {
+        npcOk1.classList.add('hidden');
+        npcOk2.classList.add('hidden');
+        npcSam1.classList.add('hidden');
+        npcSam2.classList.add('hidden');
+        npcBori3.classList.add('hidden');
+        npcBori4.classList.add('hidden');
+        return;
+    }
+        npcOk1.classList.remove('hidden');
+        npcSam1.classList.remove('hidden');
+        npcBori3.classList.remove('hidden');
+        npcOk2.classList.add('hidden');
+        npcSam2.classList.add('hidden');
+        npcBori4.classList.add('hidden');
+    [npcOk1, npcSam1, npcBori3, npcOk2, npcSam2, npcBori4].forEach(el => {
+        el.classList.add('animate-float');
+    });
+}
+
+function updateNpcContact(playerRect, normalEl, altEl) {
+    if (!normalEl || !altEl) return;
+    if (normalEl.classList.contains('hidden') && altEl.classList.contains('hidden')) return;
+    const baseEl = normalEl.classList.contains('hidden') ? altEl : normalEl;
+    const r = baseEl.getBoundingClientRect();
+    const hit = !(playerRect.right < r.left || playerRect.left > r.right || playerRect.bottom < r.top || playerRect.top > r.bottom);
+    normalEl.classList.toggle('hidden', hit);
+    altEl.classList.toggle('hidden', !hit);
+    return hit;
+}
+
+// Check collision between player and bases
+function checkBaseCollision() {
+    if (!state.village.basesActive) return;
+
+    const playerX = state.village.playerX;
+    const playerWidth = 44; // w-11 = 44px
+    const playerRight = playerX + playerWidth;
+
+    // Base positions and widths (considering scale and center-based transform)
+    // scale transforms from center, so we need to adjust left position
+    const basePositions = [
+        { id: 1, left: 240, width: 70, scale: 1 },
+        { id: 2, left: 325, width: 70, scale: 1.5 },
+        { id: 3, left: 410, width: 70, scale: 0.85 }
+    ].map(bp => {
+        const scaledWidth = bp.width * bp.scale;
+        const offsetX = (bp.width - scaledWidth) / 2;
+        return {
+            id: bp.id,
+            left: bp.left + offsetX,
+            width: scaledWidth
         };
+    });
 
-        // 로컬 스토리지에서 상태 불러오기
-        function loadGameState() {
-            const saved = localStorage.getItem('mobileGameState');
-            if (saved) {
-                try {
-                    gameState = JSON.parse(saved);
-                    // 이어하기 버튼 표시
-                    if (gameState.stage1Completed || gameState.stage2Completed || gameState.stage3Completed) {
-                        btnContinue.style.display = 'block';
-                    }
-                } catch (e) {
-                    console.error('Failed to load game state:', e);
-                }
+    let collidingBase = null;
+
+    basePositions.forEach(bp => {
+        const baseRight = bp.left + bp.width;
+        // Check overlap
+        if (playerRight > bp.left && playerX < baseRight) {
+            collidingBase = bp.id;
+        }
+    });
+
+    // Update collision state
+    if (collidingBase !== state.village.baseCollision) {
+        // Remove hover from previous
+        if (state.village.baseCollision) {
+            const prevBase = document.getElementById(`base-${state.village.baseCollision}`);
+            prevBase.classList.remove('base-hover');
+        }
+        // Add hover to current
+        if (collidingBase) {
+            const currBase = document.getElementById(`base-${collidingBase}`);
+            currBase.classList.add('base-hover');
+            // Play hover sound
+            playHoverSound();
+            // Show interaction hint
+            const instructionP = movementInstruction.querySelector('p');
+            if (instructionP) {
+                instructionP.textContent = "Enter 또는 클릭으로 선택";
+            }
+            movementInstruction.classList.remove('hidden');
+        } else {
+            // Hide hint when not colliding
+            const instructionP = movementInstruction.querySelector('p');
+            if (instructionP) {
+                instructionP.textContent = "학습할 단계를 선택하세요";
             }
         }
+        state.village.baseCollision = collidingBase;
+    }
+}
 
-        // 게임 상태 저장
-        function saveGameState() {
-            localStorage.setItem('mobileGameState', JSON.stringify(gameState));
+// Open modal for a base
+function openBaseModal(baseId) {
+    const base = document.getElementById(`base-${baseId}`);
+    const data = baseData[baseId];
+
+    // Play select sound
+    playSelectSound();
+
+    // Play click animation
+    base.classList.add('base-click');
+    setTimeout(() => {
+        base.classList.remove('base-click');
+    }, 300);
+
+    // Open modal after animation
+    setTimeout(() => {
+        modalTitle.textContent = data.title;
+        modalDescription.textContent = data.description;
+        baseModal.classList.add('active');
+        baseModal.dataset.currentBase = baseId;
+    }, 150);
+}
+
+// Close modal
+function closeBaseModal() {
+    baseModal.classList.remove('active');
+    delete baseModal.dataset.currentBase;
+}
+
+function showAlert(message) {
+    alertMessage.textContent = message;
+    alertModal.classList.add('active');
+}
+
+function closeAlert() {
+    alertModal.classList.remove('active');
+}
+
+function openStageModal(stagePath) {
+    stageFrame.src = stagePath;
+    stageModal.classList.add('active');
+}
+
+function closeStageModal() {
+    stageModal.classList.remove('active');
+    stageFrame.src = '';
+}
+
+function setupStage3Background() {
+    const container = stageBgScroll.parentElement;
+    const width = container.clientWidth;
+    state.village.stage3BgWidth = width;
+    stageBgTile1.style.width = `${width}px`;
+    stageBgTile2.style.width = `${width}px`;
+    stageBgTile1.style.left = '0px';
+    stageBgTile2.style.left = `${width}px`;
+    stageBgTile1.style.backgroundImage = "url('../img/bg1.png')";
+    stageBgTile2.style.backgroundImage = "url('../img/bg12.png')";
+    stageBgScroll.style.width = `${width * 2}px`;
+    stageBgScroll.style.transform = `translateX(${state.village.stage3BgOffset}px)`;
+}
+
+function startStage3() {
+    state.village.stage3Active = true;
+    state.village.stage3BgOffset = 0;
+    state.village.playerX = 105;
+    state.village.currentImageIndex = 1;
+    state.village.lastFrameTime = 0;
+    state.village.stage3GroundY = 32;
+    state.village.playerY = state.village.stage3GroundY;
+    state.village.stage3ObstacleActive = false;
+    state.village.stage3Jumping = false;
+    state.village.stage3JumpVelocity = 0;
+    state.village.stage3Attacking = false;
+    state.village.stage3AttackFrame = 1;
+    state.village.stage3AttackTimer = 0;
+    state.village.stage3Projectiles = [];
+    state.village.stage3RunAnimTimer = 0;
+
+    // Initialize monster system
+    state.village.stage3Level = 1;
+    state.village.stage3GameStarted = true;
+    state.village.stage3Victory = false;
+
+    // Initialize player HP system
+    state.village.stage3PlayerHP = state.village.stage3PlayerMaxHP;
+    state.village.stage3Invincible = false;
+    state.village.stage3InvincibleTimer = 0;
+    playerImage.classList.remove('player-hit');
+
+    // Initialize obstacle system
+    state.village.stage3Obstacles = [];
+    state.village.stage3ObstacleSpawnTimer = performance.now();
+    state.village.stage3ObstacleSpawnInterval = 2500;
+    stage3ObstaclesContainer.innerHTML = '';
+
+    // Initialize item system
+    state.village.stage3Items = [];
+    stage3ItemsContainer.innerHTML = '';
+
+    stage3Obstacle.classList.add('hidden');
+    playerImage.style.left = `${state.village.playerX}px`;
+    playerImage.style.bottom = `${state.village.playerY}px`;
+    stageBgStatic.classList.add('hidden');
+    stageBgScroll.classList.remove('hidden');
+    setupStage3Background();
+    const stage3Width = stageBgScroll.parentElement.clientWidth;
+    state.village.stage3MonsterBaseX = Math.max(320, stage3Width - 140);
+
+    // Initialize monster movement
+    state.village.stage3MonsterX = state.village.stage3MonsterBaseX;
+    state.village.stage3MonsterKnockback = 0;
+
+    bases.forEach(base => base.classList.add('hidden'));
+    state.village.basesActive = false;
+    state.village.baseCollision = null;
+    state.village.selectedBase = null;
+    setNpcVisibility(false);
+    if (npcOk1) npcOk1.classList.add('hidden');
+    if (npcOk2) npcOk2.classList.add('hidden');
+    if (npcSam1) npcSam1.classList.add('hidden');
+    if (npcSam2) npcSam2.classList.add('hidden');
+    if (npcBori3) npcBori3.classList.add('hidden');
+    if (npcBori4) npcBori4.classList.add('hidden');
+
+    // Show Stage 3 UI
+    stage3HpBar.classList.remove('hidden');
+    stage3LevelDisplay.classList.remove('hidden');
+    stage3CurrentHanja.classList.remove('hidden');
+    stage3HanjaQueue.classList.remove('hidden');
+    stage3PlayerHp.classList.remove('hidden');
+    stage3ReturnBtn.classList.remove('hidden');
+    stage3GameOver.classList.add('hidden');
+
+    // Reset player HP UI
+    resetPlayerHPUI();
+
+    // Initialize hanja queue and spawn monster
+    initializeHanjaQueue(1);
+    spawnMonster(1);
+
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "⬆️ 점프 / ⚔️ 한자 발사!";
+    }
+    movementInstruction.classList.remove('hidden');
+
+    const gameTitle = document.querySelector('#game-view .absolute.top-3.left-4');
+    if (gameTitle) {
+        gameTitle.textContent = "화과산";
+    }
+
+    // 모바일 터치 컨트롤 표시
+    const stage3Controls = document.getElementById('stage3-touch-controls');
+    if (stage3Controls) stage3Controls.style.display = 'flex';
+}
+
+// Stage 3: Initialize hanja queue for a level
+function initializeHanjaQueue(level) {
+    const levelKey = `level${level}`;
+    const hanjaList = [...stage3HanjaData[levelKey]];
+    // Shuffle the array
+    for (let i = hanjaList.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [hanjaList[i], hanjaList[j]] = [hanjaList[j], hanjaList[i]];
+    }
+    state.village.stage3HanjaQueue = hanjaList;
+    state.village.stage3CurrentHanjaIndex = 0;
+    updateHanjaUI();
+}
+
+// Stage 3: Update hanja UI display
+function updateHanjaUI() {
+    const queue = state.village.stage3HanjaQueue;
+    const idx = state.village.stage3CurrentHanjaIndex;
+
+    if (idx >= queue.length) {
+        // All hanja used for this level
+        stage3HanjaChar.textContent = '-';
+        stage3HanjaReading.textContent = '';
+        stage3HanjaQueue.innerHTML = '';
+        return;
+    }
+
+    // Update current hanja
+    const current = queue[idx];
+    stage3HanjaChar.textContent = current.char;
+    stage3HanjaReading.textContent = `${current.deut} ${current.eum}`;
+
+    // Update queue preview (next 5)
+    stage3HanjaQueue.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+        const nextIdx = idx + i;
+        if (nextIdx < queue.length) {
+            const item = document.createElement('div');
+            item.className = 'hanja-queue-item';
+            item.textContent = queue[nextIdx].char;
+            stage3HanjaQueue.appendChild(item);
         }
+    }
+}
 
-        // 스테이지 상태 업데이트
-        function updateStageCards() {
-            stageCards.forEach(card => {
-                const stage = card.dataset.stage;
-                if (gameState[`stage${stage}Completed`]) {
-                    card.classList.add('completed');
-                    card.querySelector('.stage-status').textContent = '✅';
-                }
-            });
-        }
+// Stage 3: Spawn monster for a level
+function spawnMonster(level) {
+    // HP를 레벨별 한자 수에 맞게 설정 (한자 1개 = 10 데미지)
+    const hpByLevel = { 1: 240, 2: 170, 3: 90 }; // level1: 24자, level2: 17자, level3: 9자
+    const hp = hpByLevel[level] || 100;
+    state.village.stage3MonsterHP = hp;
+    state.village.stage3MonsterMaxHP = hp;
+    state.village.stage3MonsterActive = true;
+    state.village.stage3MonsterX = state.village.stage3MonsterBaseX;
+    state.village.stage3MonsterKnockback = 0;
 
-        // 화면 전환
-        function showScreen(screenId) {
-            introScreen.classList.add('hidden');
-            stageSelectScreen.classList.remove('active');
+    // Set monster image based on level
+    stage3Monster.src = `img/monster${level}/motion1.png`;
+    stage3Monster.classList.remove('hidden', 'monster-defeat');
+    stage3Monster.classList.add('monster-wobble');
+    stage3Monster.style.right = '30px';
 
-            if (screenId === 'intro') {
-                introScreen.classList.remove('hidden');
-            } else if (screenId === 'stage-select') {
-                stageSelectScreen.classList.add('active');
-                updateStageCards();
+    // Update level display
+    stage3LevelDisplay.textContent = `Level ${level}/3`;
+
+    // Update HP bar
+    updateMonsterHP();
+
+    // Update background for level
+    updateStage3Background(level);
+}
+
+// Stage 3: Update monster sprite based on HP
+function updateMonsterSprite() {
+    const level = state.village.stage3Level;
+    const hpPercent = (state.village.stage3MonsterHP / state.village.stage3MonsterMaxHP) * 100;
+
+    let motion = 1;
+    if (hpPercent <= 32) {
+        motion = 3;
+    } else if (hpPercent <= 65) {
+        motion = 2;
+    }
+
+    stage3Monster.src = `img/monster${level}/motion${motion}.png`;
+}
+
+// Stage 3: Update monster HP bar
+function updateMonsterHP() {
+    const hpPercent = (state.village.stage3MonsterHP / state.village.stage3MonsterMaxHP) * 100;
+    stage3HpFill.style.width = `${hpPercent}%`;
+
+    // Change color based on HP
+    if (hpPercent <= 32) {
+        stage3HpFill.className = 'h-full bg-gradient-to-r from-red-800 to-red-600 transition-all duration-200';
+    } else if (hpPercent <= 65) {
+        stage3HpFill.className = 'h-full bg-gradient-to-r from-orange-600 to-orange-400 transition-all duration-200';
+    } else {
+        stage3HpFill.className = 'h-full bg-gradient-to-r from-red-600 to-red-400 transition-all duration-200';
+    }
+}
+
+// Stage 3: Damage monster
+function damageMonster(amount) {
+    state.village.stage3MonsterHP -= amount;
+    if (state.village.stage3MonsterHP < 0) state.village.stage3MonsterHP = 0;
+
+    updateMonsterHP();
+    updateMonsterSprite();
+
+    // Hit animation
+    stage3Monster.classList.remove('monster-hit');
+    void stage3Monster.offsetWidth;
+    stage3Monster.classList.add('monster-hit');
+    setTimeout(() => {
+        stage3Monster.classList.remove('monster-hit');
+    }, 200);
+
+    // Check if monster defeated
+    if (state.village.stage3MonsterHP <= 0) {
+        defeatMonster();
+    }
+}
+
+// Stage 3: Monster defeated
+function defeatMonster() {
+    state.village.stage3MonsterActive = false;
+    stage3Monster.classList.add('monster-defeat');
+    stage3Monster.classList.remove('monster-wobble');
+
+    // Play defeat sound
+    playSelectSound();
+
+    setTimeout(() => {
+        const currentLevel = state.village.stage3Level;
+
+        if (currentLevel < 3) {
+            // Next level
+            state.village.stage3Level++;
+
+            // Reset monster position for next level
+            state.village.stage3MonsterX = state.village.stage3MonsterBaseX;
+            state.village.stage3MonsterKnockback = 0;
+
+            initializeHanjaQueue(state.village.stage3Level);
+            spawnMonster(state.village.stage3Level);
+
+            // Show level clear message
+            const instructionP = movementInstruction.querySelector('p');
+            if (instructionP) {
+                instructionP.textContent = `Level ${state.village.stage3Level} 시작!`;
+                instructionP.classList.add('level-clear-text');
+                setTimeout(() => {
+                    instructionP.classList.remove('level-clear-text');
+                    instructionP.textContent = "스페이스바로 한자 발사! ↑키로 점프!";
+                }, 1500);
             }
+        } else {
+            // Victory!
+            state.village.stage3Victory = true;
+            showVictory();
         }
+    }, 600);
+}
 
-        // 스테이지 시작
-        function startStage(stageNum) {
-            switch (stageNum) {
-                case '1':
-                    window.location.href = 'stage1.html';
-                    break;
-                case '2':
-                    window.location.href = 'stage2.html';
-                    break;
-                case '3':
-                    // Stage 3은 아직 구현 전, 모달로 알림
-                    alert('Stage 3은 준비 중입니다!');
-                    break;
+// Stage 3: Update background based on level
+function updateStage3Background(level) {
+    const bgImage = `url('../img/bg${level}.png')`;
+    stageBgTile1.style.backgroundImage = bgImage;
+    stageBgTile2.style.backgroundImage = bgImage;
+
+    const gameTitle = document.querySelector('#game-view .absolute.top-3.left-4');
+    if (gameTitle) {
+        const titleMap = {
+            1: '화과산',
+            2: '바위산',
+            3: '엔더던전'
+        };
+        gameTitle.textContent = titleMap[level] || '화과산';
+    }
+}
+
+function victoryConfetti() {
+    var duration = 3 * 1000;
+    var end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 3,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#ff6b6b', '#48dbfb', '#ff9f43', '#feca57']
+        });
+        confetti({
+            particleCount: 3,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#ff6b6b', '#48dbfb', '#ff9f43', '#feca57']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    }());
+}
+
+// Stage 3: Show victory screen
+function showVictory() {
+    stage3HpBar.classList.add('hidden');
+    stage3LevelDisplay.classList.add('hidden');
+    stage3CurrentHanja.classList.add('hidden');
+    stage3HanjaQueue.classList.add('hidden');
+    stage3Monster.classList.add('hidden');
+    stage3Monster.style.display = 'none';  // 확실하게 숨김
+    stage3PlayerHp.classList.add('hidden');
+    stage3ReturnBtn.classList.add('hidden');
+
+    // Clear obstacles
+    state.village.stage3Obstacles.forEach(obs => obs.element.remove());
+    state.village.stage3Obstacles = [];
+    stage3ObstaclesContainer.innerHTML = '';
+
+    // Clear items
+    state.village.stage3Items.forEach(item => item.element.remove());
+    state.village.stage3Items = [];
+    stage3ItemsContainer.innerHTML = '';
+
+    // Clear projectiles
+    state.village.stage3Projectiles.forEach(proj => proj.element.remove());
+    state.village.stage3Projectiles = [];
+    stage3Projectiles.innerHTML = '';
+
+    // Calculate center position
+    const containerWidth = stageBgScroll.parentElement.clientWidth;
+    const targetX = (containerWidth / 2) - 22; // Center minus half player width
+
+    // Gradually slow down background
+    const initialSpeed = state.village.stage3BgSpeed;
+    const deceleration = 0.05; // How much to slow down each frame
+
+    function slowDownBackground() {
+        if (state.village.stage3BgSpeed > 0.1) {
+            state.village.stage3BgSpeed -= deceleration;
+            if (state.village.stage3BgSpeed < 0.1) state.village.stage3BgSpeed = 0;
+
+            // Update background position
+            state.village.stage3BgOffset -= state.village.stage3BgSpeed;
+            if (state.village.stage3BgWidth > 0 && state.village.stage3BgOffset <= -state.village.stage3BgWidth) {
+                state.village.stage3BgOffset += state.village.stage3BgWidth;
             }
+            stageBgScroll.style.transform = `translateX(${state.village.stage3BgOffset}px)`;
+
+            requestAnimationFrame(slowDownBackground);
+        } else {
+            // Background fully stopped, now walk to center
+            state.village.stage3BgSpeed = 0;
+            requestAnimationFrame(walkToCenter);
+        }
+    }
+
+    // Walk to center animation
+    const walkSpeed = 2;
+    let walkAnimTimer = 0;
+    const walkAnimInterval = 150;
+
+    function walkToCenter(timestamp) {
+        // 점프 중이면 먼저 착지시킴
+        if (state.village.stage3Jumping || state.village.playerY > state.village.stage3GroundY) {
+            state.village.stage3JumpVelocity -= 0.6;
+            state.village.playerY += state.village.stage3JumpVelocity;
+            if (state.village.playerY <= state.village.stage3GroundY) {
+                state.village.playerY = state.village.stage3GroundY;
+                state.village.stage3Jumping = false;
+                state.village.stage3JumpVelocity = 0;
+            }
+            playerImage.style.bottom = `${state.village.playerY}px`;
+            requestAnimationFrame(walkToCenter);
+            return;
         }
 
-        // 이벤트 리스너
-        btnStart.addEventListener('click', () => {
-            showScreen('stage-select');
-        });
+        if (!walkAnimTimer) walkAnimTimer = timestamp;
 
-        btnContinue.addEventListener('click', () => {
-            showScreen('stage-select');
-        });
+        // Walking animation
+        if (timestamp - walkAnimTimer > walkAnimInterval) {
+            state.village.currentImageIndex++;
+            if (state.village.currentImageIndex > 3) state.village.currentImageIndex = 1;
+            walkAnimTimer = timestamp;
+            playerImage.src = `img/run${state.village.currentImageIndex}.png`;
+        }
 
-        btnWeb.addEventListener('click', () => {
-            // 웹 버전으로 이동 (세션 스토리지에 플래그 설정)
-            sessionStorage.setItem('forceDesktop', 'true');
-            window.location.href = '../index.html';
-        });
+        // Move player towards center
+        if (state.village.playerX < targetX) {
+            state.village.playerX += walkSpeed;
+            playerImage.style.left = `${state.village.playerX}px`;
+            requestAnimationFrame(walkToCenter);
+        } else {
+            // Arrived at center - show victory message and confetti
+            playerImage.src = '../img/run1.png';
 
-        btnBackIntro.addEventListener('click', () => {
-            showScreen('intro');
-        });
+            const instructionP = movementInstruction.querySelector('p');
+            if (instructionP) {
+                instructionP.innerHTML = '🎉 축하합니다! 모든 레벨 클리어! 🎉';
+                instructionP.classList.add('level-clear-text');
+            }
+            movementInstruction.classList.remove('hidden');
 
-        stageCards.forEach(card => {
-            card.addEventListener('click', () => {
-                if (!card.classList.contains('locked')) {
-                    startStage(card.dataset.stage);
-                }
-            });
-        });
+            victoryConfetti();
+            playCheerSound();
+            state.village.stage3Completed = true;
 
-        // 초기화
-        function init() {
-            loadGameState();
-
-            // 로딩 완료 후 화면 표시
+            // Return to village after delay
             setTimeout(() => {
-                loadingScreen.classList.add('hidden');
-            }, 500);
+                returnToVillage();
+            }, 3000);
+        }
+    }
+
+    // Start the slow down sequence
+    requestAnimationFrame(slowDownBackground);
+}
+
+// Stage 3: Return to village
+function returnToVillage() {
+    state.village.stage3Active = false;
+    state.village.stage3GameStarted = false;
+    state.village.stage3Victory = false;
+    state.village.stage3Projectiles = [];
+    state.village.stage3Obstacles = [];
+
+    // Hide Stage 3 UI
+    stage3HpBar.classList.add('hidden');
+    stage3LevelDisplay.classList.add('hidden');
+    stage3CurrentHanja.classList.add('hidden');
+    stage3HanjaQueue.classList.add('hidden');
+    stage3Monster.classList.add('hidden');
+    stage3PlayerHp.classList.add('hidden');
+    stage3ReturnBtn.classList.add('hidden');
+    stage3GameOver.classList.add('hidden');
+    stage3Projectiles.innerHTML = '';
+    stage3ObstaclesContainer.innerHTML = '';
+    stage3ItemsContainer.innerHTML = '';
+    stage3ScreenFlashContainer.innerHTML = '';
+
+    // Remove monster wobble
+    stage3Monster.classList.remove('monster-wobble');
+
+    // Reset player visual state
+    playerImage.classList.remove('player-hit');
+
+    // Reset background
+    stageBgScroll.classList.add('hidden');
+    stageBgStatic.classList.remove('hidden');
+
+    // Show bases again
+    bases.forEach(base => base.classList.remove('hidden'));
+    if (state.village.stage3Completed) {
+        state.village.basesActive = false;
+        state.village.baseCollision = null;
+        state.village.selectedBase = null;
+        bases.forEach(base => {
+            base.classList.add('pointer-events-none');
+            base.classList.remove('base-activated', 'base-hover', 'base-click');
+        });
+        state.village.npcMetOk = false;
+        state.village.npcMetSam = false;
+        state.village.npcMetBori = false;
+        state.village.npcSpokenOk = false;
+        state.village.npcSpokenSam = false;
+        state.village.npcSpokenBori = false;
+        state.village.certificateShown = false;
+        setNpcVisibility(true);
+    } else {
+        state.village.basesActive = true;
+    }
+
+    // Reset player position
+    if (state.village.stage3Completed) {
+        const containerWidth = stageBgStatic.parentElement.clientWidth || 600;
+        state.village.playerX = Math.round(containerWidth / 2 - 22);
+    } else {
+        state.village.playerX = 300;
+    }
+    playerImage.style.left = `${state.village.playerX}px`;
+    playerImage.style.bottom = '32px';
+    playerImage.src = '../img/run1.png';
+    playerImage.classList.toggle('player-glow', state.village.stage3Completed);
+
+    // Update title
+    const gameTitle = document.querySelector('#game-view .absolute.top-3.left-4');
+    if (gameTitle) {
+        gameTitle.textContent = '한자마을';
+    }
+
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "사람들을 만나세요";
+        instructionP.classList.remove('level-clear-text');
+    }
+
+    // 모바일 터치 컨트롤 숨김
+    const stage3Controls = document.getElementById('stage3-touch-controls');
+    if (stage3Controls) stage3Controls.style.display = 'none';
+}
+
+function resetHanjaScore() {
+    const userId = state.currentUser?.id || 'guest';
+    const ok = confirm('마력(점수)과 단계 기록을 초기화할까요?');
+    if (!ok) return;
+    localStorage.removeItem(`hanjaGameData:${userId}`);
+    alert('마력 기록이 초기화되었습니다.');
+}
+
+// Stage 3: TTS speak hanja
+function speakHanja(deut, eum) {
+    if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech
+        speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(`${deut} ${eum}`);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        speechSynthesis.speak(utterance);
+    }
+}
+
+// Stage 3: Shoot hanja projectile
+function shootHanja() {
+    if (!state.village.stage3GameStarted || state.village.stage3Victory) return;
+    if (!state.village.stage3MonsterActive) return;
+
+    const queue = state.village.stage3HanjaQueue;
+    const idx = state.village.stage3CurrentHanjaIndex;
+
+    if (idx >= queue.length) return;
+
+    const hanja = queue[idx];
+
+    // Speak the hanja
+    speakHanja(hanja.deut, hanja.eum);
+
+    // Create projectile element
+    const projectile = document.createElement('div');
+    projectile.className = 'hanja-shot';
+    projectile.textContent = hanja.char;
+    projectile.style.left = `${state.village.playerX + 44}px`;
+    projectile.style.bottom = `${state.village.playerY + 20}px`;
+    stage3Projectiles.appendChild(projectile);
+
+    // Add to projectiles array
+    state.village.stage3Projectiles.push({
+        element: projectile,
+        x: state.village.playerX + 44,
+        y: state.village.playerY + 20,
+        speed: 8,
+        damage: 10 // 고정 데미지 (레벨별 한자 수만큼 발사 필요)
+    });
+
+    // Move to next hanja
+    state.village.stage3CurrentHanjaIndex++;
+    updateHanjaUI();
+
+    // If we run out of hanja, refill queue
+    if (state.village.stage3CurrentHanjaIndex >= queue.length) {
+        initializeHanjaQueue(state.village.stage3Level);
+    }
+}
+
+// Stage 3: Update projectiles
+function updateStage3Projectiles() {
+    const containerWidth = stageBgScroll.parentElement.clientWidth;
+    // Monster hitbox based on current position
+    const monsterRight = containerWidth - state.village.stage3MonsterX + state.village.stage3MonsterBaseX;
+    const monsterLeft = monsterRight - 60; // Monster width ~60px
+
+    state.village.stage3Projectiles = state.village.stage3Projectiles.filter(proj => {
+        proj.x += proj.speed;
+        proj.element.style.left = `${proj.x}px`;
+
+        // Check collision with monster
+        if (state.village.stage3MonsterActive && proj.x >= monsterLeft - 45 && proj.x <= monsterRight + 30) {
+            playDamageSound();
+            damageMonster(proj.damage);
+            proj.element.remove();
+            return false;
         }
 
-        // 페이지 로드 시 초기화
-        document.addEventListener('DOMContentLoaded', init);
-
-        // URL 파라미터로 스테이지 완료 처리
-        const urlParams = new URLSearchParams(window.location.search);
-        const completedStage = urlParams.get('completed');
-        if (completedStage) {
-            gameState[`stage${completedStage}Completed`] = true;
-            saveGameState();
-            // URL 파라미터 제거
-            window.history.replaceState({}, document.title, window.location.pathname);
+        // Remove if off screen
+        if (proj.x > containerWidth + 50) {
+            proj.element.remove();
+            return false;
         }
-    </script>
+
+        return true;
+    });
+}
+
+// Stage 3: Spawn obstacle
+function spawnObstacle() {
+    const obstacleNum = Math.max(1, Math.min(3, state.village.stage3Level));
+    const obstacle = document.createElement('img');
+    obstacle.src = `img/obstacle${obstacleNum}.png`;
+    obstacle.className = 'stage3-obstacle';
+    obstacle.style.right = '-50px';
+    // obstacle1~2는 작게, obstacle3은 기존 크기
+    const obstacleWidth = obstacleNum <= 2 ? 20 : 24;
+    obstacle.style.width = `${obstacleWidth}px`;
+    stage3ObstaclesContainer.appendChild(obstacle);
+
+    state.village.stage3Obstacles.push({
+        element: obstacle,
+        x: stageBgScroll.parentElement.clientWidth + 50,
+        width: obstacleWidth,
+        hitboxInset: 8,
+        passed: false
+    });
+
+    // 20% 확률로 아이템도 함께 스폰
+    if (Math.random() < 0.2) {
+        spawnItem();
+    }
+}
+
+// Stage 3: Spawn item (HP 회복 아이템)
+function spawnItem() {
+    const itemNum = Math.floor(Math.random() * 9) + 1; // item1 ~ item9
+    const item = document.createElement('img');
+    item.src = `img/item${itemNum}.png`;
+    item.className = 'stage3-item';
+    item.style.right = '-20px';
+    stage3ItemsContainer.appendChild(item);
+
+    state.village.stage3Items.push({
+        element: item,
+        x: stageBgScroll.parentElement.clientWidth + 20,
+        width: 16,
+        collected: false
+    });
+}
+
+// Stage 3: Update items
+function updateStage3Items() {
+    const playerLeft = state.village.playerX;
+    const playerRight = state.village.playerX + 44;
+    const playerBottom = state.village.playerY;
+    const playerTop = state.village.playerY + 50;
+
+    // 아이템은 공중에 있으므로 (bottom: 70px), 점프해야 획득 가능
+    const itemBottom = 70;
+    const itemTop = 86; // 70 + 16 (아이템 높이)
+
+    state.village.stage3Items = state.village.stage3Items.filter(item => {
+        // 배경 속도에 맞춰 이동
+        item.x -= state.village.stage3BgSpeed;
+        item.element.style.right = `${stageBgScroll.parentElement.clientWidth - item.x}px`;
+
+        // 플레이어와 충돌 감지 (점프해서 공중에 있을 때만)
+        if (!item.collected && state.village.playerY > 20) {
+            const itemLeft = item.x - item.width;
+            const itemRight = item.x;
+
+            // 충돌 체크
+            if (playerRight > itemLeft && playerLeft < itemRight) {
+                if (playerTop > itemBottom && playerBottom < itemTop) {
+                    collectItem(item);
+                    return false;
+                }
+            }
+        }
+
+        // 화면 밖으로 나가면 제거
+        if (item.x < -20) {
+            item.element.remove();
+            return false;
+        }
+
+        return true;
+    });
+}
+
+// Stage 3: Collect item (HP 회복)
+function collectItem(item) {
+    item.collected = true;
+    item.element.remove();
+
+    // HP 회복 (최대 HP 초과 불가)
+    if (state.village.stage3PlayerHP < state.village.stage3PlayerMaxHP) {
+        state.village.stage3PlayerHP++;
+        updatePlayerHPUI();
+    }
+
+    // 효과음 (임시로 데미지 사운드 재활용, 나중에 별도 효과음 추가 가능)
+    // playItemSound();
+}
+
+// Stage 3: Update obstacles
+function updateStage3Obstacles(timestamp) {
+    const containerWidth = stageBgScroll.parentElement.clientWidth;
+
+    // Spawn new obstacles at random intervals
+    if (state.village.stage3GameStarted && !state.village.stage3Victory) {
+        if (timestamp - state.village.stage3ObstacleSpawnTimer > state.village.stage3ObstacleSpawnInterval) {
+            spawnObstacle();
+            state.village.stage3ObstacleSpawnTimer = timestamp;
+            // Randomize next spawn interval (2-4 seconds)
+            state.village.stage3ObstacleSpawnInterval = 2000 + Math.random() * 2000;
+        }
+    }
+
+    // Player hitbox
+    const playerLeft = state.village.playerX;
+    const playerRight = playerLeft + 44;
+    const playerBottom = state.village.playerY;
+    const playerTop = playerBottom + 50; // Approximate player height
+
+    // Update existing obstacles
+    state.village.stage3Obstacles = state.village.stage3Obstacles.filter(obs => {
+        // Move obstacle left (same speed as background)
+        obs.x -= state.village.stage3BgSpeed + 1;
+        obs.element.style.right = `${containerWidth - obs.x}px`;
+
+        // Check collision with player (only if not jumping and not invincible)
+        if (!state.village.stage3Invincible && !obs.passed) {
+            const obsLeft = obs.x - obs.width + (obs.hitboxInset || 0);
+            const obsRight = obs.x - (obs.hitboxInset || 0);
+
+            // Collision check
+            if (playerRight > obsLeft && playerLeft < obsRight) {
+                // If player is on the ground (not jumping high enough)
+                if (state.village.playerY < state.village.stage3GroundY + 30) {
+                    damagePlayer();
+                    obs.passed = true; // Don't damage again from same obstacle
+                }
+            }
+        }
+
+        // Mark as passed if player jumped over
+        if (obs.x < playerLeft && !obs.passed) {
+            obs.passed = true;
+        }
+
+        // Remove if off screen
+        if (obs.x < -50) {
+            obs.element.remove();
+            return false;
+        }
+
+        return true;
+    });
+}
+
+// Stage 3: Update monster movement (approach + wobble)
+function updateStage3MonsterMovement() {
+    if (!state.village.stage3MonsterActive) return;
+
+    // Apply knockback decay
+    if (state.village.stage3MonsterKnockback > 0) {
+        state.village.stage3MonsterKnockback -= 0.5;
+        if (state.village.stage3MonsterKnockback < 0) state.village.stage3MonsterKnockback = 0;
+    }
+
+    // Monster approaches player slowly
+    state.village.stage3MonsterX -= state.village.stage3MonsterApproachSpeed;
+
+    // Apply knockback offset
+    const effectiveX = state.village.stage3MonsterX + state.village.stage3MonsterKnockback;
+
+    // Clamp position (don't go off screen right, don't get too close)
+    const minX = 150; // Minimum distance from left edge
+    const maxX = state.village.stage3MonsterBaseX + 50;
+
+    const clampedX = Math.max(minX, Math.min(maxX, effectiveX));
+
+    // Update monster position
+    const containerWidth = stageBgScroll.parentElement.clientWidth;
+    stage3Monster.style.right = `${containerWidth - clampedX - 70}px`;
+
+    // Add wobble animation if not already applied
+    if (!stage3Monster.classList.contains('monster-wobble')) {
+        stage3Monster.classList.add('monster-wobble');
+    }
+}
+
+// Stage 3: Check collision with monster
+function checkMonsterCollision() {
+    if (!state.village.stage3MonsterActive || state.village.stage3Invincible) return;
+
+    const containerWidth = stageBgScroll.parentElement.clientWidth;
+    const effectiveMonsterX = state.village.stage3MonsterX + state.village.stage3MonsterKnockback;
+    const monsterLeft = effectiveMonsterX - 50; // Monster width consideration
+
+    const playerRight = state.village.playerX + 44;
+
+    // If player touches monster
+    if (playerRight >= monsterLeft) {
+        damagePlayer();
+        // Push monster back a bit
+        state.village.stage3MonsterKnockback += 20;
+    }
+}
+
+// Stage 3: Damage player
+function damagePlayer() {
+    if (state.village.stage3Invincible) return;
+
+    state.village.stage3PlayerHP--;
+    updatePlayerHPUI();
+
+    // Start invincibility
+    state.village.stage3Invincible = true;
+    state.village.stage3InvincibleTimer = performance.now();
+    playerImage.classList.add('player-hit');
+
+    // Screen flash effect
+    const flash = document.createElement('div');
+    flash.className = 'screen-flash';
+    stage3ScreenFlashContainer.appendChild(flash);
+    setTimeout(() => flash.remove(), 300);
+
+    // Play damage sound
+    playDamageSound();
+
+    // Check game over
+    if (state.village.stage3PlayerHP <= 0) {
+        triggerGameOver();
+    }
+}
+
+// Stage 3: Update player HP UI
+function updatePlayerHPUI() {
+    const hearts = stage3PlayerHp.querySelectorAll('.player-heart');
+    hearts.forEach((heart, index) => {
+        if (index < state.village.stage3PlayerHP) {
+            heart.classList.remove('lost');
+            heart.textContent = '❤️';
+        } else {
+            heart.classList.add('lost');
+            heart.textContent = '🖤';
+            // Add damage animation to recently lost heart
+            if (index === state.village.stage3PlayerHP) {
+                heart.classList.add('damage');
+                setTimeout(() => heart.classList.remove('damage'), 300);
+            }
+        }
+    });
+}
+
+// Stage 3: Reset player HP UI
+function resetPlayerHPUI() {
+    const hearts = stage3PlayerHp.querySelectorAll('.player-heart');
+    hearts.forEach(heart => {
+        heart.classList.remove('lost', 'damage');
+        heart.textContent = '❤️';
+    });
+}
+
+// Stage 3: Play damage sound
+function playDamageSound() {
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.2);
+    oscillator.type = 'sawtooth';
+
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.2);
+}
+
+function playCheerSound() {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const duration = 1.6;
+
+    const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.6;
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(900, now);
+    filter.Q.setValueAtTime(0.7, now);
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.0001, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.25, now + 0.15);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + duration);
+
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc2.type = 'triangle';
+    osc1.frequency.setValueAtTime(220, now);
+    osc2.frequency.setValueAtTime(330, now);
+
+    const chantGain = ctx.createGain();
+    chantGain.gain.setValueAtTime(0.0001, now);
+    chantGain.gain.exponentialRampToValueAtTime(0.12, now + 0.2);
+    chantGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    osc1.connect(chantGain);
+    osc2.connect(chantGain);
+    chantGain.connect(ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + duration);
+    osc2.stop(now + duration);
+}
+
+// Stage 3: Trigger game over
+function triggerGameOver() {
+    state.village.stage3GameStarted = false;
+    state.village.stage3MonsterActive = false;
+
+    // Clear obstacles
+    state.village.stage3Obstacles.forEach(obs => obs.element.remove());
+    state.village.stage3Obstacles = [];
+
+    // Clear items
+    state.village.stage3Items.forEach(item => item.element.remove());
+    state.village.stage3Items = [];
+
+    // Clear projectiles
+    state.village.stage3Projectiles.forEach(proj => proj.element.remove());
+    state.village.stage3Projectiles = [];
+
+    // Show game over overlay
+    stage3GameOver.classList.remove('hidden');
+
+    // Hide other UI
+    movementInstruction.classList.add('hidden');
+}
+
+// Stage 3: Restart game
+function restartStage3() {
+    // Hide game over overlay
+    stage3GameOver.classList.add('hidden');
+
+    // Reset player HP
+    state.village.stage3PlayerHP = state.village.stage3PlayerMaxHP;
+    state.village.stage3Invincible = false;
+    playerImage.classList.remove('player-hit');
+    resetPlayerHPUI();
+
+    // Reset monster
+    state.village.stage3MonsterX = state.village.stage3MonsterBaseX;
+    state.village.stage3MonsterKnockback = 0;
+    state.village.stage3MonsterHP = state.village.stage3MonsterMaxHP;
+
+    // Reset level to 1
+    state.village.stage3Level = 1;
+
+    // Clear containers
+    stage3ObstaclesContainer.innerHTML = '';
+    stage3ItemsContainer.innerHTML = '';
+    stage3Projectiles.innerHTML = '';
+    state.village.stage3Obstacles = [];
+    state.village.stage3Items = [];
+    state.village.stage3Projectiles = [];
+
+    // Reset timers
+    state.village.stage3ObstacleSpawnTimer = performance.now();
+
+    // Re-initialize
+    initializeHanjaQueue(1);
+    spawnMonster(1);
+    state.village.stage3GameStarted = true;
+
+    // Show instruction
+    const instructionP = movementInstruction.querySelector('p');
+    if (instructionP) {
+        instructionP.textContent = "스페이스바로 한자 발사! ↑키로 점프!";
+    }
+    movementInstruction.classList.remove('hidden');
+}
+
+function sendStageUser() {
+    if (!stageFrame.contentWindow) return;
+    const userId = state.currentUser?.id || 'guest';
+    stageFrame.contentWindow.postMessage({ type: 'hanjaUser', id: userId }, '*');
+}
+
+// Base mouse events
+bases.forEach(base => {
+    base.addEventListener('mouseenter', () => {
+        if (!state.village.basesActive) return;
+        base.classList.add('base-hover');
+        state.village.selectedBase = parseInt(base.dataset.base);
+        playHoverSound();
+    });
+
+    base.addEventListener('mouseleave', () => {
+        if (!state.village.basesActive) return;
+        // Only remove if not colliding
+        if (state.village.baseCollision !== parseInt(base.dataset.base)) {
+            base.classList.remove('base-hover');
+        }
+        state.village.selectedBase = null;
+    });
+
+    base.addEventListener('click', () => {
+        if (!state.village.basesActive) return;
+        openBaseModal(parseInt(base.dataset.base));
+    });
+});
+
+// Modal events
+modalClose.addEventListener('click', closeBaseModal);
+modalStart.addEventListener('click', () => {
+    const baseId = baseModal.dataset.currentBase;
+    console.log(`Starting level ${baseId}!`);
+    closeBaseModal();
+    if (String(baseId) === '1') {
+        // 모바일 stage1로 이동
+        window.location.href = 'stage1.html';
+    } else if (String(baseId) === '2') {
+        // 모바일 stage2로 이동
+        window.location.href = 'stage2.html';
+    } else if (String(baseId) === '3') {
+        startStage3();
+    } else {
+        // Stage 3 placeholder removed
+        return;
+    }
+});
+
+certificateHome.addEventListener('click', () => {
+    location.reload();
+});
+
+baseModal.addEventListener('click', (e) => {
+    if (e.target === baseModal) {
+        closeBaseModal();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.code !== 'Space') return;
+    if (!baseModal.classList.contains('active')) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    modalStart.click();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.code !== 'Space') return;
+    if (stage3GameOver.classList.contains('hidden')) return;
+    e.preventDefault();
+    restartStage3();
+});
+
+alertOk.addEventListener('click', closeAlert);
+alertModal.addEventListener('click', (e) => {
+    if (e.target === alertModal) {
+        closeAlert();
+    }
+});
+
+stageModalClose.addEventListener('click', closeStageModal);
+stageModal.addEventListener('click', (e) => {
+    if (e.target === stageModal) {
+        closeStageModal();
+    }
+});
+
+stageFrame.addEventListener('load', sendStageUser);
+
+// Stage 3 restart button
+stage3RestartBtn.addEventListener('click', restartStage3);
+stage3ReturnBtn.addEventListener('click', () => {
+    returnToVillage();
+});
+
+window.addEventListener('message', (event) => {
+    const data = event.data || {};
+    if (data.type === 'hanjaReady') {
+        sendStageUser();
+    }
+});
+
+window.addEventListener('resize', () => {
+    if (state.village.stage3Active) {
+        setupStage3Background();
+    }
+});
+
+// Keyboard event for Enter on colliding base
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && state.village.basesActive && state.village.baseCollision) {
+        if (baseModal.classList.contains('active')) return;
+        e.preventDefault();
+        openBaseModal(state.village.baseCollision);
+    }
+});
+
+// Run Init
+init();</script>
 </body>
 </html>
